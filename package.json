@@ -1,0 +1,54 @@
+{
+	"name": "pedal_shootout_front_end",
+	"version": "1.0.0",
+	"description": "A product comparison tool for comparing the specs and features of effects pedals",
+	"main": "index.js",
+	"scripts": {
+		"test": "jest",
+		"test:watch": "jest --watch",
+		"test:coverage": "jest --coverage",
+		"build": "webpack --config webpack.production.js",
+		"start": "webpack serve --config webpack.development.js"
+	},
+	"keywords": [],
+	"author": "Josh Demolar",
+	"license": "ISC",
+	"devDependencies": {
+		"@testing-library/jest-dom": "^5.16.4",
+		"@testing-library/react": "^13.3.0",
+		"@types/jest": "^28.1.2",
+		"@types/node": "^18.0.0",
+		"@types/react": "^18.0.14",
+		"@types/react-dom": "^18.0.5",
+		"@types/swagger-ui-react": "^4.11.0",
+		"copy-webpack-plugin": "^11.0.0",
+		"css-loader": "^6.7.1",
+		"dotenv-webpack": "^7.1.1",
+		"html-webpack-plugin": "^5.5.0",
+		"jest": "^28.1.1",
+		"jest-environment-jsdom": "^28.1.1",
+		"react-bootstrap": "^2.4.0",
+		"sass": "^1.52.3",
+		"sass-loader": "^13.0.0",
+		"style-loader": "^3.3.1",
+		"ts-jest": "^28.0.5",
+		"ts-loader": "^9.3.0",
+		"ts-node": "^10.8.1",
+		"typescript": "^4.7.4",
+		"webpack": "^5.73.0",
+		"webpack-cli": "^4.10.0",
+		"webpack-dev-server": "^4.9.2",
+		"webpack-merge": "^5.8.0"
+	},
+	"browser": {
+		"crypto": false
+	},
+	"dependencies": {
+		"@rjsf/core": "^4.2.0",
+		"node-polyfill-webpack-plugin": "^2.0.0",
+		"react": "^18.2.0",
+		"react-classlist": "^1.1.2",
+		"react-dom": "^18.2.0",
+		"realm-web": "^1.7.0"
+	}
+}
