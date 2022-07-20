@@ -1,14 +1,50 @@
 import './index.scss';
+import { MouseEvent, useState } from "react";
+// import { ClassList } from "react-classlist";
 
 interface Props {
 	children?: React.ReactNode
 }
 
+// function getClassName(target:HTMLElement) {
+// 	if (!target || !target || !target.parentElement) {
+// 		return '';
+// 	} else {
+// 		return target.parentElement.className;
+// 	}
+// }
+
 const FeatureTable = ({children}: Props) => {
+
+	const [tableClasses, setTableClasses] = useState('');
+
+	const updateVisibility = (event: MouseEvent) => {
+		let el = event.target as HTMLElement;
+		console.log(el.parentElement?.className);
+		// console.log(target.parentElement);
+		// let tbl = document.getElementById('feature-table');
+		// console.log(tbl);
+		let featureTableClassList = (tableClasses === '') ? [] : tableClasses.split(' ');
+		console.log(featureTableClassList);
+		let currentSection = el.parentElement?.className;
+		let hideClassName = 'hide-' + currentSection;
+		let i = featureTableClassList?.indexOf(hideClassName);
+		
+		if (i === -1) {
+			console.log('i = ' + i);
+			featureTableClassList.push(hideClassName);
+		} else {
+			featureTableClassList.splice(i, 1);
+		}
+
+		setTableClasses(featureTableClassList.join(' '));
+		// tbl?.className = tableClasses;
+	}
+
 	return (
 		<div className='table-wrapper'>
 			<h1>Pedals</h1>
-			<table id='feature-table' className=''>
+			<table id='feature-table' className={tableClasses}>
 				<thead>
 					<tr className='category-header'>
 						<th className='general-info-cell' data-label='General Info' colSpan={3}>
@@ -16,7 +52,8 @@ const FeatureTable = ({children}: Props) => {
 							General Info
 						</th>
 						<th className='signal-cell' data-label='Signal' colSpan={3}>
-							<span className="label">Signal</span>
+							<span className='collapse-button' onClick={updateVisibility}>X</span>
+							<span className="label" onClick={updateVisibility}>Signal</span>
 							Signal
 						</th>
 						<th className='audio-inputs-cell' data-label='Audio In' colSpan={3}>
