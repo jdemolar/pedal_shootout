@@ -19,9 +19,6 @@ const App = () => {
 				const user = await realmApp.logIn(creds);
 				const pedalsArray = await user.functions.listAllPedals();
 				setPedals(pedalsArray);
-				// setTimeout(function() {
-				// 	console.log(pedalsArray);
-				// }, 5000);
 			} catch (err) {
 
 			}
@@ -45,7 +42,6 @@ const App = () => {
 			<FeatureTable>
 				{
 					pedals.map((pedal) => {
-						console.log(pedal);
 						return <FeatureRow
 							key={pedal['pedalId']}
 							pedalManufacturer={pedal['pedalManufacturer']}

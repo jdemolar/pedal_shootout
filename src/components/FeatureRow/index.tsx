@@ -86,12 +86,6 @@ interface Props {
 	auxiliaryJacks: auxiliaryJack[];
 }
 
-// function doesExist(property: any) {
-// 	let val = false;
-// 	!property ? val = false : val = true;;
-// 	return val;
-// }
-
 function showAudioLoopDetails(audioLoops: fxLoop[], clnm: string) {
 	if (!audioLoops || audioLoops.length === 0) {
 		return <td className={clnm}>N/A</td>;
@@ -153,7 +147,6 @@ function showAuxJackDetails(auxiliaryJacks: auxiliaryJack[], clnm: string) {
 }
 
 function listWithCommas(ary: string[], clnm: string) {
-	console.log(ary);
 	clnm = 'left-align-cell ' + clnm
 	if (ary.length === 0) {
 		return <td>N/A</td>;
@@ -171,16 +164,6 @@ function listWithCommas(ary: string[], clnm: string) {
 // TODO: add acceptable values to the above interfaces' properties when enum is defined in schema
 
 const FeatureRow = ({pedalManufacturer, pedalName, effectTypes, audioSignalType, trueBypass, audioConnections, powerConnections, midiFeatures, auxiliaryJacks, audioMix, hasReorderableLoops, numberOfPresets, software}: Props) => {
-// general-info-cell
-// signal-cell'
-// audio-inputs-cell
-// audio-outputs-cell
-// audio-loops-cell
-// power-input-cell
-// power-output-cell
-// presets-cell'
-// midi-features-cell
-// aux-jacks-cell
 	return (
 		<tr>
 			{/* General Info */}
