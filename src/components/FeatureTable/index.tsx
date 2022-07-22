@@ -12,24 +12,24 @@ const FeatureTable = ({children}: Props) => {
 	const [tableClasses, setTableClasses] = useState('');
 	const categories = [
 		{ label: 'General Info',	clnm: 'general-info-cell',	colHeaders: ['Manufacturer', 'Name', 'Effect Type(s)'] },
-		{ label: 'Signal',			clnm: 'signal-cell',		colHeaders: ['Analog<br />Signal', 'True<br />Bypass', 'Audio<br />Mix'] },
-		{ label: 'Audio Inputs',	clnm: 'audio-inputs-cell',	colHeaders: ['# of <br />Inputs', 'Connection<br />Type', 'Impedance<br />(in &Omega;)'] },
-		{ label: 'Audio Outputs',	clnm: 'audio-outputs-cell',	colHeaders: ['# of <br />Outputs', 'Connection<br />Type', 'Impedance<br />(in &Omega;)'] },
-		{ label: 'Audio Loops',		clnm: 'audio-loops-cell',	colHeaders: ['(Hover for<br />Details)', 'Reorderable<br />Loops'] },
-		{ label: 'Power Input',		clnm: 'power-input-cell',	colHeaders: ['Power<br />Required', 'Voltage', 'Current<br />(in mA)', 'Connection<br />Type', 'Battery<br />Capable'] },
-		{ label: 'Power Outputs',	clnm: 'power-outputs-cell',	colHeaders: ['(Hover for<br />Details)'] },
+		{ label: 'Signal',			clnm: 'signal-cell',		colHeaders: ['Analog\nSignal', 'True\nBypass', 'Audio\nMix'] },
+		{ label: 'Audio Inputs',	clnm: 'audio-inputs-cell',	colHeaders: ['# of\nInputs', 'Connection\nType', 'Impedance\n(in Ω)'] },
+		{ label: 'Audio Outputs',	clnm: 'audio-outputs-cell',	colHeaders: ['# of \nOutputs', 'Connection\nType', 'Impedance\n(in Ω)'] },
+		{ label: 'Audio Loops',		clnm: 'audio-loops-cell',	colHeaders: ['(Hover for\nDetails)', 'Reorderable\nLoops'] },
+		{ label: 'Power Input',		clnm: 'power-input-cell',	colHeaders: ['Power\nRequired', 'Voltage', 'Current\n(in mA)', 'Connection\nType', 'Battery\nCapable'] },
+		{ label: 'Power Outputs',	clnm: 'power-outputs-cell',	colHeaders: ['(Hover for\nDetails)'] },
 		{ label: 'Presets',			clnm: 'presets-cell',		colHeaders: ['Presets'] },
-		{ label: 'Software',		clnm: 'software-cell',		colHeaders: ['Software<br />Editor', 'Platforms'] },
-		{ label: 'MIDI Features',	clnm: 'midi-features-cell',	colHeaders: ['Receive Capabilities', 'Send Capabilities', 'MIDI In<br />Connection<br />Type', 'MIDI Out<br />Connection<br />Type', 'MIDI Thru<br />Connection<br />Type'] },
-		{ label: 'Aux Jacks',		clnm: 'aux-jacks-cell',		colHeaders: ['(Hover for<br /> Details)'] },
+		{ label: 'Software',		clnm: 'software-cell',		colHeaders: ['Software\nEditor', 'Platforms'] },
+		{ label: 'MIDI Features',	clnm: 'midi-features-cell',	colHeaders: ['Receive Capabilities', 'Send Capabilities', 'MIDI In\nConnection\nType', 'MIDI Out\nConnection\nType', 'MIDI Thru\nConnection\nType'] },
+		{ label: 'Aux Jacks',		clnm: 'aux-jacks-cell',		colHeaders: ['(Hover for\n Details)'] },
 	];
 
 	return (
-		<div className='table-wrapper'>
+		<div className='feature-table-wrapper'>
 			<h1>Pedals</h1>
 			<table id='feature-table' className={tableClasses}>
 				<thead>
-					<tr className='category-header'>
+					<tr className='category-header-row'>
 						{
 							categories.map((category) => {
 								return <FeatureTableCategoryHeader

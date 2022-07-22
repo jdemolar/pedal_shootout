@@ -1,56 +1,20 @@
-.table-wrapper {
+.feature-table-wrapper {
 
 	padding: 20px;
 	display: flex;
 	align-items: center;
 	flex-direction: column;
-	justify-self: left;
+	// justify-self: left;
+	overflow: scroll;
 
 	h1 {
 		width: 100%;
 	}
 
-	#feature-table {
+	table {
 		border: 2px solid black;
 		border-collapse: collapse;
-
-		tr.category-header {
-			th {
-				background-color: darkgray;
-				position: relative;
-
-				span.label {
-					visibility: hidden;
-					display: block;
-					content: attr(data-label);
-					position: absolute;
-					width: 120px;
-					border-bottom: 1px solid green;
-					left: -10px;
-					top: -19px;
-					transform: rotate(-60deg);
-					margin-right: 40px;
-					padding: 0 20px 4px 20px;
-					transform-origin: left center;
-					text-align: left;
-					color: green;
-				}
-
-				span.collapse-button {
-					position: absolute;
-					top: 0;
-					right: 0;
-					padding: 4px;
-					color: red;
-					cursor: pointer;
-
-					&:hover {
-						font-weight: bolder;
-						text-decoration: underline;
-					}
-				}
-			}
-		}
+		align-self: start;
 
 		th, td {
 			border: 1px solid darkgray;
@@ -61,68 +25,7 @@
 		}
 
 		th {
-			background-color: lightgray;
 			border-color: black;
 		}
-
-		td {
-			&.yay, &.nay {
-				font: 1.5em Arial bold, Helvetica, sans-serif;
-			}
-
-			&.yay {
-				color: green;
-				font-weight: bolder;
-			}
-
-			&.nay {
-				// color: rgb(220, 20, 60);
-			}
-		}
-
-		.left-align-cell {
-			text-align: left;
-		}
-
-		table.loop-details {
-			tr, th, td {
-				border: none;
-			}
-		}
-
-		&.hide-general-info-cell .general-info-cell,
-		&.hide-signal-cell .signal-cell,
-		&.hide-audio-inputs-cell .audio-inputs-cell,
-		&.hide-audio-outputs-cell .audio-outputs-cell,
-		&.hide-audio-loops-cell .audio-loops-cell,
-		&.hide-power-input-cell .power-input-cell,
-		&.hide-power-outputs-cell .power-outputs-cell,
-		&.hide-presets-cell .presets-cell,
-		&.hide-software-cell .software-cell,
-		&.hide-midi-features-cell .midi-features-cell,
-		&.hide-aux-jacks-cell .aux-jacks-cell {
-			visibility: hidden;
-			width: 0;
-			max-width: 10px;
-			border-width: 0;
-			padding: 0;
-		}
-
-		&.hide-general-info-cell .category-header .general-info-cell,
-		&.hide-signal-cell .category-header .signal-cell,
-		&.hide-audio-inputs-cell .category-header .audio-inputs-cell,
-		&.hide-audio-outputs-cell .category-header .audio-outputs-cell,
-		&.hide-audio-loops-cell .category-header .audio-loops-cell,
-		&.hide-power-input-cell .category-header .power-input-cell,
-		&.hide-power-outputs-cell .category-header .power-outputs-cell,
-		&.hide-presets-cell .category-header .presets-cell,
-		&.hide-software-cell .category-header .software-cell,
-		&.hide-midi-features-cell .category-header .midi-features-cell,
-		&.hide-aux-jacks-cell .category-header .aux-jacks-cell {
-			span.label {
-				visibility: visible !important;
-			}
-		}
 	}
-
 }

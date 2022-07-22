@@ -6,7 +6,7 @@ interface Props {
 }
 
 const FeatureTableColumnHeader = ({clnm, children}: Props) => {
-	return <th className={clnm}>{children}</th>
+	return <th className={'col-header-cell ' + clnm}>{children}</th>
 }
 
 export default FeatureTableColumnHeader;

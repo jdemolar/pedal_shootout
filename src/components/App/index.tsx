@@ -1,6 +1,7 @@
 import './app.scss';
 import * as Realm from 'realm-web';
 import { useState, useEffect } from "react";
+import Nav from '../Nav';
 import Loading from '../Loading';
 import FeatureTable from '../FeatureTable';
 import FeatureRow from '../FeatureRow';
@@ -34,6 +35,7 @@ const App = () => {
 
 	return (
 		<div className="app">
+			<Nav></Nav>
 			{loading && (
 				<div className="text-center">
 					<Loading />

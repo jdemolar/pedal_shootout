@@ -14,7 +14,7 @@ const FeatureTableCategoryHeader = ({label, clnm, numColumns, tableClasses, setT
 	const updateVisibility = (event: MouseEvent) => {
 		let el = event.target as HTMLElement;
 		let featureTableClassList = (tableClasses === '') ? [] : tableClasses.split(' ');
-		let currentSection = el.parentElement?.className;
+		let currentSection = el.parentElement?.className.replace('category-header-cell ', '');
 		let hideClassName = 'hide-' + currentSection;
 		let i = featureTableClassList?.indexOf(hideClassName);
 		
@@ -28,7 +28,7 @@ const FeatureTableCategoryHeader = ({label, clnm, numColumns, tableClasses, setT
 	}
 
 	return (
-		<th className={clnm} data-label={label} colSpan={numColumns}>
+		<th className={'category-header-cell ' + clnm} data-label={label} colSpan={numColumns}>
 			<span className='collapse-button' onClick={updateVisibility}>X</span>
 			<span className="label" onClick={updateVisibility}>{label}</span>
 			{label}
