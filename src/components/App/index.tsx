@@ -11,6 +11,11 @@ const App = () => {
 	const [pedals, setPedals] = useState([]);
 	const [loading, setLoading] = useState(true);
 
+	const navElements = [
+		{label: 'Features Table',	link: 'FeatureTable'},
+		{label: 'Submit Pedal Data',	link: 'PedalForm'},
+	]
+
 	useEffect(() => {
 		async function getPedalsData () {
 			const realmApp = new Realm.App({id: "pedal_shootout-kycqe"});
@@ -35,7 +40,10 @@ const App = () => {
 
 	return (
 		<div className="app">
-			<Nav></Nav>
+			<Nav
+				key='navElements'
+				elements={navElements}
+			/>
 			{loading && (
 				<div className="text-center">
 					<Loading />
