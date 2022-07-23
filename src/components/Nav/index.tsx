@@ -1,5 +1,6 @@
 import './index.scss';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 interface element {
 	label: string;
@@ -24,7 +25,7 @@ const Nav = ({elements}: Props) => {
 			{
 				elements.map((element) => {
 					return (
-						<div onClick = {() => navHandler}>{element.label}</div>
+						<div onClick = {() => navHandler}><Link to={element.link}>{element.label}</Link></div>
 					)
 				})
 			}
