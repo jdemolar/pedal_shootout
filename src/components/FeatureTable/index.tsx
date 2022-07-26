@@ -6,10 +6,6 @@ import FeatureTableColumnHeader from '../FeatureTableColumnHeader';
 import FeatureRow from '../FeatureRow';
 import * as Realm from 'realm-web';
 
-// interface Props {
-// 	children?: React.ReactNode;
-// }
-
 const FeatureTable = () => {
 
 	const [pedals, setPedals] = useState([]);
