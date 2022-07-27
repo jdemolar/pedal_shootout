@@ -25,7 +25,7 @@ const Nav = ({elements}: Props) => {
 			{
 				elements.map((element) => {
 					return (
-						<div onClick = {() => navHandler}><Link to={element.link}>{element.label}</Link></div>
+						<div key={element.link} onClick = {() => navHandler}><Link to={element.link}>{element.label}</Link></div>
 					)
 				})
 			}

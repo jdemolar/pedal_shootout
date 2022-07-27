@@ -29,7 +29,7 @@ const FeatureTableCategoryHeader = ({label, clnm, numColumns, tableClasses, setT
 
 	return (
 		<th className={'category-header-cell ' + clnm} data-label={label} colSpan={numColumns}>
-			<span className='collapse-button' onClick={updateVisibility}>X</span>
+			<span className='collapse-button' onClick={updateVisibility}>-</span>
 			<span className="label" onClick={updateVisibility}>{label}</span>
 			{label}
 		</th>

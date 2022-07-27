@@ -5,7 +5,6 @@
 	span.label {
 		visibility: hidden;
 		display: block;
-		content: attr(data-label);
 		position: absolute;
 		width: 120px;
 		border-bottom: 1px solid green;
@@ -41,38 +40,37 @@
 			pointer-events: none;
 		}
 	}
+}
 
-	&.hide-general-info-cell .general-info-cell,
-	&.hide-signal-cell .signal-cell,
-	&.hide-audio-inputs-cell .audio-inputs-cell,
-	&.hide-audio-outputs-cell .audio-outputs-cell,
-	&.hide-audio-loops-cell .audio-loops-cell,
-	&.hide-power-input-cell .power-input-cell,
-	&.hide-power-outputs-cell .power-outputs-cell,
-	&.hide-presets-cell .presets-cell,
-	&.hide-software-cell .software-cell,
-	&.hide-midi-features-cell .midi-features-cell,
-	&.hide-aux-jacks-cell .aux-jacks-cell {
-		visibility: hidden;
-		width: 0;
-		max-width: 10px;
-		border-width: 0;
-		padding: 0;
-	}
+.hide-signal-cell .signal-cell,
+.hide-audio-inputs-cell .audio-inputs-cell,
+.hide-audio-outputs-cell .audio-outputs-cell,
+.hide-audio-loops-cell .audio-loops-cell,
+.hide-power-input-cell .power-input-cell,
+.hide-power-outputs-cell .power-outputs-cell,
+.hide-presets-cell .presets-cell,
+.hide-software-cell .software-cell,
+.hide-midi-features-cell .midi-features-cell,
+.hide-aux-jacks-cell .aux-jacks-cell {
+	visibility: hidden;
+	width: 0;
+	max-width: 0;
+	border-width: 0;
+	padding: 0;
+}
 
-	&.hide-general-info-cell .category-header-row .general-info-cell,
-	&.hide-signal-cell .category-header-row .signal-cell,
-	&.hide-audio-inputs-cell .category-header-row .audio-inputs-cell,
-	&.hide-audio-outputs-cell .category-header-row .audio-outputs-cell,
-	&.hide-audio-loops-cell .category-header-row .audio-loops-cell,
-	&.hide-power-input-cell .category-header-row .power-input-cell,
-	&.hide-power-outputs-cell .category-header-row .power-outputs-cell,
-	&.hide-presets-cell .category-header-row .presets-cell,
-	&.hide-software-cell .category-header-row .software-cell,
-	&.hide-midi-features-cell .category-header-row .midi-features-cell,
-	&.hide-aux-jacks-cell .category-header-row .aux-jacks-cell {
-		span.label {
-			visibility: visible !important;
-		}
+.hide-signal-cell .category-header-row .signal-cell,
+.hide-audio-inputs-cell .category-header-row .audio-inputs-cell,
+.hide-audio-outputs-cell .category-header-row .audio-outputs-cell,
+.hide-audio-loops-cell .category-header-row .audio-loops-cell,
+.hide-power-input-cell .category-header-row .power-input-cell,
+.hide-power-outputs-cell .category-header-row .power-outputs-cell,
+.hide-presets-cell .category-header-row .presets-cell,
+.hide-software-cell .category-header-row .software-cell,
+.hide-midi-features-cell .category-header-row .midi-features-cell,
+.hide-aux-jacks-cell .category-header-row .aux-jacks-cell {
+	border-left: 2px solid green;
+	span.label {
+		visibility: visible !important;
 	}
 }

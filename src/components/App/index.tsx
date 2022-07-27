@@ -22,7 +22,7 @@ const App = () => {
 				<Routes>
 					<Route path='/' element={<Navigate to={navElements[0].link} replace />} />
 					{navElements.map((navElement) => {
-						return <Route path={'/' + navElement.link} element={navElement.component}/>
+						return <Route key={navElement.link} path={'/' + navElement.link} element={navElement.component}/>
 					})}
 					<Route path='*' element={<NotFound />} />
 				</Routes>
