@@ -2,7 +2,7 @@ import  './index.scss';
 
 function Loading () {
 	return (
-		<div className='loading-indicator'>
+		<div className='loading-overlay'>
 			<div className="spinner"></div>
 		</div>
 	)
