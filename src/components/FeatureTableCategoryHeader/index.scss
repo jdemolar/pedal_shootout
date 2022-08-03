@@ -16,6 +16,12 @@
 		transform-origin: left center;
 		text-align: left;
 		color: green;
+		opacity: .7;
+		cursor: pointer;
+
+		&:hover {
+			opacity: 1;
+		}
 	}
 
 	span.collapse-button {
@@ -58,6 +64,45 @@
 	max-width: 0;
 	border-width: 0;
 	padding: 0;
+}
+
+// Display label and left border of category header when column is hidden
+.hide-signal-cell .category-header-row .signal-cell,
+.hide-audio-inputs-cell .category-header-row .audio-inputs-cell,
+.hide-audio-outputs-cell .category-header-row .audio-outputs-cell,
+.hide-audio-loops-cell .category-header-row .audio-loops-cell,
+.hide-power-input-cell .category-header-row .power-input-cell,
+.hide-power-outputs-cell .category-header-row .power-outputs-cell,
+.hide-presets-cell .category-header-row .presets-cell,
+.hide-software-cell .category-header-row .software-cell,
+.hide-midi-features-cell .category-header-row .midi-features-cell,
+.hide-aux-jacks-cell .category-header-row .aux-jacks-cell {
+	border-left: 2px solid green;
+	span.label {
+		visibility: visible !important;
+	}
+}
+
+.hide-signal-cell .general-info-cell,
+.hide-audio-inputs-cell .general-info-cell,
+.hide-audio-outputs-cell .general-info-cell,
+.hide-audio-loops-cell .general-info-cell,
+.hide-power-input-cell .general-info-cell,
+.hide-power-outputs-cell .general-info-cell,
+.hide-presets-cell .general-info-cell,
+.hide-software-cell .general-info-cell,
+.hide-midi-features-cell .general-info-cell,
+.hide-aux-jacks-cell .general-info-cell {
+	span.label {
+		transform: none;
+		visibility: visible;
+		border: none;
+		width: 95%;
+		padding: 0;
+		margin: 0;
+		text-align: right;
+		left: 0;
+	}
 }
 
 // Offset label when two adjacent columns are hidden
@@ -156,21 +201,5 @@
 .hide-signal-cell.hide-audio-inputs-cell.hide-audio-outputs-cell.hide-audio-loops-cell.hide-power-input-cell.hide-power-outputs-cell.hide-presets-cell.hide-software-cell.hide-midi-features-cell.hide-aux-jacks-cell .aux-jacks-cell {
 	span.label {
 		margin-left: 270px;
-	}
-}
-
-.hide-signal-cell .category-header-row .signal-cell,
-.hide-audio-inputs-cell .category-header-row .audio-inputs-cell,
-.hide-audio-outputs-cell .category-header-row .audio-outputs-cell,
-.hide-audio-loops-cell .category-header-row .audio-loops-cell,
-.hide-power-input-cell .category-header-row .power-input-cell,
-.hide-power-outputs-cell .category-header-row .power-outputs-cell,
-.hide-presets-cell .category-header-row .presets-cell,
-.hide-software-cell .category-header-row .software-cell,
-.hide-midi-features-cell .category-header-row .midi-features-cell,
-.hide-aux-jacks-cell .category-header-row .aux-jacks-cell {
-	border-left: 2px solid green;
-	span.label {
-		visibility: visible !important;
 	}
 }

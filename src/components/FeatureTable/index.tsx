@@ -13,7 +13,7 @@ const FeatureTable = () => {
 	const [tableClasses, setTableClasses] = useState('');
 
 	const categories = [
-		{ label: 'General Info',	clnm: 'general-info-cell',	colHeaders: ['Manufacturer', 'Name', 'Effect Type(s)'] },
+		{ label: 'Show All Columns',	clnm: 'general-info-cell',	colHeaders: ['Manufacturer', 'Name', 'Effect Type(s)'] },
 		{ label: 'Signal',			clnm: 'signal-cell',		colHeaders: ['Analog\nSignal', 'True\nBypass', 'Audio\nMix'] },
 		{ label: 'Audio Inputs',	clnm: 'audio-inputs-cell',	colHeaders: ['# of\nInputs', 'Connection\nType', 'Impedance\n(in Ω)'] },
 		{ label: 'Audio Outputs',	clnm: 'audio-outputs-cell',	colHeaders: ['# of \nOutputs', 'Connection\nType', 'Impedance\n(in Ω)'] },
