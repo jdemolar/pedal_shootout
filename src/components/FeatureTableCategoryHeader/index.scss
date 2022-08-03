@@ -42,6 +42,7 @@
 	}
 }
 
+// Hide single column
 .hide-signal-cell .signal-cell,
 .hide-audio-inputs-cell .audio-inputs-cell,
 .hide-audio-outputs-cell .audio-outputs-cell,
@@ -57,6 +58,105 @@
 	max-width: 0;
 	border-width: 0;
 	padding: 0;
+}
+
+// Offset label when two adjacent columns are hidden
+.hide-signal-cell.hide-audio-inputs-cell .audio-inputs-cell,
+.hide-audio-inputs-cell.hide-audio-outputs-cell .audio-outputs-cell,
+.hide-audio-outputs-cell.hide-audio-loops-cell .audio-loops-cell,
+.hide-audio-loops-cell.hide-power-input-cell .power-input-cell,
+.hide-power-input-cell.hide-power-outputs-cell .power-outputs-cell,
+.hide-power-outputs-cell.hide-presets-cell .presets-cell,
+.hide-presets-cell.hide-software-cell .software-cell,
+.hide-software-cell.hide-midi-features-cell .midi-features-cell,
+.hide-midi-features-cell.hide-aux-jacks-cell .aux-jacks-cell {
+	span.label {
+		margin-left: 30px;
+	}
+}
+
+// Offset label when three adjacent columns are hidden
+.hide-signal-cell.hide-audio-inputs-cell.hide-audio-outputs-cell .audio-outputs-cell,
+.hide-audio-inputs-cell.hide-audio-outputs-cell.hide-audio-loops-cell .audio-loops-cell,
+.hide-audio-outputs-cell.hide-audio-loops-cell.hide-power-input-cell .power-input-cell,
+.hide-audio-loops-cell.hide-power-input-cell.hide-power-outputs-cell .power-outputs-cell,
+.hide-power-input-cell.hide-power-outputs-cell.hide-presets-cell .presets-cell,
+.hide-power-outputs-cell.hide-presets-cell.hide-software-cell .software-cell,
+.hide-presets-cell.hide-software-cell.hide-midi-features-cell .midi-features-cell,
+.hide-software-cell.hide-midi-features-cell.hide-aux-jacks-cell .aux-jacks-cell {
+	span.label {
+		margin-left: 60px;
+	}
+}
+
+// Offset label when four adjacent columns are hidden
+.hide-signal-cell.hide-audio-inputs-cell.hide-audio-outputs-cell.hide-audio-loops-cell .audio-loops-cell,
+.hide-audio-inputs-cell.hide-audio-outputs-cell.hide-audio-loops-cell.hide-power-input-cell .power-input-cell,
+.hide-audio-outputs-cell.hide-audio-loops-cell.hide-power-input-cell.hide-power-outputs-cell .power-outputs-cell,
+.hide-audio-loops-cell.hide-power-input-cell.hide-power-outputs-cell.hide-presets-cell .presets-cell,
+.hide-power-input-cell.hide-power-outputs-cell.hide-presets-cell.hide-software-cell .software-cell,
+.hide-power-outputs-cell.hide-presets-cell.hide-software-cell.hide-midi-features-cell .midi-features-cell,
+.hide-presets-cell.hide-software-cell.hide-midi-features-cell.hide-aux-jacks-cell .aux-jacks-cell {
+	span.label {
+		margin-left: 90px;
+	}
+}
+
+// Offset label when five adjacent columns are hidden
+.hide-signal-cell.hide-audio-inputs-cell.hide-audio-outputs-cell.hide-audio-loops-cell.hide-power-input-cell .power-input-cell,
+.hide-audio-inputs-cell.hide-audio-outputs-cell.hide-audio-loops-cell.hide-power-input-cell.hide-power-outputs-cell .power-outputs-cell,
+.hide-audio-outputs-cell.hide-audio-loops-cell.hide-power-input-cell.hide-power-outputs-cell.hide-presets-cell .presets-cell,
+.hide-audio-loops-cell.hide-power-input-cell.hide-power-outputs-cell.hide-presets-cell.hide-software-cell .software-cell,
+.hide-power-input-cell.hide-power-outputs-cell.hide-presets-cell.hide-software-cell.hide-midi-features-cell .midi-features-cell,
+.hide-power-outputs-cell.hide-presets-cell.hide-software-cell.hide-midi-features-cell.hide-aux-jacks-cell .aux-jacks-cell {
+	span.label {
+		margin-left: 120px;
+	}
+}
+
+// Offset label when six adjacent columns are hidden
+.hide-signal-cell.hide-audio-inputs-cell.hide-audio-outputs-cell.hide-audio-loops-cell.hide-power-input-cell.hide-power-outputs-cell .power-outputs-cell,
+.hide-audio-inputs-cell.hide-audio-outputs-cell.hide-audio-loops-cell.hide-power-input-cell.hide-power-outputs-cell.hide-presets-cell .presets-cell,
+.hide-audio-outputs-cell.hide-audio-loops-cell.hide-power-input-cell.hide-power-outputs-cell.hide-presets-cell.hide-software-cell .software-cell,
+.hide-audio-loops-cell.hide-power-input-cell.hide-power-outputs-cell.hide-presets-cell.hide-software-cell.hide-midi-features-cell .midi-features-cell,
+.hide-power-input-cell.hide-power-outputs-cell.hide-presets-cell.hide-software-cell.hide-midi-features-cell.hide-aux-jacks-cell .aux-jacks-cell {
+	span.label {
+		margin-left: 150px;
+	}
+}
+
+// Offset label when seven adjacent columns are hidden
+.hide-signal-cell.hide-audio-inputs-cell.hide-audio-outputs-cell.hide-audio-loops-cell.hide-power-input-cell.hide-power-outputs-cell.hide-presets-cell .presets-cell,
+.hide-audio-inputs-cell.hide-audio-outputs-cell.hide-audio-loops-cell.hide-power-input-cell.hide-power-outputs-cell.hide-presets-cell.hide-software-cell .software-cell,
+.hide-audio-outputs-cell.hide-audio-loops-cell.hide-power-input-cell.hide-power-outputs-cell.hide-presets-cell.hide-software-cell.hide-midi-features-cell .midi-features-cell,
+.hide-audio-loops-cell.hide-power-input-cell.hide-power-outputs-cell.hide-presets-cell.hide-software-cell.hide-midi-features-cell.hide-aux-jacks-cell .aux-jacks-cell {
+	span.label {
+		margin-left: 180px;
+	}
+}
+
+// Offset label when eight adjacent columns are hidden
+.hide-signal-cell.hide-audio-inputs-cell.hide-audio-outputs-cell.hide-audio-loops-cell.hide-power-input-cell.hide-power-outputs-cell.hide-presets-cell.hide-software-cell .software-cell,
+.hide-audio-inputs-cell.hide-audio-outputs-cell.hide-audio-loops-cell.hide-power-input-cell.hide-power-outputs-cell.hide-presets-cell.hide-software-cell.hide-midi-features-cell .midi-features-cell,
+.hide-audio-outputs-cell.hide-audio-loops-cell.hide-power-input-cell.hide-power-outputs-cell.hide-presets-cell.hide-software-cell.hide-midi-features-cell.hide-aux-jacks-cell .aux-jacks-cell {
+	span.label {
+		margin-left: 210px;
+	}
+}
+
+// Offset label when nine adjacent columns are hidden
+.hide-signal-cell.hide-audio-inputs-cell.hide-audio-outputs-cell.hide-audio-loops-cell.hide-power-input-cell.hide-power-outputs-cell.hide-presets-cell.hide-software-cell.hide-midi-features-cell .midi-features-cell,
+.hide-audio-inputs-cell.hide-audio-outputs-cell.hide-audio-loops-cell.hide-power-input-cell.hide-power-outputs-cell.hide-presets-cell.hide-software-cell.hide-midi-features-cell.hide-aux-jacks-cell .aux-jacks-cell {
+	span.label {
+		margin-left: 240px;
+	}
+}
+
+// Offset label when ten adjacent columns are hidden
+.hide-signal-cell.hide-audio-inputs-cell.hide-audio-outputs-cell.hide-audio-loops-cell.hide-power-input-cell.hide-power-outputs-cell.hide-presets-cell.hide-software-cell.hide-midi-features-cell.hide-aux-jacks-cell .aux-jacks-cell {
+	span.label {
+		margin-left: 270px;
+	}
 }
 
 .hide-signal-cell .category-header-row .signal-cell,
