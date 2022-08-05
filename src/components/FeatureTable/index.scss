@@ -8,6 +8,7 @@
 
 	h1 {
 		width: 100%;
+		color: rgb(245, 245, 245);
 	}
 
 	table {
@@ -25,6 +26,15 @@
 
 		th {
 			border-color: black;
+		}
+
+		tbody {
+			tr:nth-of-type(odd) {
+				background-color: white;
+			}
+			tr:nth-of-type(even) {
+				background-color: rgb(245, 245, 245);
+			}
 		}
 	}
 }

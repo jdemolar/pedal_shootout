@@ -1,5 +1,6 @@
 .category-header-cell {
-	background-color: darkgray;
+	background-color: #485665;
+	color: #fff;
 	position: relative;
 
 	span.label {
@@ -15,7 +16,7 @@
 		padding: 0 20px 4px 20px;
 		transform-origin: left center;
 		text-align: left;
-		color: green;
+		color: lawngreen;
 		opacity: .7;
 		cursor: pointer;
 
@@ -63,6 +64,7 @@
 	width: 0;
 	max-width: 0;
 	border-width: 0;
+	border-left: 1px solid lawngreen;
 	padding: 0;
 }
 
@@ -77,7 +79,6 @@
 .hide-software-cell .category-header-row .software-cell,
 .hide-midi-features-cell .category-header-row .midi-features-cell,
 .hide-aux-jacks-cell .category-header-row .aux-jacks-cell {
-	border-left: 2px solid green;
 	span.label {
 		visibility: visible !important;
 	}

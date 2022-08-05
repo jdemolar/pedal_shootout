@@ -13,11 +13,9 @@ const FeatureTableCategoryHeader = ({label, clnm, numColumns, tableClasses, setT
 
 	const updateVisibility = (event: MouseEvent) => {
 		let el = event.target as HTMLElement;
-		// if (el.)
 
 		let featureTableClassList = (tableClasses === '') ? [] : tableClasses.split(' ');
 		let currentSection = el.parentElement?.className.replace('category-header-cell ', '');
-		console.log(currentSection);
 
 		if (currentSection === 'general-info-cell') {
 			setTableClasses('');
