@@ -1,0 +1,24 @@
+#feature-table {
+	td {
+		&.yay, &.nay {
+			font: 1.5em Arial bold, Helvetica, sans-serif;
+		}
+
+		&.yay {
+			color: green;
+			font-weight: bolder;
+		}
+
+		&.nay {
+			// color: rgb(220, 20, 60);
+		}
+
+		&.left-align-cell {
+			text-align: left;
+		}
+
+		&.general-info-cell {
+			font-weight: bold;
+		}
+	}
+}

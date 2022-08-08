@@ -1,71 +1,33 @@
 import './app.scss';
-import * as Realm from 'realm-web';
-import { useState, useEffect } from "react";
-import Loading from '../Loading';
+import Nav from '../Nav';
 import FeatureTable from '../FeatureTable';
-import FeatureRow from '../FeatureRow';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import PedalSpecForm from '../PedalSpecForm';
+import NotFound from '../NotFound';
 
 const App = () => {
 	
-	const [pedals, setPedals] = useState([]);
-	const [loading, setLoading] = useState(true);
-
-	useEffect(() => {
-		async function getPedalsData () {
-			const realmApp = new Realm.App({id: "pedal_shootout-kycqe"});
-			const creds = Realm.Credentials.anonymous();
-
-			try {
-				const user = await realmApp.logIn(creds);
-				const pedalsArray = await user.functions.listAllPedals();
-				setPedals(pedalsArray);
-				// setTimeout(function() {
-				// 	console.log(pedalsArray);
-				// }, 5000);
-			} catch (err) {
-
-			}
-
-			setLoading(false);
-		}
-
-		if (loading) {
-			getPedalsData();
-		}
-	}, [loading])
-
+	const navElements = [
+		{label: 'Features Table',		link: 'feature-table',	component: <FeatureTable />},
+		{label: 'Submit Pedal Data',	link: 'pedal-form',		component: <PedalSpecForm />},
+	];
 
 	return (
-		<div className="app">
-			{loading && (
-				<div className="text-center">
-					<Loading />
-				</div>
-			)}
-			<FeatureTable>
-				{
-					pedals.map((pedal) => {
-						console.log(pedal);
-						return <FeatureRow
-							key={pedal['pedalId']}
-							pedalManufacturer={pedal['pedalManufacturer']}
-							pedalName={pedal['pedalName']}
-							effectTypes={pedal['effectTypes']}
-							audioSignalType={pedal['audioSignalType']}
-							trueBypass={pedal['isTrueBypassAudioSignal']}
-							audioMix={pedal['audioMix']}
-							hasReorderableLoops={pedal['hasReorderableLoops']}
-							numberOfPresets={pedal['numberOfPresets']}
-							software={pedal['software']}
-							audioConnections={pedal['audioConnections']}
-							powerConnections={pedal['powerConnections']}
-							midiFeatures={pedal['midiFeatures']}
-							auxiliaryJacks={pedal['auxiliaryJacks']}
-						/>
-					})
-				}
-			</FeatureTable>
-		</div>
+		<Router>
+			<div className="app">
+				<Nav
+					key='navElements'
+					elements={navElements}
+				/>
+				<Routes>
+					<Route path='/' element={<Navigate to={navElements[0].link} replace />} />
+					{navElements.map((navElement) => {
+						return <Route key={navElement.link} path={'/' + navElement.link} element={navElement.component}/>
+					})}
+					<Route path='*' element={<NotFound />} />
+				</Routes>
+			</div>
+		</Router>
 	);
 };
 

@@ -12,6 +12,7 @@ module.exports = merge(common, {
 		compress: true,
 		open: true,
 		static: './build',
+		historyApiFallback: true,
 	},
 	stats: {
 		errorDetails: true,

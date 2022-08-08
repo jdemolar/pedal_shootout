@@ -1,3 +1,4 @@
+import './index.scss';
 import DetailsTooltip from '../DetailsTooltip';
 
 interface powerOutput {
@@ -86,12 +87,6 @@ interface Props {
 	auxiliaryJacks: auxiliaryJack[];
 }
 
-// function doesExist(property: any) {
-// 	let val = false;
-// 	!property ? val = false : val = true;;
-// 	return val;
-// }
-
 function showAudioLoopDetails(audioLoops: fxLoop[], clnm: string) {
 	if (!audioLoops || audioLoops.length === 0) {
 		return <td className={clnm}>N/A</td>;
@@ -114,7 +109,7 @@ function showAudioLoopDetails(audioLoops: fxLoop[], clnm: string) {
 
 function showPowerOutputDetails(powerOutputs: powerOutput[], clnm: string) {
 	if (powerOutputs.length === 0) {
-		return <td>N/A</td>;
+		return <td className={clnm}>N/A</td>;
 	} else {
 		let titleString:string = `===============================\n`;
 		let count = powerOutputs.length.toString();
@@ -134,7 +129,7 @@ function showPowerOutputDetails(powerOutputs: powerOutput[], clnm: string) {
 
 function showAuxJackDetails(auxiliaryJacks: auxiliaryJack[], clnm: string) {
 	if (!auxiliaryJacks || auxiliaryJacks.length === 0) {
-		return <td>N/A</td>;
+		return <td className={clnm}>N/A</td>;
 	} else {
 		let titleString:string = `===============================\n`;
 		let count = auxiliaryJacks.length.toString();
@@ -153,10 +148,9 @@ function showAuxJackDetails(auxiliaryJacks: auxiliaryJack[], clnm: string) {
 }
 
 function listWithCommas(ary: string[], clnm: string) {
-	console.log(ary);
 	clnm = 'left-align-cell ' + clnm
 	if (ary.length === 0) {
-		return <td>N/A</td>;
+		return <td className={clnm}>N/A</td>;
 	} else {
 		return (
 			<td className={clnm}>
@@ -171,16 +165,6 @@ function listWithCommas(ary: string[], clnm: string) {
 // TODO: add acceptable values to the above interfaces' properties when enum is defined in schema
 
 const FeatureRow = ({pedalManufacturer, pedalName, effectTypes, audioSignalType, trueBypass, audioConnections, powerConnections, midiFeatures, auxiliaryJacks, audioMix, hasReorderableLoops, numberOfPresets, software}: Props) => {
-// general-info-cell
-// signal-cell'
-// audio-inputs-cell
-// audio-outputs-cell
-// audio-loops-cell
-// power-input-cell
-// power-output-cell
-// presets-cell'
-// midi-features-cell
-// aux-jacks-cell
 	return (
 		<tr>
 			{/* General Info */}
@@ -209,7 +193,7 @@ const FeatureRow = ({pedalManufacturer, pedalName, effectTypes, audioSignalType,
 			<td className='power-input-cell'>{powerConnections.input.connectionType ? powerConnections.input.connectionType : 'N/A'}</td>
 			<td className='power-input-cell'>{powerConnections.input.isBatteryCapable === true ? 'Yes' : 'No'}</td>
 			{/* Power Outputs */}
-			{showPowerOutputDetails(powerConnections.outputs, 'power-output-cell')}
+			{showPowerOutputDetails(powerConnections.outputs, 'power-outputs-cell')}
 			{/* Presets */}
 			<td className='presets-cell'>{numberOfPresets}</td>
 			{/* Software */}

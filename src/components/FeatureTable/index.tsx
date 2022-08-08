@@ -1,115 +1,105 @@
 import './index.scss';
+import { useState, useEffect } from "react";
+import Loading from '../Loading';
+import FeatureTableCategoryHeader from '../FeatureTableCategoryHeader';
+import FeatureTableColumnHeader from '../FeatureTableColumnHeader';
+import FeatureRow from '../FeatureRow';
+import * as Realm from 'realm-web';
 
-interface Props {
-	children?: React.ReactNode
-}
+const FeatureTable = () => {
 
-const FeatureTable = ({children}: Props) => {
+	const [pedals, setPedals] = useState([]);
+	const [loading, setLoading] = useState(true);
+	const [tableClasses, setTableClasses] = useState('');
+
+	const categories = [
+		{ label: 'Show All Columns',	clnm: 'general-info-cell',	colHeaders: ['Manufacturer', 'Name', 'Effect Type(s)'] },
+		{ label: 'Signal',			clnm: 'signal-cell',		colHeaders: ['Analog\nSignal', 'True\nBypass', 'Audio\nMix'] },
+		{ label: 'Audio Inputs',	clnm: 'audio-inputs-cell',	colHeaders: ['# of\nInputs', 'Connection\nType', 'Impedance\n(in Ω)'] },
+		{ label: 'Audio Outputs',	clnm: 'audio-outputs-cell',	colHeaders: ['# of \nOutputs', 'Connection\nType', 'Impedance\n(in Ω)'] },
+		{ label: 'Audio Loops',		clnm: 'audio-loops-cell',	colHeaders: ['(Hover for\nDetails)', 'Reorderable\nLoops'] },
+		{ label: 'Power Input',		clnm: 'power-input-cell',	colHeaders: ['Power\nRequired', 'Voltage', 'Current\n(in mA)', 'Connection\nType', 'Battery\nCapable'] },
+		{ label: 'Power Outputs',	clnm: 'power-outputs-cell',	colHeaders: ['(Hover for\nDetails)'] },
+		{ label: 'Presets',			clnm: 'presets-cell',		colHeaders: ['Presets'] },
+		{ label: 'Software',		clnm: 'software-cell',		colHeaders: ['Software\nEditor', 'Platforms'] },
+		{ label: 'MIDI Features',	clnm: 'midi-features-cell',	colHeaders: ['Receive Capabilities', 'Send Capabilities', 'MIDI In\nConnection\nType', 'MIDI Out\nConnection\nType', 'MIDI Thru\nConnection\nType'] },
+		{ label: 'Aux Jacks',		clnm: 'aux-jacks-cell',		colHeaders: ['(Hover for\n Details)'] },
+	];
+
+	useEffect(() => {
+		async function getPedalsData () {
+			const realmApp = new Realm.App({id: "pedal_shootout-kycqe"});
+			const creds = Realm.Credentials.anonymous();
+
+			try {
+				const user = await realmApp.logIn(creds);
+				const pedalsArray = await user.functions.listAllPedals();
+				setPedals(pedalsArray);
+			} catch (err) {
+
+			}
+
+			setLoading(false);
+		}
+
+		if (loading) {
+			getPedalsData();
+		}
+	}, [loading])
+
 	return (
-		<div className='table-wrapper'>
+		<div className='feature-table-wrapper'>
 			<h1>Pedals</h1>
-			<table id='feature-table' className=''>
+			{loading && (
+				<div className="text-center">
+					<Loading />
+				</div>
+			)}
+			<table id='feature-table' className={tableClasses}>
 				<thead>
-					<tr className='category-header'>
-						<th className='general-info-cell' data-label='General Info' colSpan={3}>
-							<span className="label">General Info</span>
-							General Info
-						</th>
-						<th className='signal-cell' data-label='Signal' colSpan={3}>
-							<span className="label">Signal</span>
-							Signal
-						</th>
-						<th className='audio-inputs-cell' data-label='Audio In' colSpan={3}>
-							<span className='collapse-button'>X</span>
-							<span className="label">Audio In</span>
-							Audio Inputs
-						</th>
-						<th className='audio-outputs-cell' data-label='Audio Out' colSpan={3}>
-							<span className='collapse-button'>X</span>
-							<span className="label">Audio Out</span>
-							Audio Outputs
-						</th>
-						<th className='audio-loops-cell' data-label='Audio Loops' colSpan={2}>
-							<span className='collapse-button'>X</span>
-							<span className="label">Audio Loops</span>
-							Audio Loops
-						</th>
-						<th className='power-input-cell' data-label='Power In' colSpan={5}>
-							<span className='collapse-button'>X</span>
-							<span className="label">Power In</span>
-							Power Input
-						</th>
-						<th className='power-output-cell' data-label='Power Out'>
-							<span className='collapse-button'>X</span>
-							<span className="label">Power Out</span>
-							Power Outputs
-						</th>
-						<th className='presets-cell' data-label='Presets'>
-							<span className='collapse-button'>X</span>
-							<span className="label">Presets</span>
-							Presets
-						</th>
-						<th className='software-cell' data-label='Software' colSpan={2}>
-							<span className='collapse-button'>X</span>
-							<span className="label">Software</span>
-							Software
-						</th>
-						<th className='midi-features-cell' data-label='MIDI' colSpan={5}>
-							<span className='collapse-button'>X</span>
-							<span className="label">MIDI</span>
-							MIDI Features
-						</th>
-						<th className='aux-jacks-cell' data-label='Aux Jacks'>
-							<span className='collapse-button'>X</span>
-							<span className="label">Aux Jacks</span>
-							Auxiliary Jacks
-						</th>
+					<tr className='category-header-row'>
+						{
+							categories.map((category) => {
+								return <FeatureTableCategoryHeader
+									key={category.label}
+									label={category.label}
+									clnm={category.clnm}
+									numColumns={category.colHeaders.length}
+									tableClasses={tableClasses}
+									setTableClasses={setTableClasses}
+								/>
+							})
+						}
 					</tr>
 					<tr className='col-headers'>
-						{/* General Info */}						
-						<th className='general-info-cell left-align-cell'>Manufacturer</th>
-						<th className='general-info-cell left-align-cell'>Name</th>
-						<th className='general-info-cell left-align-cell'>Effect Type(s)</th>
-						{/* Signal */}						
-						<th className='signal-cell'>Analog<br />Signal</th>
-						<th className='signal-cell'>True<br />Bypass</th>
-						<th className='signal-cell'>Audio<br />Mix</th>
-						{/* Inputs */}						
-						<th className='audio-inputs-cell'># of <br />Inputs</th>
-						<th className='audio-inputs-cell'>Connection<br />Type</th>
-						<th className='audio-inputs-cell'>Impedance<br />(in &Omega;)</th>
-						{/* Outputs */}
-						<th className='audio-outputs-cell'># of <br />Outputs</th>
-						<th className='audio-outputs-cell'>Connection<br />Type</th>
-						<th className='audio-outputs-cell'>Impedance<br />(in &Omega;)</th>
-						{/* Audio Loops */}
-						<th className='audio-loops-cell'>(Hover for<br />Details)</th>
-						<th className='audio-loops-cell'>Reorderable<br />Loops</th>
-						{/* Power Input */}
-						<th className='power-input-cell'>Power<br />Required</th>
-						<th className='power-input-cell'>Voltage</th>
-						<th className='power-input-cell'>Current<br />(in mA)</th>
-						<th className='power-input-cell'>Connection<br />Type</th>
-						<th className='power-input-cell'>Battery<br />Capable</th>
-						{/* Power Outputs */}
-						<th className='power-output-cell'>(Hover for<br />Details)</th>
-						{/* Presets */}
-						<th className='presets-cell'># of<br />Presets</th>
-						{/* Software */}
-						<th className='software-cell'>Software<br />Editor</th>
-						<th className='software-cell'>Platforms</th>
-						{/* MIDI Features */}
-						<th className='midi-features-cell'>Receive Capabilities</th>
-						<th className='midi-features-cell'>Send Capabilities</th>
-						<th className='midi-features-cell'>MIDI In<br />Connection<br />Type</th>
-						<th className='midi-features-cell'>MIDI Out<br />Connection<br />Type</th>
-						<th className='midi-features-cell'>MIDI Thru<br />Connection<br />Type</th>
-						{/* Aux Jacks */}
-						<th className='aux-jacks-cell'>(Hover for<br /> Details)</th>
+						{
+							categories.map((category) => {
+								return category.colHeaders.map((colHeader) => {
+									return <FeatureTableColumnHeader key={colHeader} clnm={category.clnm}>{colHeader}</FeatureTableColumnHeader>
+								})
+							})
+						}
 					</tr>	
 				</thead>
 				<tbody>
-					{children}
+					{pedals.map((pedal) => {
+						return <FeatureRow
+							key={pedal['pedalId']}
+							pedalManufacturer={pedal['pedalManufacturer']}
+							pedalName={pedal['pedalName']}
+							effectTypes={pedal['effectTypes']}
+							audioSignalType={pedal['audioSignalType']}
+							trueBypass={pedal['isTrueBypassAudioSignal']}
+							audioMix={pedal['audioMix']}
+							hasReorderableLoops={pedal['hasReorderableLoops']}
+							numberOfPresets={pedal['numberOfPresets']}
+							software={pedal['software']}
+							audioConnections={pedal['audioConnections']}
+							powerConnections={pedal['powerConnections']}
+							midiFeatures={pedal['midiFeatures']}
+							auxiliaryJacks={pedal['auxiliaryJacks']}
+						/>
+					})}
 				</tbody>
 			</table>
 		</div>
