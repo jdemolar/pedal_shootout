@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:adaamps.com)",
+      "WebFetch(domain:www.musiciansfriend.com)",
+      "WebFetch(domain:www.effectsdatabase.com)",
+      "WebSearch",
+      "WebFetch(domain:www.buyanalogman.com)",
+      "WebFetch(domain:www.fullcompass.com)",
+      "WebFetch(domain:www.amazon.com)",
+      "WebFetch(domain:modulargrid.net)",
+      "WebFetch(domain:reverb.com)",
+      "WebFetch(domain:phantom48.com)",
+      "WebFetch(domain:www.axeandyoushallreceive.com)"
+    ]
+  }
+}
