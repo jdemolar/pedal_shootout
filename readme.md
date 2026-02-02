@@ -5,6 +5,8 @@ A product comparison tool for comparing the specs and features of effects pedals
 
 Figure it out.
 
+To run the dev server, run 'npm start' in the terminal from the /pedal_shootout directory
+
 ## Features
 
 This web app includes:
