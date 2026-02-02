@@ -22,6 +22,16 @@ module.exports = {
 				exclude: /node_modules/,
 			},
 			{
+				test: /\.jsx$/,
+				use: {
+					loader: 'babel-loader',
+					options: {
+						presets: [['@babel/preset-react', { runtime: 'automatic' }]],
+					},
+				},
+				exclude: /node_modules/,
+			},
+			{
 				test: /\.(scss|sass|css)$/,
 				use: ['style-loader', 'css-loader', 'sass-loader'],
 			},
@@ -36,7 +46,7 @@ module.exports = {
 		],
 	},
 	resolve: {
-		extensions: ['.tsx', '.ts', '.js', '.json'],
+		extensions: ['.tsx', '.ts', '.js', '.jsx', '.json'],
 	},
 	output: {
 		filename: 'bundle.js',
