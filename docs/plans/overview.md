@@ -7,8 +7,9 @@ The long-term goal of this project is not only to have a product comparison tool
 ## Vision
 
 The data collected and stored by this application will be a powerful tool to inform an AI agent so that it can help to plan a pedalboard build. This could be coupled with a tool like pedalplayground.com to also help visualize it. This would ideally enable a more detailed, granular pedalboard plan that takes multiple factors into account:
-- Pedalboard layout, including space needed for plugs and cables
-- Signal path, including sequence, send/return loops, series/parallel, etc.
-- Power requirements
-- Control needs (MIDI, CV, USB)
-- Cabling, plug types
+
+* Pedalboard layout, including space needed for plugs and cables
+* Signal path, including sequence, send/return loops, series/parallel, etc.
+* Power requirements
+* Control needs (MIDI, CV, USB)
+* Cabling, plug types
