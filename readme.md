@@ -3,8 +3,6 @@ A product comparison tool for comparing the specs and features of effects pedals
 
 ## ⚡️ Quick Start
 
-Figure it out.
-
 To run the dev server, run 'npm start' in the terminal from the /pedal_shootout directory
 
 ## Features
@@ -13,6 +11,3 @@ This web app includes:
 
 - A form for submitting the specs of a particular pedal
 - A filterable view for comparing all of the specs of selected pedals side-by-side
-
-
-

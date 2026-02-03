@@ -11,7 +11,11 @@
       "WebFetch(domain:modulargrid.net)",
       "WebFetch(domain:reverb.com)",
       "WebFetch(domain:phantom48.com)",
-      "WebFetch(domain:www.axeandyoushallreceive.com)"
+      "WebFetch(domain:www.axeandyoushallreceive.com)",
+      "WebFetch(domain:adventurepedals.com)",
+      "WebFetch(domain:www.perfectcircuit.com)",
+      "Bash(sqlite3:*)",
+      "Bash(python3:*)"
     ]
   }
 }
