@@ -1,14 +1,5 @@
 # TODO
 
-## Add new tables for:
-
-* **pedalboards** - dimensions (including height/clearance), material, mounting type, inputs/outputs, weight capacity
-* **power_supplies** - outputs (count, voltage, current per output), total current, isolated vs non-isolated, switch mode vs torroidal
-* **midi_controllers** - channels, presets, footswitches, expression inputs
-* **cables** - type (patch, power, MIDI), length, plug types
-
-Consider a compatibility junction table linking products that work well together.
-
 ## Add tools:
 
 Build the "smart" features:
