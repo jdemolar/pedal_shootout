@@ -26,5 +26,12 @@ dist/
 .yarn/install-state.gz
 .pnp.*
 
+# Local database (generated from schema)
+data/local/
+
+# Environment files (keep .env.example if created)
+.env
+apps/*/.env
+
 # Miscellaneous
 .DS_Store
