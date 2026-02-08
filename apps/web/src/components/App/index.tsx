@@ -4,16 +4,17 @@ import FeatureTable from '../FeatureTable';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import PedalSpecForm from '../PedalSpecForm';
 import NotFound from '../NotFound';
-import PedalDatabase from '../../../raw_data/pedal_database_view';
-import ManufacturerDatabase from '../../../raw_data/manufacturer_database_view';
+// TODO: Migrate PedalDatabase component from raw_data to apps/web/src/components
+// import PedalDatabase from '../../../raw_data/pedal_database_view';
+import Manufacturers from '../Manufacturers';
 
 const App = () => {
 
 	const navElements = [
 		{label: 'Features Table',		link: 'feature-table',	component: <FeatureTable />},
 		{label: 'Submit Pedal Data',	link: 'pedal-form',		component: <PedalSpecForm />},
-		{label: 'Pedal Database',		link: 'pedal-database',	component: <PedalDatabase />},
-		{label: 'Manufacturers',		link: 'manufacturers',	component: <ManufacturerDatabase />},
+		// {label: 'Pedal Database',	link: 'pedal-database',	component: <PedalDatabase />},  // TODO: Migrate from raw_data
+		{label: 'Manufacturers',		link: 'manufacturers',	component: <Manufacturers />},
 	];
 
 	return (

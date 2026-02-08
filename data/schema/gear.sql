@@ -1,84 +1,14 @@
-# Guitar Gear Database Schema Redesign
+-- Guitar Gear Database Schema
+-- Generated from docs/plans/data_design.md
+--
+-- IMPORTANT: Enable foreign keys on every connection:
+--   PRAGMA foreign_keys = ON;
 
-## Overview
+-- =============================================================================
+-- CORE TABLES
+-- =============================================================================
 
-Redesign the SQLite database to support multiple product types (pedals, power supplies, pedalboards, MIDI controllers, utilities, plugs) using **Class Table Inheritance** with a **unified jacks table**.
-
-## Purpose & Goals
-
-This database serves guitarists and pedalboard builders by enabling:
-
-- **Spec comparison** — Compare pedals by effect type, bypass type, power requirements, dimensions, and features
-- **Pedalboard layout planning** — Calculate if pedals fit on a board, considering plug dimensions and spacing
-- **Power budget calculations** — Sum pedal current draw against power supply capacity
-- **Compatibility tracking** — Know which power supplies fit under which boards, which accessories work together
-- **MIDI system planning** — Match controllers to pedals, track MIDI capabilities
-
-The data model prioritizes **queryability** (find all stereo delay pedals with MIDI under $300) and **completeness** (capture specs that matter for real-world pedalboard building).
-
-## Conventions
-
-Throughout this schema:
-
-- **Booleans** — Stored as `INTEGER` with values `0` (false) or `1` (true)
-- **Multi-value fields** — Comma-separated strings (e.g., `'macOS, Windows, iOS'`)
-- **NULL handling** — `NULL` means unknown or not applicable; empty string means intentionally blank
-- **Dimensions** — Always in millimeters (`_mm` suffix)
-- **Weight** — Always in grams (`weight_grams`)
-- **Currency** — Always in cents (`msrp_cents`); divide by 100 for dollars
-- **Timestamps** — SQLite `DATETIME` format, auto-populated via `DEFAULT CURRENT_TIMESTAMP`
-
-## Design Pattern
-
-**Class Table Inheritance**: A shared `products` base table contains common attributes, with type-specific detail tables extending it. Each product has exactly one row in `products` and exactly one row in its corresponding detail table (1:1 relationship).
-
-```
-┌─────────────────┐
-│   products      │  ← Common: manufacturer, model, dimensions, MSRP, etc.
-└────────┬────────┘
-         │
-    ┌────┴────┬──────────┬──────────┬──────────┬──────────┐
-    ▼         ▼          ▼          ▼          ▼          ▼
-┌────────┐┌────────┐┌────────┐┌────────┐┌────────┐┌────────┐
-│pedal_  ││power_  ││pedal-  ││midi_   ││utility_││plug_   │
-│details ││supply_ ││board_  ││control-││details ││details │
-│        ││details ││details ││ler_det.││        ││        │
-└────────┘└────────┘└────────┘└────────┘└────────┘└────────┘
-```
-
-**Unified Jacks Table**: All connectors (audio, MIDI, power, aux) reference a single `jacks` table linked to `products`.
-
-## Schema Summary
-
-### Core Tables
-
-| Table | Purpose |
-|-------|---------|
-| `manufacturers` | Existing table (unchanged) |
-| `product_types` | Enum reference: pedal, power_supply, pedalboard, midi_controller, utility, plug |
-| `products` | Base table with shared attributes |
-| `jacks` | All connectors for all product types |
-
-### Detail Tables (one per product type)
-
-| Table | Key Attributes |
-|-------|----------------|
-| `pedal_details` | effect_type, bypass_type, signal_type, preset_count, midi_capable, fx_loop_count |
-| `power_supply_details` | supply_type, topology, total_output_count, isolated_output_count, available_voltages |
-| `pedalboard_details` | usable dimensions, surface_type, rail_spacing, under_clearance, case_type |
-| `midi_controller_details` | footswitch_count, bank_count, preset_slots, display_type, expression_input_count |
-| `utility_details` | utility_type (DI, buffer, splitter, tuner, etc.), is_active, specific fields per subtype |
-| `plug_details` | plug_type (patch, instrument, power, MIDI), connector_type, is_right_angle, profile dimensions |
-
-**Note**: Cables excluded for now. Plugs are included because their physical profile affects pedal spacing on a board—users need to plan around plug dimensions.
-
----
-
-## Full Schema
-
-### manufacturers (existing, add updated_at if missing)
-
-```sql
+-- Manufacturers table (source of truth for all manufacturer values)
 CREATE TABLE manufacturers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,            -- Official company/brand name
@@ -90,11 +20,8 @@ CREATE TABLE manufacturers (
     notes TEXT,                           -- Internal notes (history, ownership changes, etc.)
     updated_at DATETIME                   -- Last modified timestamp
 );
-```
 
-### product_types (enum reference)
-
-```sql
+-- Product types (enum reference table)
 CREATE TABLE product_types (
     id INTEGER PRIMARY KEY,               -- Fixed IDs (not auto-increment) for stable references
     type_name TEXT NOT NULL UNIQUE,       -- Machine-readable identifier (e.g., 'pedal', 'power_supply')
@@ -108,11 +35,8 @@ INSERT INTO product_types (id, type_name, description) VALUES
     (4, 'midi_controller', 'MIDI foot controllers'),
     (5, 'utility', 'DI boxes, buffers, splitters, tuners, etc.'),
     (6, 'plug', 'Cable plugs/connectors for layout planning');
-```
 
-### products (base table)
-
-```sql
+-- Products base table (shared attributes for all product types)
 CREATE TABLE products (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     manufacturer_id INTEGER NOT NULL,     -- FK to manufacturers table
@@ -131,6 +55,7 @@ CREATE TABLE products (
     msrp_cents INTEGER DEFAULT NULL,      -- Divide by 100 for dollars; NULL if unknown
     product_page TEXT DEFAULT NULL,       -- Manufacturer's product page URL
     instruction_manual TEXT DEFAULT NULL, -- URL to instruction manual (usually PDF)
+    image_path TEXT DEFAULT NULL,        -- Product image: relative file path or external URL
 
     -- Metadata
     description TEXT,                     -- User-facing summary of the product
@@ -147,17 +72,12 @@ CREATE TABLE products (
 
 CREATE INDEX idx_products_manufacturer ON products(manufacturer_id);
 CREATE INDEX idx_products_type ON products(product_type_id);
-```
 
-### jacks (unified connectors)
+-- =============================================================================
+-- JACKS TABLE (unified connectors for all product types)
+-- =============================================================================
 
-All physical connectors (audio, MIDI, power, expression, USB) for all product types are stored in this single table. This unified approach:
-- Avoids duplicating I/O columns across every detail table
-- Enables queries like "find all products with XLR outputs" across product types
-- Allows flexible per-jack attributes (buffered, isolated, normalled) without schema changes
-- Links related jacks via `group_id` (stereo pairs, FX loop send/return)
-
-```sql
+-- All physical connectors (audio, MIDI, power, expression, USB) for all products
 CREATE TABLE jacks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     product_id INTEGER NOT NULL,          -- FK to products table
@@ -191,11 +111,12 @@ CREATE TABLE jacks (
 
 CREATE INDEX idx_jacks_product ON jacks(product_id);
 CREATE INDEX idx_jacks_category ON jacks(category);
-```
 
-### pedal_details
+-- =============================================================================
+-- DETAIL TABLES (one per product type, 1:1 relationship with products)
+-- =============================================================================
 
-```sql
+-- Pedal-specific attributes
 CREATE TABLE pedal_details (
     product_id INTEGER PRIMARY KEY,
 
@@ -251,11 +172,8 @@ CREATE TABLE pedal_details (
 
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
-```
 
-### power_supply_details
-
-```sql
+-- Power supply-specific attributes
 CREATE TABLE power_supply_details (
     product_id INTEGER PRIMARY KEY,       -- FK to products table (1:1 relationship)
 
@@ -291,11 +209,8 @@ CREATE TABLE power_supply_details (
 
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
-```
 
-### pedalboard_details
-
-```sql
+-- Pedalboard-specific attributes
 CREATE TABLE pedalboard_details (
     product_id INTEGER PRIMARY KEY,       -- FK to products table (1:1 relationship)
 
@@ -338,11 +253,8 @@ CREATE TABLE pedalboard_details (
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
     FOREIGN KEY (integrated_power_product_id) REFERENCES products(id)
 );
-```
 
-### midi_controller_details
-
-```sql
+-- MIDI controller-specific attributes
 CREATE TABLE midi_controller_details (
     product_id INTEGER PRIMARY KEY,       -- FK to products table (1:1 relationship)
 
@@ -398,11 +310,8 @@ CREATE TABLE midi_controller_details (
 
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
-```
 
-### utility_details
-
-```sql
+-- Utility device-specific attributes
 CREATE TABLE utility_details (
     product_id INTEGER PRIMARY KEY,       -- FK to products table (1:1 relationship)
 
@@ -445,11 +354,8 @@ CREATE TABLE utility_details (
 
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
-```
 
-### plug_details
-
-```sql
+-- Plug/connector-specific attributes (for layout planning)
 CREATE TABLE plug_details (
     product_id INTEGER PRIMARY KEY,       -- FK to products table (1:1 relationship)
     plug_type TEXT NOT NULL,              -- 'patch', 'instrument', 'power', 'midi', 'usb'
@@ -468,11 +374,12 @@ CREATE TABLE plug_details (
 
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
-```
 
-### product_compatibility
+-- =============================================================================
+-- COMPATIBILITY TABLE
+-- =============================================================================
 
-```sql
+-- Tracks known compatibility relationships between products
 CREATE TABLE product_compatibility (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     product_a_id INTEGER NOT NULL,        -- First product in the pair
@@ -498,13 +405,11 @@ CREATE TABLE product_compatibility (
 
 CREATE INDEX idx_compat_a ON product_compatibility(product_a_id);
 CREATE INDEX idx_compat_b ON product_compatibility(product_b_id);
-```
 
----
+-- =============================================================================
+-- TRIGGERS
+-- =============================================================================
 
-## Triggers
-
-```sql
 -- Update product timestamp on modification
 CREATE TRIGGER update_product_timestamp
 AFTER UPDATE ON products
@@ -524,15 +429,12 @@ AFTER UPDATE ON products
 BEGIN
     UPDATE manufacturers SET updated_at = datetime('now') WHERE id = NEW.manufacturer_id;
 END;
-```
 
----
+-- =============================================================================
+-- LEGACY COMPATIBILITY VIEW
+-- =============================================================================
 
-## Legacy Compatibility View
-
-To maintain backward compatibility with existing code that queries the `pedals` table:
-
-```sql
+-- Maintains backward compatibility with code expecting the old pedals table structure
 CREATE VIEW pedals_legacy AS
 SELECT
     p.id,
@@ -570,132 +472,3 @@ FROM products p
 JOIN manufacturers m ON p.manufacturer_id = m.id
 JOIN pedal_details pd ON p.id = pd.product_id
 WHERE p.product_type_id = 1;  -- pedal type
-```
-
----
-
-## Key Design Decisions
-
-### 1. Plugs instead of cables
-Cables are excluded (length depends on pedal arrangement). Plugs are included because their physical profile affects pedal spacing. A "pancake" plug vs. a straight plug changes how close pedals can be placed.
-
-### 2. Dimensions in mm
-International standard, precise. Products table stores `width_mm`, `depth_mm`, `height_mm`, `weight_grams`.
-
-### 3. FX Loops via group_id
-Send and return jacks share a `group_id` value (e.g., "loop_1") to link them as a pair.
-
-### 4. Hybrid products
-For products like pedalboards with integrated power: use `integrated_power_product_id` FK or create two linked products via `product_compatibility`.
-
-### 5. MSRP in cents
-Stored as INTEGER to avoid floating-point rounding errors. `$99.00` = `9900`. NULL means unknown.
-
-### 6. Foreign key enforcement
-SQLite requires explicit enabling:
-```sql
-PRAGMA foreign_keys = ON;
-```
-This must be run on every new connection.
-
----
-
-## Glossary
-
-**Analog dry through** — A feature of some digital pedals where the dry (unprocessed) signal stays in the analog domain and never passes through the DSP. Only the wet signal is digitally processed. Preserves analog tone quality in the dry path.
-
-**Class Table Inheritance** — A database design pattern where a base table contains shared attributes (like `products`), and specialized subtables contain type-specific attributes (like `pedal_details`). Each entity has one row in the base table and one row in its detail table.
-
-**Normalling** — Internal wiring in patch bays/junction boxes that creates a default signal path when nothing is plugged in:
-- **Normalled** — Plugging into either jack breaks the internal connection
-- **Half-Normalled** — Plugging into the output doesn't break the connection (allows signal splitting); plugging into the input breaks it
-- **Non-Normalled** — No internal connection; jacks are independent
-- **Parallel** — Jacks are always connected (mult); plugging in never breaks the connection
-
-**Spillover / Trails** — When a time-based effect (delay, reverb) continues its tails after being bypassed or switched out, rather than cutting off abruptly. For loop switchers, this means effect tails can ring out even when the loop is removed from the signal path.
-
-**Topology** (power supplies) — The circuit design used to convert/regulate power:
-- **Switch Mode** — Uses high-frequency switching for efficient, lightweight conversion
-- **Toroidal** — Uses a toroidal transformer; often quieter, heavier
-- **Linear** — Traditional transformer-based; simple, reliable, heavier
-
----
-
-## Migration Path
-
-1. **Create new tables** alongside existing `pedals` table
-2. **Migrate pedal data** to `products` + `pedal_details`
-3. **Parse existing I/O fields** into `jacks` rows:
-   - `inputs` text → Audio Input jacks
-   - `outputs` text → Audio Output jacks
-   - Power columns → Power Input jack
-4. **Create `pedals_legacy` view** for backward compatibility
-5. **Validate** migrated data matches original
-6. **Rename old table** to `pedals_old` (keep for rollback)
-7. **Update application code** to use new schema
-8. **Drop old table** once stable
-
----
-
-## Example Queries
-
-### Find all pedals by a manufacturer
-```sql
-SELECT p.model, pd.effect_type, p.msrp_cents / 100.0 AS msrp_dollars
-FROM products p
-JOIN pedal_details pd ON p.id = pd.product_id
-WHERE p.manufacturer_id = 1
-ORDER BY p.model;
-```
-
-### Find power supplies that fit under a specific pedalboard
-```sql
-SELECT ps_prod.model, psd.total_output_count, ps_prod.height_mm
-FROM products ps_prod
-JOIN power_supply_details psd ON ps_prod.id = psd.product_id
-WHERE ps_prod.height_mm <= (
-    SELECT under_clearance_mm
-    FROM pedalboard_details pbd
-    JOIN products pb_prod ON pbd.product_id = pb_prod.id
-    WHERE pb_prod.model = 'Classic 2'
-);
-```
-
-### List all jacks for a specific pedal
-```sql
-SELECT j.category, j.direction, j.jack_name, j.connector_type, j.position
-FROM jacks j
-JOIN products p ON j.product_id = p.id
-WHERE p.model = 'Morning Glory V4'
-ORDER BY j.category, j.jack_name;
-```
-
-### Find stereo-capable delay pedals with MIDI
-```sql
-SELECT p.model, m.name AS manufacturer
-FROM products p
-JOIN manufacturers m ON p.manufacturer_id = m.id
-JOIN pedal_details pd ON p.id = pd.product_id
-WHERE pd.effect_type = 'Delay'
-  AND pd.mono_stereo IN ('Stereo In/Out', 'Mono In/Stereo Out')
-  AND pd.midi_capable = 1;
-```
-
-### Find all products compatible with a specific pedalboard
-```sql
-SELECT p2.model, pt.type_name, pc.compatibility_type, pc.notes
-FROM product_compatibility pc
-JOIN products p1 ON pc.product_a_id = p1.id
-JOIN products p2 ON pc.product_b_id = p2.id
-JOIN product_types pt ON p2.product_type_id = pt.id
-WHERE p1.model = 'Novo 24'
-ORDER BY pt.type_name;
-```
-
----
-
-## Files to Modify During Implementation
-
-- `raw_data/pedals.db` — Add new tables, migrate data
-- `CLAUDE.md` — Update documentation with new schema reference
-- Application code — Update to use new table structure (future task)
