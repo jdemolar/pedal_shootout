@@ -29,6 +29,9 @@ dist/
 # Local database (generated from schema)
 data/local/
 
+# Migration CSV exports
+data/migrations/csv_export/
+
 # Environment files (keep .env.example if created)
 .env
 apps/*/.env

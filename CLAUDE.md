@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Pedal Shootout is a guitar gear database and comparison tool. It consists of:
 - A React/TypeScript web application for comparing pedal specs
-- A SQLite database for storing comprehensive gear data (pedals, power supplies, pedalboards, MIDI controllers, utilities)
+- A PostgreSQL database for storing comprehensive gear data (pedals, power supplies, pedalboards, MIDI controllers, utilities)
 
 ## Project Structure
 
@@ -20,11 +20,11 @@ pedal_shootout/
 │
 ├── data/
 │   ├── schema/                 # SQL schema definitions (source of truth)
-│   │   └── gear.sql            # Full database schema
+│   │   └── gear_postgres.sql   # PostgreSQL database schema
 │   ├── migrations/             # Versioned migration scripts
 │   ├── seeds/                  # Reference/sample data
-│   └── local/                  # Local dev database (gitignored)
-│       └── gear.db
+│   └── local/                  # Local dev artifacts (gitignored)
+│       └── gear.db             # Legacy SQLite database (archived)
 │
 ├── docs/
 │   └── plans/                  # Design documents and plans
@@ -61,11 +61,12 @@ npm run test:coverage    # Tests with coverage report
 - Webpack 5 for bundling
 - SASS/SCSS for styling
 - Jest + React Testing Library for tests
-- MongoDB Realm Web for backend data (current, will migrate to SQLite API)
+- MongoDB Realm Web for backend data (current, will migrate to Spring Boot API)
 
 **Database:**
-- SQLite with Class Table Inheritance pattern
-- Schema defined in `data/schema/gear.sql`
+- PostgreSQL 17 with Class Table Inheritance pattern
+- Schema defined in `data/schema/gear_postgres.sql`
+- Local connection: `postgresql://pedal_shootout_app:localdev@localhost:5432/pedal_shootout`
 
 ## Web App Architecture
 
@@ -107,27 +108,16 @@ The gear database uses **Class Table Inheritance**: a shared `products` table co
 - `utility_details` — DI boxes, tuners, volume pedals, etc.
 - `plug_details` — Connector dimensions for layout planning
 
-**Full schema:** See `data/schema/gear.sql`
+**Full schema:** See `data/schema/gear_postgres.sql`
 **Design rationale:** See `docs/plans/data_design.md`
-
-## Foreign Key Enforcement
-
-SQLite does not enforce foreign keys by default. **Always run this first:**
-
-```sql
-PRAGMA foreign_keys = ON;
-```
-
-Without this, invalid foreign key values will be silently accepted.
 
 ## Working with the Database
 
-```bash
-# Open the database
-sqlite3 data/local/gear.db
+PostgreSQL enforces foreign keys by default — no PRAGMA needed.
 
-# IMPORTANT: Always enable foreign keys first
-PRAGMA foreign_keys = ON;
+```bash
+# Connect to the database
+psql -U pedal_shootout_app -d pedal_shootout
 
 # View all manufacturers
 SELECT * FROM manufacturers;
@@ -149,8 +139,12 @@ WHERE pd.effect_type = 'Delay';
 ## Creating the Database from Schema
 
 ```bash
-# Create a fresh database from schema
-sqlite3 data/local/gear.db < data/schema/gear.sql
+# Create user and database (one-time setup)
+psql postgres -c "CREATE USER pedal_shootout_app WITH PASSWORD 'localdev';"
+psql postgres -c "CREATE DATABASE pedal_shootout OWNER pedal_shootout_app;"
+
+# Apply schema
+PGPASSWORD=localdev psql -U pedal_shootout_app -d pedal_shootout -f data/schema/gear_postgres.sql
 ```
 
 ### Adding a Product with an Unrecognized Manufacturer

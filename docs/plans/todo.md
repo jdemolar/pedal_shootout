@@ -28,7 +28,7 @@
 #### Option 3: Hybrid (recommended)
 
 - /products         → Unified search/browse across all types (common columns)
-- /pedals           → Deep dive with all pedal-specific columns
+- /pedals           → Deep dive with all pedal-specific columns (DONE)
 - /power-supplies   → Deep dive with power supply columns
 - ...etc
 
@@ -46,6 +46,8 @@ The hybrid approach aligns with your stated goals in `data_design.md`:
 - MIDI system planning → midi-planner
 
   For data entry/maintenance, the type-specific views make sense. For users planning a rig, the use-case views are more valuable.
+
+## Migrate to PostreSQL
 
 ## Move database into cloud infrastructure
 
