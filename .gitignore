@@ -36,5 +36,8 @@ data/migrations/csv_export/
 .env
 apps/*/.env
 
+# Claude Code local settings
+.claude/
+
 # Miscellaneous
 .DS_Store
