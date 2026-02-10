@@ -28,7 +28,7 @@
 #### Option 3: Hybrid (recommended)
 
 - /products         → Unified search/browse across all types (common columns)
-- /pedals           → Deep dive with all pedal-specific columns
+- /pedals           → Deep dive with all pedal-specific columns (DONE)
 - /power-supplies   → Deep dive with power supply columns
 - ...etc
 
@@ -47,9 +47,11 @@ The hybrid approach aligns with your stated goals in `data_design.md`:
 
   For data entry/maintenance, the type-specific views make sense. For users planning a rig, the use-case views are more valuable.
 
-## Move database into cloud infrastructure
+## Migrate to PostreSQL (DONE)
 
 ## Create API
+
+## Move app into cloud infrastructure
 
 ## Create pedalboard layout planning (similar to pedalplayground.com)
 

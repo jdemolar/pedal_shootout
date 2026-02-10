@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Spring Boot parent POM — provides dependency versions, plugin config, and defaults.
+         Think of it like "extends" in Java: your project inherits a ton of pre-configured stuff
+         so you don't have to specify versions for every dependency. -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.4.3</version>
+        <relativePath/>
+    </parent>
+
+    <!-- Your project coordinates — like the "name" and "version" fields in package.json -->
+    <groupId>com.pedalshootout</groupId>
+    <artifactId>api</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>Pedal Shootout API</name>
+    <description>REST API for the Pedal Shootout guitar gear database</description>
+
+    <properties>
+        <java.version>17</java.version>
+    </properties>
+
+    <!-- Dependencies are like npm packages. Spring Boot "starters" bundle related libraries
+         together so you don't have to add 10 individual jars. -->
+    <dependencies>
+        <!-- spring-boot-starter-web: Gives you an embedded Tomcat server, Spring MVC for
+             REST endpoints, JSON serialization via Jackson. This is the "express.js" equivalent. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- spring-boot-starter-data-jpa: Gives you Hibernate (ORM) and Spring Data JPA
+             (repository pattern). Maps Java classes to database tables automatically.
+             Think of it like Sequelize or Prisma for Java. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- PostgreSQL JDBC driver — the low-level connector that lets Java talk to PostgreSQL.
+             Like the "pg" npm package. -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Flyway — database migration tool (like knex migrations or Prisma migrate).
+             Tracks which SQL migrations have been applied. We use "baseline-on-migrate"
+             since our database already exists. -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Spring Boot Maven plugin — packages your app as an executable JAR
+                 and provides the `./mvnw spring-boot:run` command. -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

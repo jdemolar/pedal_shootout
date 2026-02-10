@@ -15,7 +15,8 @@
       "WebFetch(domain:adventurepedals.com)",
       "WebFetch(domain:www.perfectcircuit.com)",
       "Bash(sqlite3:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(brew list:*)"
     ]
   }
 }
