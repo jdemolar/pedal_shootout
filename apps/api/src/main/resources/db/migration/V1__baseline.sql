@@ -1,0 +1,5 @@
+-- Intentionally empty.
+-- Our database already has all tables created by gear_postgres.sql.
+-- Flyway's "baseline-on-migrate" marks the existing state as version 0,
+-- so this V1 migration is a no-op placeholder. Future migrations (V2, V3, etc.)
+-- will contain actual schema changes.

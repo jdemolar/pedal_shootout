@@ -1,0 +1,28 @@
+server:
+  port: 8081  # React dev server uses 8080, so we use 8081
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/pedal_shootout
+    username: pedal_shootout_app
+    password: localdev
+
+  jpa:
+    hibernate:
+      # "validate" means Hibernate checks that your entity classes match the existing
+      # database tables on startup — but never creates or modifies tables.
+      # This is the safest option for an existing database.
+      ddl-auto: validate
+    # Log the SQL queries Hibernate generates (helpful during development)
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        # Tell Hibernate we're using PostgreSQL so it generates correct SQL dialect
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  flyway:
+    # Our database already has tables — "baseline-on-migrate" tells Flyway to mark
+    # the existing state as version 0 rather than trying to create tables from scratch.
+    baseline-on-migrate: true
+    baseline-version: 0

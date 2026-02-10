@@ -1,0 +1,16 @@
+# Maven build output
+target/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# OS files
+.DS_Store
+
+# Maven wrapper (downloaded automatically)
+.mvn/wrapper/maven-wrapper.jar
