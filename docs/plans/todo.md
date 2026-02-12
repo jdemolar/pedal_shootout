@@ -49,7 +49,11 @@ The hybrid approach aligns with your stated goals in `data_design.md`:
 
 ## Migrate to PostreSQL (DONE)
 
-## Create API
+## Create API (DONE)
+
+## Create views for each table and some use-case views per the above plan
+
+## Create a way for users to put multiple products into a "cart" for the purpose of product comparison and compatibility analysis, generating a shopping list, and moving to pedal arrangement
 
 ## Move app into cloud infrastructure
 
