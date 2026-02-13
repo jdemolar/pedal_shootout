@@ -9,6 +9,7 @@ import NotFound from '../NotFound';
 import Manufacturers from '../Manufacturers';
 import Pedals from '../Pedals';
 import MidiControllers from '../MidiControllers';
+import Pedalboards from '../Pedalboards';
 
 const App = () => {
 
@@ -19,6 +20,7 @@ const App = () => {
 		{label: 'Manufacturers',		link: 'manufacturers',		component: <Manufacturers />},
 		{label: 'Pedals',				link: 'pedals',				component: <Pedals />},
 		{label: 'MIDI Controllers',		link: 'midi-controllers',	component: <MidiControllers />},
+		{label: 'Pedalboards',			link: 'pedalboards',		component: <Pedalboards />},
 	];
 
 	return (
