@@ -68,6 +68,19 @@ npm run test:coverage    # Tests with coverage report
 - Schema defined in `data/schema/gear_postgres.sql`
 - Local connection: `postgresql://pedal_shootout_app:localdev@localhost:5432/pedal_shootout`
 
+## Local Environment
+
+**Operating System**
+- macOS 13.7.8
+- Only install versions of node and other tools compatible with macOS 13.7.8
+- Do NOT run `brew upgrade node` or install Node via Homebrew — Homebrew's current Node requires XCode CLI Tools newer than what macOS 13 supports
+
+**Node / npm**
+- Managed via nvm (installed at `~/.nvm`); project is pinned to Node 20 via `.nvmrc`
+- nvm is NOT auto-loaded in non-interactive shells (such as the shell Claude Code uses)
+- All `node`/`npm` commands must be prefixed with: `export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" &&`
+- Example: `export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" && npm run web --prefix /path/to/project`
+
 ## Web App Architecture
 
 **Component Organization:** Each component lives in its own folder under `apps/web/src/components/` with an `index.tsx` file.
