@@ -46,7 +46,7 @@ public class ManufacturerService {
             manufacturers = manufacturerRepository.findAll();
         }
         return manufacturers.stream()
-                .map(ManufacturerDto::from)
+                .map(m -> ManufacturerDto.from(m, productRepository.countByManufacturerId(m.getId())))
                 .toList();
     }
 

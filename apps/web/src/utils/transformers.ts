@@ -59,7 +59,7 @@ export function transformManufacturer(dto: ManufacturerApiResponse) {
     website: dto.website,
     notes: null as string | null,
     updated_at: null as string | null,
-    pedal_count: dto.productCount,
+    product_count: dto.productCount,
   };
 }
 
