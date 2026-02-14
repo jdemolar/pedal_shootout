@@ -10,6 +10,13 @@ A guitar gear database and comparison tool for comparing the specs and features 
 npm run web              # Start dev server (localhost:8080)
 ```
 
+### API
+
+```bash
+cd apps/api
+./mvnw spring-boot:run    # starts on port 8081
+```
+
 ### Database
 
 The database runs on PostgreSQL 17. Connect with:

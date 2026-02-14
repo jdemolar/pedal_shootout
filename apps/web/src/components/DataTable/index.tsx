@@ -28,6 +28,8 @@ export interface DataTableProps<T extends { id: number }> {
   renderExpandedRow: (item: T) => ReactNode;
   defaultSortKey?: keyof T;
   minTableWidth?: number;
+  loading?: boolean;
+  error?: string | null;
 }
 
 function DataTable<T extends { id: number }>({
@@ -43,6 +45,8 @@ function DataTable<T extends { id: number }>({
   renderExpandedRow,
   defaultSortKey,
   minTableWidth = 1100,
+  loading = false,
+  error = null,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState('');
   const [filterValues, setFilterValues] = useState<string[]>(() => filters.map(() => 'All'));
@@ -112,6 +116,32 @@ function DataTable<T extends { id: number }>({
       return next;
     });
   };
+
+  if (loading) {
+    return (
+      <div className="data-table">
+        <div className="data-table__header">
+          <div className="data-table__title-group">
+            <h1 className="data-table__title">{title}</h1>
+          </div>
+        </div>
+        <div className="data-table__loading">Loading {entityNamePlural}...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="data-table">
+        <div className="data-table__header">
+          <div className="data-table__title-group">
+            <h1 className="data-table__title">{title}</h1>
+          </div>
+        </div>
+        <div className="data-table__error">Failed to load {entityNamePlural}: {error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="data-table">

@@ -214,4 +214,18 @@
     color: #3d3d3d;
     font-size: 13px;
   }
+
+  &__loading {
+    padding: 48px;
+    text-align: center;
+    color: #555;
+    font-size: 13px;
+  }
+
+  &__error {
+    padding: 48px;
+    text-align: center;
+    color: #cc6060;
+    font-size: 13px;
+  }
 }

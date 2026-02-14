@@ -31,6 +31,7 @@ public record PedalDto(
     String imagePath,
     String description,
     String tags,
+    String dataReliability,
     // Pedal-specific details (nested object)
     PedalDetailDto pedalDetails,
     // Jacks
@@ -55,6 +56,7 @@ public record PedalDto(
             p.getImagePath(),
             p.getDescription(),
             p.getTags(),
+            p.getDataReliability(),
             PedalDetailDto.from(pd),
             jacks
         );

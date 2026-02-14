@@ -1,0 +1,213 @@
+export interface JackApiResponse {
+  id: number;
+  category: string | null;
+  direction: string | null;
+  jackName: string | null;
+  position: string | null;
+  connectorType: string | null;
+  impedanceOhms: number | null;
+  voltage: string | null;
+  currentMa: number | null;
+  polarity: string | null;
+  function: string | null;
+  powerOverConnector: boolean | null;
+  isIsolated: boolean | null;
+  isBuffered: boolean | null;
+  bufferSwitchable: boolean | null;
+  hasGroundLift: boolean | null;
+  hasPhaseInvert: boolean | null;
+  normalledToJackId: number | null;
+  normallingType: string | null;
+  groupId: string | null;
+}
+
+export interface PedalDetailApiResponse {
+  effectType: string | null;
+  circuitType: string | null;
+  circuitRoutingOptions: string | null;
+  signalType: string | null;
+  bypassType: string | null;
+  monoStereo: string | null;
+  audioMix: string | null;
+  hasAnalogDryThrough: boolean | null;
+  hasSpillover: boolean | null;
+  sampleRateKhz: number | null;
+  bitDepth: number | null;
+  latencyMs: number | null;
+  presetCount: number | null;
+  hasTapTempo: boolean | null;
+  midiCapable: boolean | null;
+  midiReceiveCapabilities: string | null;
+  midiSendCapabilities: string | null;
+  hasSoftwareEditor: boolean | null;
+  softwarePlatforms: string | null;
+  isFirmwareUpdatable: boolean | null;
+  hasUsbAudio: boolean | null;
+  batteryCapable: boolean | null;
+  fxLoopCount: number | null;
+  hasReorderableLoops: boolean | null;
+}
+
+export interface PedalApiResponse {
+  id: number;
+  model: string;
+  manufacturerName: string;
+  manufacturerId: number;
+  colorOptions: string | null;
+  inProduction: boolean;
+  widthMm: number | null;
+  depthMm: number | null;
+  heightMm: number | null;
+  weightGrams: number | null;
+  msrpDisplay: string | null;
+  msrpCents: number | null;
+  productPage: string | null;
+  instructionManual: string | null;
+  imagePath: string | null;
+  description: string | null;
+  tags: string | null;
+  dataReliability: string | null;
+  pedalDetails: PedalDetailApiResponse;
+  jacks: JackApiResponse[];
+}
+
+export interface ManufacturerApiResponse {
+  id: number;
+  name: string;
+  country: string | null;
+  founded: string | null;
+  status: string;
+  specialty: string | null;
+  website: string | null;
+  productCount: number;
+}
+
+export interface MidiControllerApiResponse {
+  id: number;
+  model: string;
+  manufacturerName: string;
+  manufacturerId: number;
+  colorOptions: string | null;
+  inProduction: boolean;
+  widthMm: number | null;
+  depthMm: number | null;
+  heightMm: number | null;
+  weightGrams: number | null;
+  msrpDisplay: string | null;
+  msrpCents: number | null;
+  productPage: string | null;
+  instructionManual: string | null;
+  imagePath: string | null;
+  dataReliability: string | null;
+  footswitchCount: number;
+  footswitchType: string | null;
+  hasLedIndicators: boolean | null;
+  ledColorOptions: string | null;
+  bankCount: number | null;
+  presetsPerBank: number | null;
+  totalPresetSlots: number | null;
+  hasDisplay: boolean;
+  displayType: string | null;
+  displaySize: string | null;
+  expressionInputCount: number;
+  midiChannels: number | null;
+  supportsMidiClock: boolean | null;
+  supportsSysex: boolean | null;
+  softwareEditorAvailable: boolean;
+  softwarePlatforms: string | null;
+  onDeviceProgramming: boolean | null;
+  isFirmwareUpdatable: boolean | null;
+  configFormat: string | null;
+  configFormatDocumented: boolean | null;
+  hasTuner: boolean;
+  hasTapTempo: boolean;
+  hasSetlistMode: boolean;
+  hasPerSwitchDisplays: boolean;
+  auxSwitchInputCount: number;
+  hasUsbHost: boolean | null;
+  hasBluetoothMidi: boolean;
+  audioLoopCount: number;
+  hasReorderableLoops: boolean | null;
+  loopBypassType: string | null;
+  hasParallelRouting: boolean | null;
+  hasGaplessSwitching: boolean | null;
+  hasSpillover: boolean | null;
+  jacks: JackApiResponse[];
+}
+
+export interface PedalboardApiResponse {
+  id: number;
+  model: string;
+  manufacturerName: string;
+  manufacturerId: number;
+  colorOptions: string | null;
+  inProduction: boolean;
+  widthMm: number | null;
+  depthMm: number | null;
+  heightMm: number | null;
+  weightGrams: number | null;
+  msrpDisplay: string | null;
+  msrpCents: number | null;
+  productPage: string | null;
+  instructionManual: string | null;
+  imagePath: string | null;
+  dataReliability: string | null;
+  usableWidthMm: number | null;
+  usableDepthMm: number | null;
+  surfaceType: string | null;
+  railSpacingMm: number | null;
+  material: string | null;
+  tiltAngleDegrees: number | null;
+  underClearanceMm: number | null;
+  hasSecondTier: boolean;
+  tier2UsableWidthMm: number | null;
+  tier2UsableDepthMm: number | null;
+  tier2UnderClearanceMm: number | null;
+  tier2HeightMm: number | null;
+  hasIntegratedPower: boolean;
+  integratedPowerProductId: number | null;
+  hasIntegratedPatchBay: boolean;
+  caseIncluded: boolean;
+  caseType: string | null;
+  maxLoadKg: number | null;
+  jacks: JackApiResponse[];
+}
+
+export interface UtilityApiResponse {
+  id: number;
+  model: string;
+  manufacturerName: string;
+  manufacturerId: number;
+  colorOptions: string | null;
+  inProduction: boolean;
+  widthMm: number | null;
+  depthMm: number | null;
+  heightMm: number | null;
+  weightGrams: number | null;
+  msrpDisplay: string | null;
+  msrpCents: number | null;
+  productPage: string | null;
+  instructionManual: string | null;
+  imagePath: string | null;
+  dataReliability: string | null;
+  utilityType: string;
+  isActive: boolean;
+  signalType: string | null;
+  bypassType: string | null;
+  hasGroundLift: boolean;
+  hasPad: boolean | null;
+  padDb: number | null;
+  tuningDisplayType: string | null;
+  tuningAccuracyCents: number | null;
+  polyphonicTuning: boolean | null;
+  sweepType: string | null;
+  hasTunerOut: boolean | null;
+  hasMinimumVolume: boolean | null;
+  hasPolaritySwitch: boolean | null;
+  powerHandlingWatts: number | null;
+  hasReactiveLoad: boolean | null;
+  hasAttenuation: boolean | null;
+  attenuationRangeDb: string | null;
+  hasCabSim: boolean | null;
+  jacks: JackApiResponse[];
+}
