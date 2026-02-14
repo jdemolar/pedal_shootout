@@ -36,8 +36,8 @@ const columns: ColumnDef<Manufacturer>[] = [
     render: m => m.specialty != null ? <span style={{ color: '#6a6a6a' }}>{m.specialty}</span> : <span className="null-value">{'\u2014'}</span> },
   { label: 'Products', width: 64, align: 'center', sortKey: 'product_count',
     render: m => m.product_count > 0
-      ? <span className="pedal-count-highlight">{m.product_count}</span>
-      : <span className="pedal-count-zero">0</span> },
+      ? <span className="product-count-highlight">{m.product_count}</span>
+      : <span className="product-count-zero">0</span> },
   { label: 'Website', width: 160, sortKey: 'website',
     render: m => m.website
       ? <a href={formatWebsiteUrl(m.website)} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="detail-link">{m.website}</a>
