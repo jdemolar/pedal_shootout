@@ -1,5 +1,6 @@
-import './index.scss';
-import { useState, useMemo } from 'react';
+import { ReactNode } from 'react';
+import DataTable, { ColumnDef, FilterConfig } from '../DataTable';
+import { formatMsrp, formatDimensions, formatPower } from '../../utils/formatters';
 
 interface Pedal {
   id: number;
@@ -109,9 +110,9 @@ const DATA: Pedal[] = [{"id":68,"manufacturer":"1981 Inventions","model":"DRV","
 {"id":1,"manufacturer":"JHS Pedals","model":"Morning Glory Clean","effect_type":"Gain","in_production":true,"width_mm":null,"depth_mm":null,"height_mm":null,"weight_grams":null,"msrp_cents":17900,"product_page":"https://jhspedals.info/products/morning-glory-clean","instruction_manual":"https://manuals.plus/jhs/pedals-morning-glory-clean-manual","image_path":null,"color_options":null,"data_reliability":"High","bypass_type":null,"signal_type":null,"circuit_type":null,"mono_stereo":"Mono","preset_count":0,"midi_capable":false,"has_tap_tempo":false,"battery_capable":false,"has_software_editor":false,"power_voltage":"9V DC","power_current_ma":null},
 {"id":2,"manufacturer":"JHS Pedals","model":"Morning Glory V4","effect_type":"Gain","in_production":true,"width_mm":55.9,"depth_mm":121.9,"height_mm":40.6,"weight_grams":null,"msrp_cents":19900,"product_page":"https://jhspedals.info/products/morning-glory-v4","instruction_manual":"https://manuals.plus/jhs/pedals-morning-glory-v4-manual","image_path":null,"color_options":null,"data_reliability":"High","bypass_type":null,"signal_type":null,"circuit_type":null,"mono_stereo":"Mono","preset_count":0,"midi_capable":false,"has_tap_tempo":false,"battery_capable":false,"has_software_editor":false,"power_voltage":"9V DC","power_current_ma":43},
 {"id":15,"manufacturer":"JHS Pedals","model":"Muffuletta","effect_type":"Fuzz","in_production":true,"width_mm":null,"depth_mm":null,"height_mm":null,"weight_grams":null,"msrp_cents":24900,"product_page":"https://jhspedals.info/products/muffuletta","instruction_manual":"https://www.jhspedals.com/web/content/1254?unique=2d2386ed1fdc615577de819199151ad1ef84c033&download=true","image_path":null,"color_options":null,"data_reliability":"High","bypass_type":null,"signal_type":null,"circuit_type":null,"mono_stereo":"Mono","preset_count":0,"midi_capable":false,"has_tap_tempo":false,"battery_capable":false,"has_software_editor":false,"power_voltage":"9V DC","power_current_ma":100},
-{"id":5,"manufacturer":"JHS Pedals","model":"Notadümblë","effect_type":"Gain","in_production":false,"width_mm":null,"depth_mm":null,"height_mm":null,"weight_grams":null,"msrp_cents":11900,"product_page":"https://jhspedals.info/products/notadumble","instruction_manual":"https://www.jhspedals.com/web/content/1254?unique=2d2386ed1fdc615577de819199151ad1ef84c033&download=true","image_path":null,"color_options":null,"data_reliability":"Medium","bypass_type":null,"signal_type":null,"circuit_type":null,"mono_stereo":"Mono","preset_count":0,"midi_capable":false,"has_tap_tempo":false,"battery_capable":false,"has_software_editor":false,"power_voltage":"9V DC","power_current_ma":null},
-{"id":4,"manufacturer":"JHS Pedals","model":"Notaklön","effect_type":"Gain","in_production":true,"width_mm":null,"depth_mm":null,"height_mm":null,"weight_grams":null,"msrp_cents":11900,"product_page":"https://jhspedals.info/products/notaklon","instruction_manual":"https://www.jhspedals.com/web/content/1254?unique=2d2386ed1fdc615577de819199151ad1ef84c033&download=true","image_path":null,"color_options":"Standard, Pink, Splatter","data_reliability":"High","bypass_type":null,"signal_type":null,"circuit_type":null,"mono_stereo":"Mono","preset_count":0,"midi_capable":false,"has_tap_tempo":false,"battery_capable":false,"has_software_editor":false,"power_voltage":"9V DC","power_current_ma":null},
-{"id":52,"manufacturer":"JHS Pedals","model":"Notaklön Blackout","effect_type":"Gain","in_production":false,"width_mm":null,"depth_mm":null,"height_mm":null,"weight_grams":null,"msrp_cents":null,"product_page":"https://jhspedals.info/products/notaklon-blackout","instruction_manual":"https://www.jhspedals.com/web/content/1254?unique=2d2386ed1fdc615577de819199151ad1ef84c033&download=true","image_path":null,"color_options":null,"data_reliability":"Medium","bypass_type":null,"signal_type":null,"circuit_type":null,"mono_stereo":"Mono","preset_count":0,"midi_capable":false,"has_tap_tempo":false,"battery_capable":false,"has_software_editor":false,"power_voltage":"9V DC","power_current_ma":null},
+{"id":5,"manufacturer":"JHS Pedals","model":"Notad\u00fcmbl\u00eb","effect_type":"Gain","in_production":false,"width_mm":null,"depth_mm":null,"height_mm":null,"weight_grams":null,"msrp_cents":11900,"product_page":"https://jhspedals.info/products/notadumble","instruction_manual":"https://www.jhspedals.com/web/content/1254?unique=2d2386ed1fdc615577de819199151ad1ef84c033&download=true","image_path":null,"color_options":null,"data_reliability":"Medium","bypass_type":null,"signal_type":null,"circuit_type":null,"mono_stereo":"Mono","preset_count":0,"midi_capable":false,"has_tap_tempo":false,"battery_capable":false,"has_software_editor":false,"power_voltage":"9V DC","power_current_ma":null},
+{"id":4,"manufacturer":"JHS Pedals","model":"Notakl\u00f6n","effect_type":"Gain","in_production":true,"width_mm":null,"depth_mm":null,"height_mm":null,"weight_grams":null,"msrp_cents":11900,"product_page":"https://jhspedals.info/products/notaklon","instruction_manual":"https://www.jhspedals.com/web/content/1254?unique=2d2386ed1fdc615577de819199151ad1ef84c033&download=true","image_path":null,"color_options":"Standard, Pink, Splatter","data_reliability":"High","bypass_type":null,"signal_type":null,"circuit_type":null,"mono_stereo":"Mono","preset_count":0,"midi_capable":false,"has_tap_tempo":false,"battery_capable":false,"has_software_editor":false,"power_voltage":"9V DC","power_current_ma":null},
+{"id":52,"manufacturer":"JHS Pedals","model":"Notakl\u00f6n Blackout","effect_type":"Gain","in_production":false,"width_mm":null,"depth_mm":null,"height_mm":null,"weight_grams":null,"msrp_cents":null,"product_page":"https://jhspedals.info/products/notaklon-blackout","instruction_manual":"https://www.jhspedals.com/web/content/1254?unique=2d2386ed1fdc615577de819199151ad1ef84c033&download=true","image_path":null,"color_options":null,"data_reliability":"Medium","bypass_type":null,"signal_type":null,"circuit_type":null,"mono_stereo":"Mono","preset_count":0,"midi_capable":false,"has_tap_tempo":false,"battery_capable":false,"has_software_editor":false,"power_voltage":"9V DC","power_current_ma":null},
 {"id":33,"manufacturer":"JHS Pedals","model":"Overdrive Preamp","effect_type":"Gain","in_production":false,"width_mm":119.4,"depth_mm":94.0,"height_mm":42.2,"weight_grams":null,"msrp_cents":17900,"product_page":"https://jhspedals.info/products/overdrive-preamp","instruction_manual":"https://www.jhspedals.com/web/content/1254?unique=2d2386ed1fdc615577de819199151ad1ef84c033&download=true","image_path":null,"color_options":null,"data_reliability":"High","bypass_type":null,"signal_type":null,"circuit_type":null,"mono_stereo":"Mono","preset_count":0,"midi_capable":false,"has_tap_tempo":false,"battery_capable":false,"has_software_editor":false,"power_voltage":"9V DC","power_current_ma":51},
 {"id":19,"manufacturer":"JHS Pedals","model":"PG-14","effect_type":"Gain","in_production":true,"width_mm":null,"depth_mm":null,"height_mm":null,"weight_grams":null,"msrp_cents":19900,"product_page":"https://jhspedals.info/products/pg-14","instruction_manual":"https://www.jhspedals.com/web/content/1254?unique=2d2386ed1fdc615577de819199151ad1ef84c033&download=true","image_path":null,"color_options":null,"data_reliability":"High","bypass_type":null,"signal_type":null,"circuit_type":null,"mono_stereo":"Mono","preset_count":0,"midi_capable":false,"has_tap_tempo":false,"battery_capable":false,"has_software_editor":false,"power_voltage":"9V DC","power_current_ma":81},
 {"id":13,"manufacturer":"JHS Pedals","model":"PackRat","effect_type":"Gain","in_production":true,"width_mm":null,"depth_mm":null,"height_mm":null,"weight_grams":null,"msrp_cents":24900,"product_page":"https://jhspedals.info/products/packrat","instruction_manual":"https://www.jhspedals.com/web/content/1254?unique=2d2386ed1fdc615577de819199151ad1ef84c033&download=true","image_path":null,"color_options":"Standard, White","data_reliability":"High","bypass_type":null,"signal_type":null,"circuit_type":null,"mono_stereo":"Mono","preset_count":0,"midi_capable":false,"has_tap_tempo":false,"battery_capable":false,"has_software_editor":false,"power_voltage":"9V DC","power_current_ma":100},
@@ -136,361 +137,155 @@ const DATA: Pedal[] = [{"id":68,"manufacturer":"1981 Inventions","model":"DRV","
 {"id":58,"manufacturer":"JHS Pedals","model":"Voice Tech","effect_type":"Utility","in_production":false,"width_mm":null,"depth_mm":null,"height_mm":null,"weight_grams":null,"msrp_cents":null,"product_page":"https://jhspedals.info/products/voice-tech","instruction_manual":"https://www.jhspedals.com/web/content/1254?unique=2d2386ed1fdc615577de819199151ad1ef84c033&download=true","image_path":null,"color_options":null,"data_reliability":"Medium","bypass_type":null,"signal_type":null,"circuit_type":null,"mono_stereo":"Mono","preset_count":0,"midi_capable":false,"has_tap_tempo":false,"battery_capable":false,"has_software_editor":false,"power_voltage":"9V DC","power_current_ma":null},
 {"id":31,"manufacturer":"JHS Pedals","model":"Whitey Tighty","effect_type":"Compression","in_production":true,"width_mm":null,"depth_mm":null,"height_mm":null,"weight_grams":null,"msrp_cents":13500,"product_page":"https://jhspedals.info/products/whitey-tighty","instruction_manual":"https://www.jhspedals.com/web/content/1254?unique=2d2386ed1fdc615577de819199151ad1ef84c033&download=true","image_path":null,"color_options":null,"data_reliability":"High","bypass_type":null,"signal_type":null,"circuit_type":null,"mono_stereo":"Mono","preset_count":0,"midi_capable":false,"has_tap_tempo":false,"battery_capable":false,"has_software_editor":false,"power_voltage":"9V DC","power_current_ma":100}];
 
-type SortColumn = 'manufacturer' | 'model' | 'effect_type' | 'in_production' | 'msrp_cents' | 'data_reliability';
-type SortDirection = 1 | -1;
-
 const EFFECT_TYPES = ['All', ...Array.from(new Set(DATA.map(d => d.effect_type).filter((t): t is string => t !== null))).sort()];
-const STATUSES = ['All', 'In Production', 'Discontinued'] as const;
-const RELIABILITIES = ['All', 'High', 'Medium', 'Low'] as const;
 
-interface ColumnDef {
-  key: SortColumn;
-  label: string;
-  width: number;
-  align?: 'left' | 'center' | 'right';
-}
-
-const COLUMNS: ColumnDef[] = [
-  { key: 'manufacturer', label: 'Manufacturer', width: 160 },
-  { key: 'model', label: 'Model', width: 200 },
-  { key: 'effect_type', label: 'Type', width: 120, align: 'center' },
-  { key: 'in_production', label: 'Status', width: 80, align: 'center' },
-  { key: 'msrp_cents', label: 'MSRP', width: 80, align: 'right' },
-  { key: 'manufacturer' as SortColumn, label: 'Dimensions', width: 160, align: 'center' },
-  { key: 'manufacturer' as SortColumn, label: 'Power', width: 100, align: 'center' },
-  { key: 'data_reliability', label: 'Reliability', width: 80, align: 'center' },
+const columns: ColumnDef<Pedal>[] = [
+  { label: 'Manufacturer', width: 160, sortKey: 'manufacturer',
+    render: p => <span style={{ color: '#f0f0f0', fontSize: '12.5px', fontWeight: 600, fontFamily: "'Helvetica Neue', sans-serif" }}>{p.manufacturer}</span> },
+  { label: 'Model', width: 200, sortKey: 'model',
+    render: p => <span style={{ color: '#d0d0d0' }}>{p.model}</span> },
+  { label: 'Type', width: 120, align: 'center', sortKey: 'effect_type',
+    render: p => p.effect_type
+      ? <span className={`effect-badge effect-badge--${p.effect_type.toLowerCase().replace(/[\s/]+/g, '-')}`}>{p.effect_type}</span>
+      : <span className="null-value">{'\u2014'}</span> },
+  { label: 'Status', width: 80, align: 'center', sortKey: 'in_production',
+    render: p => (
+      <span className={`status-badge status-badge--${p.in_production ? 'in-production' : 'discontinued'}`}>
+        {p.in_production ? 'Active' : 'Disc.'}
+      </span>
+    ) },
+  { label: 'MSRP', width: 80, align: 'right', sortKey: 'msrp_cents',
+    render: p => p.msrp_cents != null
+      ? <>{formatMsrp(p.msrp_cents)}</>
+      : <span className="null-value">{'\u2014'}</span> },
+  { label: 'Dimensions', width: 160, align: 'center',
+    render: p => p.width_mm != null && p.depth_mm != null && p.height_mm != null
+      ? <>{formatDimensions(p.width_mm, p.depth_mm, p.height_mm)}</>
+      : <span className="null-value">{'\u2014'}</span> },
+  { label: 'Power', width: 100, align: 'center',
+    render: p => p.power_voltage != null || p.power_current_ma != null
+      ? <>{formatPower(p.power_voltage, p.power_current_ma)}</>
+      : <span className="null-value">{'\u2014'}</span> },
+  { label: 'Reliability', width: 80, align: 'center', sortKey: 'data_reliability',
+    render: p => p.data_reliability
+      ? <span className={`reliability-badge reliability-badge--${p.data_reliability.toLowerCase()}`}>{p.data_reliability}</span>
+      : <span className="null-value">{'\u2014'}</span> },
 ];
 
-const Pedals = () => {
-  const [search, setSearch] = useState('');
-  const [effectTypeFilter, setEffectTypeFilter] = useState('All');
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [reliabilityFilter, setReliabilityFilter] = useState('All');
-  const [sortCol, setSortCol] = useState<SortColumn>('manufacturer');
-  const [sortDir, setSortDir] = useState<SortDirection>(1);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+const filters: FilterConfig<Pedal>[] = [
+  { label: 'Type', options: EFFECT_TYPES,
+    predicate: (p, v) => p.effect_type === v },
+  { label: 'Status', options: ['All', 'In Production', 'Discontinued'],
+    predicate: (p, v) => (v === 'In Production') === p.in_production },
+  { label: 'Reliability', options: ['All', 'High', 'Medium', 'Low'],
+    predicate: (p, v) => p.data_reliability === v },
+];
 
-  const filtered = useMemo(() => {
-    let result = DATA;
-
-    if (search) {
-      const s = search.toLowerCase();
-      result = result.filter(p => p.manufacturer.toLowerCase().includes(s) || p.model.toLowerCase().includes(s));
-    }
-
-    if (effectTypeFilter !== 'All') {
-      result = result.filter(p => p.effect_type === effectTypeFilter);
-    }
-
-    if (statusFilter !== 'All') {
-      const inProd = statusFilter === 'In Production';
-      result = result.filter(p => p.in_production === inProd);
-    }
-
-    if (reliabilityFilter !== 'All') {
-      result = result.filter(p => p.data_reliability === reliabilityFilter);
-    }
-
-    return [...result].sort((a, b) => {
-      const va = a[sortCol];
-      const vb = b[sortCol];
-
-      if (va == null && vb == null) return 0;
-      if (va == null) return 1;
-      if (vb == null) return -1;
-
-      if (typeof va === 'boolean' && typeof vb === 'boolean') {
-        return (Number(va) - Number(vb)) * sortDir;
-      }
-
-      if (typeof va === 'number' && typeof vb === 'number') {
-        return (va - vb) * sortDir;
-      }
-
-      if (typeof va === 'string' && typeof vb === 'string') {
-        return va.localeCompare(vb) * sortDir;
-      }
-
-      return 0;
-    });
-  }, [search, effectTypeFilter, statusFilter, reliabilityFilter, sortCol, sortDir]);
-
-  const handleSort = (col: SortColumn) => {
-    if (sortCol === col) {
-      setSortDir(d => (d === 1 ? -1 : 1));
-    } else {
-      setSortCol(col);
-      setSortDir(1);
-    }
-  };
-
-  const totalPedals = DATA.length;
-  const inProductionCount = DATA.filter(p => p.in_production).length;
-  const uniqueEffectTypes = new Set(DATA.map(p => p.effect_type).filter(t => t !== null)).size;
-
-  const formatMsrp = (cents: number | null): string => {
-    if (cents == null) return '\u2014';
-    return `$${(cents / 100).toFixed(2)}`;
-  };
-
-  const formatDimensions = (w: number | null, d: number | null, h: number | null): string => {
-    if (w != null && d != null && h != null) return `${w} \u00d7 ${d} \u00d7 ${h} mm`;
-    return '\u2014';
-  };
-
-  const formatPower = (voltage: string | null, current: number | null): string => {
-    if (voltage && current) return `${voltage} / ${current}mA`;
-    if (voltage) return voltage;
-    if (current) return `${current}mA`;
-    return '\u2014';
-  };
-
-  return (
-    <div className="pedals">
-      <div className="pedals__header">
-        <div className="pedals__title-group">
-          <h1 className="pedals__title">Pedal Database</h1>
-          <span className="pedals__stats">
-            {totalPedals} pedals \u00b7 {inProductionCount} in production \u00b7 {uniqueEffectTypes} effect types
-          </span>
-        </div>
+const renderExpandedRow = (p: Pedal): ReactNode => (
+  <>
+    {p.bypass_type != null && (
+      <div className="data-table__detail">
+        <div className="data-table__detail-label">Bypass Type</div>
+        <div className="data-table__detail-value">{p.bypass_type}</div>
       </div>
-
-      <div className="pedals__filters">
-        <div className="pedals__search-wrapper">
-          <span className="pedals__search-icon">&#x2315;</span>
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search pedals..."
-            className="pedals__search"
-          />
-        </div>
-
-        <select
-          value={effectTypeFilter}
-          onChange={e => setEffectTypeFilter(e.target.value)}
-          className="pedals__select"
-        >
-          {EFFECT_TYPES.map(t => (
-            <option key={t} value={t}>
-              {t === 'All' ? 'Type: All' : t}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value)}
-          className="pedals__select"
-        >
-          {STATUSES.map(s => (
-            <option key={s} value={s}>
-              {s === 'All' ? 'Status: All' : s}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={reliabilityFilter}
-          onChange={e => setReliabilityFilter(e.target.value)}
-          className="pedals__select"
-        >
-          {RELIABILITIES.map(r => (
-            <option key={r} value={r}>
-              {r === 'All' ? 'Reliability: All' : r}
-            </option>
-          ))}
-        </select>
-
-        <span className="pedals__filter-count">
-          {filtered.length} pedal{filtered.length !== 1 ? 's' : ''} shown
-        </span>
+    )}
+    {p.signal_type != null && (
+      <div className="data-table__detail">
+        <div className="data-table__detail-label">Signal Type</div>
+        <div className="data-table__detail-value">{p.signal_type}</div>
       </div>
-
-      <div className="pedals__table-wrapper">
-        <table className="pedals__table">
-          <thead>
-            <tr>
-              {COLUMNS.map((col, ci) => (
-                <th
-                  key={ci}
-                  onClick={() => col.label !== 'Dimensions' && col.label !== 'Power' ? handleSort(col.key) : undefined}
-                  className="pedals__th"
-                  style={{ width: col.width, textAlign: col.align || 'left', cursor: col.label === 'Dimensions' || col.label === 'Power' ? 'default' : 'pointer' }}
-                >
-                  {col.label}
-                  {col.label !== 'Dimensions' && col.label !== 'Power' && (
-                    <span className={`pedals__sort-icon ${sortCol === col.key ? 'active' : ''}`}>
-                      {sortCol === col.key ? (sortDir === 1 ? '\u25b2' : '\u25bc') : '\u21c5'}
-                    </span>
-                  )}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((p, i) => {
-              const isExpanded = expandedId === p.id;
-
-              return (
-                <>
-                  <tr
-                    key={p.id}
-                    onClick={() => setExpandedId(isExpanded ? null : p.id)}
-                    className={`pedals__row ${isExpanded ? 'expanded' : ''} ${i % 2 === 0 ? 'even' : 'odd'}`}
-                  >
-                    <td className="pedals__td pedals__td--name">{p.manufacturer}</td>
-                    <td className="pedals__td pedals__td--model">{p.model}</td>
-                    <td className="pedals__td pedals__td--effect-type" style={{ textAlign: 'center' }}>
-                      {p.effect_type ? (
-                        <span className={`effect-badge effect-badge--${p.effect_type.toLowerCase().replace(/[\s/]+/g, '-')}`}>
-                          {p.effect_type}
-                        </span>
-                      ) : (
-                        <span className="null-value">\u2014</span>
-                      )}
-                    </td>
-                    <td className="pedals__td pedals__td--status" style={{ textAlign: 'center' }}>
-                      <span className={`status-badge status-badge--${p.in_production ? 'in-production' : 'discontinued'}`}>
-                        {p.in_production ? 'Active' : 'Disc.'}
-                      </span>
-                    </td>
-                    <td className="pedals__td pedals__td--msrp" style={{ textAlign: 'right' }}>
-                      {formatMsrp(p.msrp_cents) === '\u2014' ? (
-                        <span className="null-value">\u2014</span>
-                      ) : (
-                        formatMsrp(p.msrp_cents)
-                      )}
-                    </td>
-                    <td className="pedals__td pedals__td--dimensions" style={{ textAlign: 'center' }}>
-                      {formatDimensions(p.width_mm, p.depth_mm, p.height_mm) === '\u2014' ? (
-                        <span className="null-value">\u2014</span>
-                      ) : (
-                        formatDimensions(p.width_mm, p.depth_mm, p.height_mm)
-                      )}
-                    </td>
-                    <td className="pedals__td pedals__td--power" style={{ textAlign: 'center' }}>
-                      {formatPower(p.power_voltage, p.power_current_ma) === '\u2014' ? (
-                        <span className="null-value">\u2014</span>
-                      ) : (
-                        formatPower(p.power_voltage, p.power_current_ma)
-                      )}
-                    </td>
-                    <td className="pedals__td pedals__td--reliability" style={{ textAlign: 'center' }}>
-                      {p.data_reliability ? (
-                        <span className={`reliability-badge reliability-badge--${p.data_reliability.toLowerCase()}`}>
-                          {p.data_reliability}
-                        </span>
-                      ) : (
-                        <span className="null-value">\u2014</span>
-                      )}
-                    </td>
-                  </tr>
-                  {isExpanded && (
-                    <tr key={`exp-${p.id}`} className="pedals__expanded-row">
-                      <td colSpan={8} className="pedals__expanded-cell">
-                        <div className="pedals__expanded-content">
-                          {p.bypass_type != null && (
-                            <div className="pedals__detail">
-                              <div className="pedals__detail-label">Bypass Type</div>
-                              <div className="pedals__detail-value">{p.bypass_type}</div>
-                            </div>
-                          )}
-                          {p.signal_type != null && (
-                            <div className="pedals__detail">
-                              <div className="pedals__detail-label">Signal Type</div>
-                              <div className="pedals__detail-value">{p.signal_type}</div>
-                            </div>
-                          )}
-                          {p.circuit_type != null && (
-                            <div className="pedals__detail">
-                              <div className="pedals__detail-label">Circuit Type</div>
-                              <div className="pedals__detail-value">{p.circuit_type}</div>
-                            </div>
-                          )}
-                          {p.mono_stereo != null && (
-                            <div className="pedals__detail">
-                              <div className="pedals__detail-label">Mono/Stereo</div>
-                              <div className="pedals__detail-value">{p.mono_stereo}</div>
-                            </div>
-                          )}
-                          <div className="pedals__detail">
-                            <div className="pedals__detail-label">MIDI Capable</div>
-                            <div className="pedals__detail-value"><span className={p.midi_capable ? 'bool-yes' : 'bool-no'}>{p.midi_capable ? 'Yes' : 'No'}</span></div>
-                          </div>
-                          {p.preset_count > 0 && (
-                            <div className="pedals__detail">
-                              <div className="pedals__detail-label">Presets</div>
-                              <div className="pedals__detail-value highlight">{p.preset_count}</div>
-                            </div>
-                          )}
-                          <div className="pedals__detail">
-                            <div className="pedals__detail-label">Tap Tempo</div>
-                            <div className="pedals__detail-value"><span className={p.has_tap_tempo ? 'bool-yes' : 'bool-no'}>{p.has_tap_tempo ? 'Yes' : 'No'}</span></div>
-                          </div>
-                          <div className="pedals__detail">
-                            <div className="pedals__detail-label">Battery</div>
-                            <div className="pedals__detail-value"><span className={p.battery_capable ? 'bool-yes' : 'bool-no'}>{p.battery_capable ? 'Yes' : 'No'}</span></div>
-                          </div>
-                          <div className="pedals__detail">
-                            <div className="pedals__detail-label">Software Editor</div>
-                            <div className="pedals__detail-value"><span className={p.has_software_editor ? 'bool-yes' : 'bool-no'}>{p.has_software_editor ? 'Yes' : 'No'}</span></div>
-                          </div>
-                          {p.color_options != null && (
-                            <div className="pedals__detail">
-                              <div className="pedals__detail-label">Color Options</div>
-                              <div className="pedals__detail-value">{p.color_options}</div>
-                            </div>
-                          )}
-                          {p.product_page != null && (
-                            <div className="pedals__detail">
-                              <div className="pedals__detail-label">Product Page</div>
-                              <div className="pedals__detail-value">
-                                <a
-                                  href={p.product_page}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={e => e.stopPropagation()}
-                                  className="detail-link"
-                                >
-                                  {p.product_page}
-                                </a>
-                              </div>
-                            </div>
-                          )}
-                          {p.instruction_manual != null && (
-                            <div className="pedals__detail">
-                              <div className="pedals__detail-label">Instruction Manual</div>
-                              <div className="pedals__detail-value">
-                                <a
-                                  href={p.instruction_manual}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={e => e.stopPropagation()}
-                                  className="detail-link"
-                                >
-                                  {p.instruction_manual}
-                                </a>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </>
-              );
-            })}
-          </tbody>
-        </table>
-        {filtered.length === 0 && (
-          <div className="pedals__empty">No pedals match your filters.</div>
-        )}
+    )}
+    {p.circuit_type != null && (
+      <div className="data-table__detail">
+        <div className="data-table__detail-label">Circuit Type</div>
+        <div className="data-table__detail-value">{p.circuit_type}</div>
+      </div>
+    )}
+    {p.mono_stereo != null && (
+      <div className="data-table__detail">
+        <div className="data-table__detail-label">Mono/Stereo</div>
+        <div className="data-table__detail-value">{p.mono_stereo}</div>
+      </div>
+    )}
+    <div className="data-table__detail">
+      <div className="data-table__detail-label">MIDI Capable</div>
+      <div className="data-table__detail-value">
+        <span className={p.midi_capable ? 'bool-yes' : 'bool-no'}>{p.midi_capable ? 'Yes' : 'No'}</span>
       </div>
     </div>
-  );
+    {p.preset_count > 0 && (
+      <div className="data-table__detail">
+        <div className="data-table__detail-label">Presets</div>
+        <div className="data-table__detail-value data-table__detail-value--highlight">{p.preset_count}</div>
+      </div>
+    )}
+    <div className="data-table__detail">
+      <div className="data-table__detail-label">Tap Tempo</div>
+      <div className="data-table__detail-value">
+        <span className={p.has_tap_tempo ? 'bool-yes' : 'bool-no'}>{p.has_tap_tempo ? 'Yes' : 'No'}</span>
+      </div>
+    </div>
+    <div className="data-table__detail">
+      <div className="data-table__detail-label">Battery</div>
+      <div className="data-table__detail-value">
+        <span className={p.battery_capable ? 'bool-yes' : 'bool-no'}>{p.battery_capable ? 'Yes' : 'No'}</span>
+      </div>
+    </div>
+    <div className="data-table__detail">
+      <div className="data-table__detail-label">Software Editor</div>
+      <div className="data-table__detail-value">
+        <span className={p.has_software_editor ? 'bool-yes' : 'bool-no'}>{p.has_software_editor ? 'Yes' : 'No'}</span>
+      </div>
+    </div>
+    {p.color_options != null && (
+      <div className="data-table__detail">
+        <div className="data-table__detail-label">Color Options</div>
+        <div className="data-table__detail-value">{p.color_options}</div>
+      </div>
+    )}
+    {p.product_page != null && (
+      <div className="data-table__detail">
+        <div className="data-table__detail-label">Product Page</div>
+        <div className="data-table__detail-value">
+          <a href={p.product_page} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="detail-link">
+            {p.product_page}
+          </a>
+        </div>
+      </div>
+    )}
+    {p.instruction_manual != null && (
+      <div className="data-table__detail">
+        <div className="data-table__detail-label">Instruction Manual</div>
+        <div className="data-table__detail-value">
+          <a href={p.instruction_manual} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="detail-link">
+            {p.instruction_manual}
+          </a>
+        </div>
+      </div>
+    )}
+  </>
+);
+
+const stats = (data: Pedal[]) => {
+  const inProd = data.filter(p => p.in_production).length;
+  const types = new Set(data.map(p => p.effect_type).filter(t => t !== null)).size;
+  return `${data.length} pedals \u00b7 ${inProd} in production \u00b7 ${types} effect types`;
 };
+
+const Pedals = () => (
+  <DataTable<Pedal>
+    title="Pedal Database"
+    entityName="pedal"
+    entityNamePlural="pedals"
+    stats={stats}
+    data={DATA}
+    columns={columns}
+    filters={filters}
+    searchFields={['manufacturer', 'model']}
+    searchPlaceholder="Search pedals..."
+    renderExpandedRow={renderExpandedRow}
+    defaultSortKey="manufacturer"
+  />
+);
 
 export default Pedals;

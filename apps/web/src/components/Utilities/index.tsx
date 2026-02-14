@@ -1,5 +1,6 @@
-import './index.scss';
-import { useState, useMemo } from 'react';
+import { ReactNode } from 'react';
+import DataTable, { ColumnDef, FilterConfig } from '../DataTable';
+import { formatMsrp, formatDimensions } from '../../utils/formatters';
 
 interface Utility {
   id: number;
@@ -273,336 +274,123 @@ const DATA: Utility[] = [
   }
 ];
 
-type SortColumn = 'manufacturer' | 'model' | 'utility_type' | 'is_active' | 'in_production' | 'msrp_cents' | 'data_reliability';
-type SortDirection = 1 | -1;
-
 const UTILITY_TYPES = ['All', ...Array.from(new Set(DATA.map(d => d.utility_type))).sort()];
-const ACTIVITY = ['All', 'Active', 'Passive'] as const;
-const STATUSES = ['All', 'In Production', 'Discontinued'] as const;
-const RELIABILITIES = ['All', 'High', 'Medium', 'Low'] as const;
 
-interface ColumnDef {
-  key: SortColumn;
-  label: string;
-  width: number;
-  align?: 'left' | 'center' | 'right';
-  sortable: boolean;
-}
-
-const COLUMNS: ColumnDef[] = [
-  { key: 'manufacturer',     label: 'Manufacturer',   width: 180, sortable: true },
-  { key: 'model',            label: 'Model',          width: 200, sortable: true },
-  { key: 'utility_type',     label: 'Type',           width: 150, sortable: true },
-  { key: 'is_active',        label: 'Active/Passive', width: 110, align: 'center', sortable: true },
-  { key: 'in_production',    label: 'Status',         width: 80,  align: 'center', sortable: true },
-  { key: 'msrp_cents',       label: 'MSRP',           width: 90,  align: 'right',  sortable: true },
-  { key: 'manufacturer',     label: 'Dimensions',     width: 150, align: 'center', sortable: false },
-  { key: 'data_reliability', label: 'Reliability',    width: 80,  align: 'center', sortable: true },
+const columns: ColumnDef<Utility>[] = [
+  { label: 'Manufacturer', width: 180, sortKey: 'manufacturer',
+    render: u => <span style={{ color: '#f0f0f0', fontSize: '12.5px', fontWeight: 600, fontFamily: "'Helvetica Neue', sans-serif" }}>{u.manufacturer}</span> },
+  { label: 'Model', width: 200, sortKey: 'model',
+    render: u => <span style={{ color: '#d0d0d0' }}>{u.model}</span> },
+  { label: 'Type', width: 150, sortKey: 'utility_type',
+    render: u => <>{u.utility_type}</> },
+  { label: 'Active/Passive', width: 110, align: 'center', sortKey: 'is_active',
+    render: u => (
+      <span className={u.is_active ? 'bool-yes' : 'bool-no'}>
+        {u.is_active ? 'Active' : 'Passive'}
+      </span>
+    ) },
+  { label: 'Status', width: 80, align: 'center', sortKey: 'in_production',
+    render: u => (
+      <span className={`status-badge status-badge--${u.in_production ? 'in-production' : 'discontinued'}`}>
+        {u.in_production ? 'Active' : 'Disc.'}
+      </span>
+    ) },
+  { label: 'MSRP', width: 90, align: 'right', sortKey: 'msrp_cents',
+    render: u => u.msrp_cents != null
+      ? <>{formatMsrp(u.msrp_cents)}</>
+      : <span className="null-value">{'\u2014'}</span> },
+  { label: 'Dimensions', width: 150, align: 'center',
+    render: u => u.width_mm != null && u.depth_mm != null && u.height_mm != null
+      ? <>{formatDimensions(u.width_mm, u.depth_mm, u.height_mm)}</>
+      : <span className="null-value">{'\u2014'}</span> },
+  { label: 'Reliability', width: 80, align: 'center', sortKey: 'data_reliability',
+    render: u => u.data_reliability
+      ? <span className={`reliability-badge reliability-badge--${u.data_reliability.toLowerCase()}`}>{u.data_reliability}</span>
+      : <span className="null-value">{'\u2014'}</span> },
 ];
 
-const Utilities = () => {
-  const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState('All');
-  const [activityFilter, setActivityFilter] = useState<typeof ACTIVITY[number]>('All');
-  const [statusFilter, setStatusFilter] = useState<typeof STATUSES[number]>('All');
-  const [reliabilityFilter, setReliabilityFilter] = useState<typeof RELIABILITIES[number]>('All');
-  const [sortCol, setSortCol] = useState<SortColumn>('manufacturer');
-  const [sortDir, setSortDir] = useState<SortDirection>(1);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+const filters: FilterConfig<Utility>[] = [
+  { label: 'Type', options: UTILITY_TYPES,
+    predicate: (u, v) => u.utility_type === v },
+  { label: 'Activity', options: ['All', 'Active', 'Passive'],
+    predicate: (u, v) => (v === 'Active') === u.is_active },
+  { label: 'Status', options: ['All', 'In Production', 'Discontinued'],
+    predicate: (u, v) => (v === 'In Production') === u.in_production },
+  { label: 'Reliability', options: ['All', 'High', 'Medium', 'Low'],
+    predicate: (u, v) => u.data_reliability === v },
+];
 
-  const filtered = useMemo(() => {
-    let result = DATA;
-
-    if (search) {
-      const s = search.toLowerCase();
-      result = result.filter(u => u.manufacturer.toLowerCase().includes(s) || u.model.toLowerCase().includes(s));
-    }
-
-    if (typeFilter !== 'All') {
-      result = result.filter(u => u.utility_type === typeFilter);
-    }
-
-    if (activityFilter !== 'All') {
-      const wantsActive = activityFilter === 'Active';
-      result = result.filter(u => u.is_active === wantsActive);
-    }
-
-    if (statusFilter !== 'All') {
-      const inProd = statusFilter === 'In Production';
-      result = result.filter(u => u.in_production === inProd);
-    }
-
-    if (reliabilityFilter !== 'All') {
-      result = result.filter(u => u.data_reliability === reliabilityFilter);
-    }
-
-    return [...result].sort((a, b) => {
-      const va = a[sortCol];
-      const vb = b[sortCol];
-
-      if (va == null && vb == null) return 0;
-      if (va == null) return 1;
-      if (vb == null) return -1;
-
-      if (typeof va === 'boolean' && typeof vb === 'boolean') {
-        return (Number(va) - Number(vb)) * sortDir;
-      }
-
-      if (typeof va === 'number' && typeof vb === 'number') {
-        return (va - vb) * sortDir;
-      }
-
-      if (typeof va === 'string' && typeof vb === 'string') {
-        return va.localeCompare(vb) * sortDir;
-      }
-
-      return 0;
-    });
-  }, [search, typeFilter, activityFilter, statusFilter, reliabilityFilter, sortCol, sortDir]);
-
-  const handleSort = (col: SortColumn) => {
-    if (sortCol === col) {
-      setSortDir(d => (d === 1 ? -1 : 1));
-    } else {
-      setSortCol(col);
-      setSortDir(1);
-    }
-  };
-
-  const totalUtilities = DATA.length;
-  const inProductionCount = DATA.filter(u => u.in_production).length;
-  const activeCount = DATA.filter(u => u.is_active).length;
-
-  const formatMsrp = (cents: number | null): string => {
-    if (cents == null) return '\u2014';
-    return `$${(cents / 100).toFixed(2)}`;
-  };
-
-  const formatDimensions = (w: number | null, d: number | null, h: number | null): string => {
-    if (w != null && d != null && h != null) return `${w} \u00d7 ${d} \u00d7 ${h} mm`;
-    return '\u2014';
-  };
-
-  return (
-    <div className="utilities">
-      <div className="utilities__header">
-        <div className="utilities__title-group">
-          <h1 className="utilities__title">Utility Database</h1>
-          <span className="utilities__stats">
-            {totalUtilities} utilities \u00b7 {inProductionCount} in production \u00b7 {activeCount} active
-          </span>
-        </div>
+const renderExpandedRow = (u: Utility): ReactNode => (
+  <>
+    {u.signal_type != null && (
+      <div className="data-table__detail">
+        <div className="data-table__detail-label">Signal Type</div>
+        <div className="data-table__detail-value">{u.signal_type}</div>
       </div>
-
-      <div className="utilities__filters">
-        <div className="utilities__search-wrapper">
-          <span className="utilities__search-icon">&#x2315;</span>
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search utilities..."
-            className="utilities__search"
-          />
-        </div>
-
-        <select
-          value={typeFilter}
-          onChange={e => setTypeFilter(e.target.value)}
-          className="utilities__select"
-        >
-          {UTILITY_TYPES.map(t => (
-            <option key={t} value={t}>
-              {t === 'All' ? 'Type: All' : t}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={activityFilter}
-          onChange={e => setActivityFilter(e.target.value as typeof ACTIVITY[number])}
-          className="utilities__select"
-        >
-          {ACTIVITY.map(a => (
-            <option key={a} value={a}>
-              {a === 'All' ? 'Activity: All' : a}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value as typeof STATUSES[number])}
-          className="utilities__select"
-        >
-          {STATUSES.map(s => (
-            <option key={s} value={s}>
-              {s === 'All' ? 'Status: All' : s}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={reliabilityFilter}
-          onChange={e => setReliabilityFilter(e.target.value as typeof RELIABILITIES[number])}
-          className="utilities__select"
-        >
-          {RELIABILITIES.map(r => (
-            <option key={r} value={r}>
-              {r === 'All' ? 'Reliability: All' : r}
-            </option>
-          ))}
-        </select>
-
-        <span className="utilities__filter-count">
-          {filtered.length} utilit{filtered.length !== 1 ? 'ies' : 'y'} shown
-        </span>
+    )}
+    {u.bypass_type != null && (
+      <div className="data-table__detail">
+        <div className="data-table__detail-label">Bypass Type</div>
+        <div className="data-table__detail-value">{u.bypass_type}</div>
       </div>
-
-      <div className="utilities__table-wrapper">
-        <table className="utilities__table">
-          <thead>
-            <tr>
-              {COLUMNS.map((col, ci) => (
-                <th
-                  key={ci}
-                  onClick={() => col.sortable ? handleSort(col.key) : undefined}
-                  className="utilities__th"
-                  style={{ width: col.width, textAlign: col.align || 'left', cursor: col.sortable ? 'pointer' : 'default' }}
-                >
-                  {col.label}
-                  {col.sortable && (
-                    <span className={`utilities__sort-icon ${sortCol === col.key ? 'active' : ''}`}>
-                      {sortCol === col.key ? (sortDir === 1 ? '\u25b2' : '\u25bc') : '\u21c5'}
-                    </span>
-                  )}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((u, i) => {
-              const isExpanded = expandedId === u.id;
-
-              return (
-                <>
-                  <tr
-                    key={u.id}
-                    onClick={() => setExpandedId(isExpanded ? null : u.id)}
-                    className={`utilities__row ${isExpanded ? 'expanded' : ''} ${i % 2 === 0 ? 'even' : 'odd'}`}
-                  >
-                    <td className="utilities__td utilities__td--manufacturer">{u.manufacturer}</td>
-                    <td className="utilities__td utilities__td--model">{u.model}</td>
-                    <td className="utilities__td utilities__td--type">{u.utility_type}</td>
-                    <td className="utilities__td" style={{ textAlign: 'center' }}>
-                      <span className={u.is_active ? 'bool-yes' : 'bool-no'}>
-                        {u.is_active ? 'Active' : 'Passive'}
-                      </span>
-                    </td>
-                    <td className="utilities__td utilities__td--status" style={{ textAlign: 'center' }}>
-                      <span className={`status-badge status-badge--${u.in_production ? 'in-production' : 'discontinued'}`}>
-                        {u.in_production ? 'Active' : 'Disc.'}
-                      </span>
-                    </td>
-                    <td className="utilities__td utilities__td--msrp" style={{ textAlign: 'right' }}>
-                      {u.msrp_cents != null ? formatMsrp(u.msrp_cents) : <span className="null-value">\u2014</span>}
-                    </td>
-                    <td className="utilities__td utilities__td--dimensions" style={{ textAlign: 'center' }}>
-                      {u.width_mm != null && u.depth_mm != null && u.height_mm != null ? (
-                        formatDimensions(u.width_mm, u.depth_mm, u.height_mm)
-                      ) : (
-                        <span className="null-value">\u2014</span>
-                      )}
-                    </td>
-                    <td className="utilities__td utilities__td--reliability" style={{ textAlign: 'center' }}>
-                      {u.data_reliability ? (
-                        <span className={`reliability-badge reliability-badge--${u.data_reliability.toLowerCase()}`}>
-                          {u.data_reliability}
-                        </span>
-                      ) : (
-                        <span className="null-value">\u2014</span>
-                      )}
-                    </td>
-                  </tr>
-                  {isExpanded && (
-                    <tr key={`exp-${u.id}`} className="utilities__expanded-row">
-                      <td colSpan={8} className="utilities__expanded-cell">
-                        <div className="utilities__expanded-content">
-                          {u.signal_type != null && (
-                            <div className="utilities__detail">
-                              <div className="utilities__detail-label">Signal Type</div>
-                              <div className="utilities__detail-value">{u.signal_type}</div>
-                            </div>
-                          )}
-                          {u.bypass_type != null && (
-                            <div className="utilities__detail">
-                              <div className="utilities__detail-label">Bypass Type</div>
-                              <div className="utilities__detail-value">{u.bypass_type}</div>
-                            </div>
-                          )}
-                          <div className="utilities__detail">
-                            <div className="utilities__detail-label">Ground Lift</div>
-                            <div className="utilities__detail-value">
-                              <span className={u.has_ground_lift ? 'bool-yes' : 'bool-no'}>
-                                {u.has_ground_lift ? 'Yes' : 'No'}
-                              </span>
-                            </div>
-                          </div>
-                          {u.weight_grams != null && (
-                            <div className="utilities__detail">
-                              <div className="utilities__detail-label">Weight</div>
-                              <div className="utilities__detail-value utilities__detail-value--highlight">
-                                {(u.weight_grams / 1000).toFixed(2)} kg
-                              </div>
-                            </div>
-                          )}
-                          {u.product_page != null && (
-                            <div className="utilities__detail">
-                              <div className="utilities__detail-label">Product Page</div>
-                              <div className="utilities__detail-value">
-                                <a
-                                  href={u.product_page}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={e => e.stopPropagation()}
-                                  className="detail-link"
-                                >
-                                  {u.product_page}
-                                </a>
-                              </div>
-                            </div>
-                          )}
-                          {u.instruction_manual != null && (
-                            <div className="utilities__detail">
-                              <div className="utilities__detail-label">Instruction Manual</div>
-                              <div className="utilities__detail-value">
-                                <a
-                                  href={u.instruction_manual}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={e => e.stopPropagation()}
-                                  className="detail-link"
-                                >
-                                  {u.instruction_manual}
-                                </a>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </>
-              );
-            })}
-          </tbody>
-        </table>
-        {filtered.length === 0 && (
-          <div className="utilities__empty">No utilities match your filters.</div>
-        )}
+    )}
+    <div className="data-table__detail">
+      <div className="data-table__detail-label">Ground Lift</div>
+      <div className="data-table__detail-value">
+        <span className={u.has_ground_lift ? 'bool-yes' : 'bool-no'}>{u.has_ground_lift ? 'Yes' : 'No'}</span>
       </div>
     </div>
-  );
+    {u.weight_grams != null && (
+      <div className="data-table__detail">
+        <div className="data-table__detail-label">Weight</div>
+        <div className="data-table__detail-value data-table__detail-value--highlight">
+          {(u.weight_grams / 1000).toFixed(2)} kg
+        </div>
+      </div>
+    )}
+    {u.product_page != null && (
+      <div className="data-table__detail">
+        <div className="data-table__detail-label">Product Page</div>
+        <div className="data-table__detail-value">
+          <a href={u.product_page} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="detail-link">
+            {u.product_page}
+          </a>
+        </div>
+      </div>
+    )}
+    {u.instruction_manual != null && (
+      <div className="data-table__detail">
+        <div className="data-table__detail-label">Instruction Manual</div>
+        <div className="data-table__detail-value">
+          <a href={u.instruction_manual} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="detail-link">
+            {u.instruction_manual}
+          </a>
+        </div>
+      </div>
+    )}
+  </>
+);
+
+const stats = (data: Utility[]) => {
+  const inProd = data.filter(u => u.in_production).length;
+  const active = data.filter(u => u.is_active).length;
+  return `${data.length} utilities \u00b7 ${inProd} in production \u00b7 ${active} active`;
 };
+
+const Utilities = () => (
+  <DataTable<Utility>
+    title="Utility Database"
+    entityName="utility"
+    entityNamePlural="utilities"
+    stats={stats}
+    data={DATA}
+    columns={columns}
+    filters={filters}
+    searchFields={['manufacturer', 'model']}
+    searchPlaceholder="Search utilities..."
+    renderExpandedRow={renderExpandedRow}
+    defaultSortKey="manufacturer"
+  />
+);
 
 export default Utilities;

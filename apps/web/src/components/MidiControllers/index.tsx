@@ -1,5 +1,6 @@
-import './index.scss';
-import { useState, useMemo } from 'react';
+import { ReactNode } from 'react';
+import DataTable, { ColumnDef, FilterConfig } from '../DataTable';
+import { formatMsrp, formatDimensions, formatPower } from '../../utils/formatters';
 
 interface MidiController {
   id: number;
@@ -217,383 +218,159 @@ const DATA: MidiController[] = [
   }
 ];
 
-type SortColumn = 'manufacturer' | 'model' | 'footswitch_count' | 'total_preset_slots' | 'audio_loop_count' | 'in_production' | 'msrp_cents' | 'data_reliability';
-type SortDirection = 1 | -1;
-
-const CONTROLLER_TYPES = ['All', 'Pure MIDI', 'Loop Switcher'] as const;
-const STATUSES = ['All', 'In Production', 'Discontinued'] as const;
-const RELIABILITIES = ['All', 'High', 'Medium', 'Low'] as const;
-
-interface ColumnDef {
-  key: SortColumn;
-  label: string;
-  width: number;
-  align?: 'left' | 'center' | 'right';
-  sortable: boolean;
-}
-
-const COLUMNS: ColumnDef[] = [
-  { key: 'manufacturer',       label: 'Manufacturer', width: 180, sortable: true },
-  { key: 'model',              label: 'Model',        width: 200, sortable: true },
-  { key: 'footswitch_count',   label: 'Switches',     width: 80,  align: 'center', sortable: true },
-  { key: 'total_preset_slots', label: 'Presets',      width: 80,  align: 'right',  sortable: true },
-  { key: 'audio_loop_count',   label: 'Loops',        width: 70,  align: 'center', sortable: true },
-  { key: 'in_production',      label: 'Status',       width: 80,  align: 'center', sortable: true },
-  { key: 'msrp_cents',         label: 'MSRP',         width: 90,  align: 'right',  sortable: true },
-  { key: 'manufacturer',       label: 'Dimensions',   width: 180, align: 'center', sortable: false },
-  { key: 'manufacturer',       label: 'Power',        width: 120, align: 'center', sortable: false },
-  { key: 'data_reliability',   label: 'Reliability',  width: 80,  align: 'center', sortable: true },
+const columns: ColumnDef<MidiController>[] = [
+  { label: 'Manufacturer', width: 180, sortKey: 'manufacturer',
+    render: c => <span style={{ color: '#f0f0f0', fontSize: '12.5px', fontWeight: 600, fontFamily: "'Helvetica Neue', sans-serif" }}>{c.manufacturer}</span> },
+  { label: 'Model', width: 200, sortKey: 'model',
+    render: c => <span style={{ color: '#d0d0d0' }}>{c.model}</span> },
+  { label: 'Switches', width: 80, align: 'center', sortKey: 'footswitch_count',
+    render: c => <>{c.footswitch_count}</> },
+  { label: 'Presets', width: 80, align: 'right', sortKey: 'total_preset_slots',
+    render: c => c.total_preset_slots != null
+      ? <>{c.total_preset_slots.toLocaleString()}</>
+      : <span className="null-value">{'\u2014'}</span> },
+  { label: 'Loops', width: 70, align: 'center', sortKey: 'audio_loop_count',
+    render: c => c.audio_loop_count > 0
+      ? <span className="loop-badge">{c.audio_loop_count}</span>
+      : <span className="null-value">{'\u2014'}</span> },
+  { label: 'Status', width: 80, align: 'center', sortKey: 'in_production',
+    render: c => (
+      <span className={`status-badge status-badge--${c.in_production ? 'in-production' : 'discontinued'}`}>
+        {c.in_production ? 'Active' : 'Disc.'}
+      </span>
+    ) },
+  { label: 'MSRP', width: 90, align: 'right', sortKey: 'msrp_cents',
+    render: c => c.msrp_cents != null
+      ? <>{formatMsrp(c.msrp_cents)}</>
+      : <span className="null-value">{'\u2014'}</span> },
+  { label: 'Dimensions', width: 180, align: 'center',
+    render: c => c.width_mm != null && c.depth_mm != null && c.height_mm != null
+      ? <>{formatDimensions(c.width_mm, c.depth_mm, c.height_mm)}</>
+      : <span className="null-value">{'\u2014'}</span> },
+  { label: 'Power', width: 120, align: 'center',
+    render: c => c.power_voltage != null || c.power_current_ma != null
+      ? <>{formatPower(c.power_voltage, c.power_current_ma)}</>
+      : <span className="null-value">{'\u2014'}</span> },
+  { label: 'Reliability', width: 80, align: 'center', sortKey: 'data_reliability',
+    render: c => c.data_reliability
+      ? <span className={`reliability-badge reliability-badge--${c.data_reliability.toLowerCase()}`}>{c.data_reliability}</span>
+      : <span className="null-value">{'\u2014'}</span> },
 ];
 
-const MidiControllers = () => {
-  const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState<typeof CONTROLLER_TYPES[number]>('All');
-  const [statusFilter, setStatusFilter] = useState<typeof STATUSES[number]>('All');
-  const [reliabilityFilter, setReliabilityFilter] = useState<typeof RELIABILITIES[number]>('All');
-  const [sortCol, setSortCol] = useState<SortColumn>('manufacturer');
-  const [sortDir, setSortDir] = useState<SortDirection>(1);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+const filters: FilterConfig<MidiController>[] = [
+  { label: 'Type', options: ['All', 'Pure MIDI', 'Loop Switcher'],
+    predicate: (c, v) => v === 'Loop Switcher' ? c.audio_loop_count > 0 : c.audio_loop_count === 0 },
+  { label: 'Status', options: ['All', 'In Production', 'Discontinued'],
+    predicate: (c, v) => (v === 'In Production') === c.in_production },
+  { label: 'Reliability', options: ['All', 'High', 'Medium', 'Low'],
+    predicate: (c, v) => c.data_reliability === v },
+];
 
-  const filtered = useMemo(() => {
-    let result = DATA;
-
-    if (search) {
-      const s = search.toLowerCase();
-      result = result.filter(c => c.manufacturer.toLowerCase().includes(s) || c.model.toLowerCase().includes(s));
-    }
-
-    if (typeFilter !== 'All') {
-      const wantsLoops = typeFilter === 'Loop Switcher';
-      result = result.filter(c => wantsLoops ? c.audio_loop_count > 0 : c.audio_loop_count === 0);
-    }
-
-    if (statusFilter !== 'All') {
-      const inProd = statusFilter === 'In Production';
-      result = result.filter(c => c.in_production === inProd);
-    }
-
-    if (reliabilityFilter !== 'All') {
-      result = result.filter(c => c.data_reliability === reliabilityFilter);
-    }
-
-    return [...result].sort((a, b) => {
-      const va = a[sortCol];
-      const vb = b[sortCol];
-
-      if (va == null && vb == null) return 0;
-      if (va == null) return 1;
-      if (vb == null) return -1;
-
-      if (typeof va === 'boolean' && typeof vb === 'boolean') {
-        return (Number(va) - Number(vb)) * sortDir;
-      }
-
-      if (typeof va === 'number' && typeof vb === 'number') {
-        return (va - vb) * sortDir;
-      }
-
-      if (typeof va === 'string' && typeof vb === 'string') {
-        return va.localeCompare(vb) * sortDir;
-      }
-
-      return 0;
-    });
-  }, [search, typeFilter, statusFilter, reliabilityFilter, sortCol, sortDir]);
-
-  const handleSort = (col: SortColumn) => {
-    if (sortCol === col) {
-      setSortDir(d => (d === 1 ? -1 : 1));
-    } else {
-      setSortCol(col);
-      setSortDir(1);
-    }
-  };
-
-  const totalControllers = DATA.length;
-  const inProductionCount = DATA.filter(c => c.in_production).length;
-  const loopSwitcherCount = DATA.filter(c => c.audio_loop_count > 0).length;
-
-  const formatMsrp = (cents: number | null): string => {
-    if (cents == null) return '\u2014';
-    return `$${(cents / 100).toFixed(2)}`;
-  };
-
-  const formatDimensions = (w: number | null, d: number | null, h: number | null): string => {
-    if (w != null && d != null && h != null) return `${w} \u00d7 ${d} \u00d7 ${h} mm`;
-    return '\u2014';
-  };
-
-  const formatPower = (voltage: string | null, current: number | null): string => {
-    if (voltage && current) return `${voltage} / ${current}mA`;
-    if (voltage) return voltage;
-    if (current) return `${current}mA`;
-    return '\u2014';
-  };
-
-  return (
-    <div className="midi-controllers">
-      <div className="midi-controllers__header">
-        <div className="midi-controllers__title-group">
-          <h1 className="midi-controllers__title">MIDI Controller Database</h1>
-          <span className="midi-controllers__stats">
-            {totalControllers} controllers \u00b7 {inProductionCount} in production \u00b7 {loopSwitcherCount} loop switchers
-          </span>
-        </div>
+const renderExpandedRow = (c: MidiController): ReactNode => (
+  <>
+    {c.display_type != null && (
+      <div className="data-table__detail">
+        <div className="data-table__detail-label">Display</div>
+        <div className="data-table__detail-value">{c.display_type}</div>
       </div>
-
-      <div className="midi-controllers__filters">
-        <div className="midi-controllers__search-wrapper">
-          <span className="midi-controllers__search-icon">&#x2315;</span>
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search controllers..."
-            className="midi-controllers__search"
-          />
-        </div>
-
-        <select
-          value={typeFilter}
-          onChange={e => setTypeFilter(e.target.value as typeof CONTROLLER_TYPES[number])}
-          className="midi-controllers__select"
-        >
-          {CONTROLLER_TYPES.map(t => (
-            <option key={t} value={t}>
-              {t === 'All' ? 'Type: All' : t}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value as typeof STATUSES[number])}
-          className="midi-controllers__select"
-        >
-          {STATUSES.map(s => (
-            <option key={s} value={s}>
-              {s === 'All' ? 'Status: All' : s}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={reliabilityFilter}
-          onChange={e => setReliabilityFilter(e.target.value as typeof RELIABILITIES[number])}
-          className="midi-controllers__select"
-        >
-          {RELIABILITIES.map(r => (
-            <option key={r} value={r}>
-              {r === 'All' ? 'Reliability: All' : r}
-            </option>
-          ))}
-        </select>
-
-        <span className="midi-controllers__filter-count">
-          {filtered.length} controller{filtered.length !== 1 ? 's' : ''} shown
+    )}
+    <div className="data-table__detail">
+      <div className="data-table__detail-label">Per-Switch Displays</div>
+      <div className="data-table__detail-value">
+        <span className={c.has_per_switch_displays ? 'bool-yes' : 'bool-no'}>
+          {c.has_per_switch_displays ? 'Yes' : 'No'}
         </span>
       </div>
-
-      <div className="midi-controllers__table-wrapper">
-        <table className="midi-controllers__table">
-          <thead>
-            <tr>
-              {COLUMNS.map((col, ci) => (
-                <th
-                  key={ci}
-                  onClick={() => col.sortable ? handleSort(col.key) : undefined}
-                  className="midi-controllers__th"
-                  style={{ width: col.width, textAlign: col.align || 'left', cursor: col.sortable ? 'pointer' : 'default' }}
-                >
-                  {col.label}
-                  {col.sortable && (
-                    <span className={`midi-controllers__sort-icon ${sortCol === col.key ? 'active' : ''}`}>
-                      {sortCol === col.key ? (sortDir === 1 ? '\u25b2' : '\u25bc') : '\u21c5'}
-                    </span>
-                  )}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((c, i) => {
-              const isExpanded = expandedId === c.id;
-
-              return (
-                <>
-                  <tr
-                    key={c.id}
-                    onClick={() => setExpandedId(isExpanded ? null : c.id)}
-                    className={`midi-controllers__row ${isExpanded ? 'expanded' : ''} ${i % 2 === 0 ? 'even' : 'odd'}`}
-                  >
-                    <td className="midi-controllers__td midi-controllers__td--manufacturer">{c.manufacturer}</td>
-                    <td className="midi-controllers__td midi-controllers__td--model">{c.model}</td>
-                    <td className="midi-controllers__td midi-controllers__td--number" style={{ textAlign: 'center' }}>
-                      {c.footswitch_count}
-                    </td>
-                    <td className="midi-controllers__td midi-controllers__td--number" style={{ textAlign: 'right' }}>
-                      {c.total_preset_slots != null ? c.total_preset_slots.toLocaleString() : <span className="null-value">\u2014</span>}
-                    </td>
-                    <td className="midi-controllers__td" style={{ textAlign: 'center' }}>
-                      {c.audio_loop_count > 0 ? (
-                        <span className="loop-badge">{c.audio_loop_count}</span>
-                      ) : (
-                        <span className="null-value">\u2014</span>
-                      )}
-                    </td>
-                    <td className="midi-controllers__td midi-controllers__td--status" style={{ textAlign: 'center' }}>
-                      <span className={`status-badge status-badge--${c.in_production ? 'in-production' : 'discontinued'}`}>
-                        {c.in_production ? 'Active' : 'Disc.'}
-                      </span>
-                    </td>
-                    <td className="midi-controllers__td midi-controllers__td--msrp" style={{ textAlign: 'right' }}>
-                      {c.msrp_cents != null ? formatMsrp(c.msrp_cents) : <span className="null-value">\u2014</span>}
-                    </td>
-                    <td className="midi-controllers__td midi-controllers__td--dimensions" style={{ textAlign: 'center' }}>
-                      {c.width_mm != null && c.depth_mm != null && c.height_mm != null ? (
-                        formatDimensions(c.width_mm, c.depth_mm, c.height_mm)
-                      ) : (
-                        <span className="null-value">\u2014</span>
-                      )}
-                    </td>
-                    <td className="midi-controllers__td midi-controllers__td--power" style={{ textAlign: 'center' }}>
-                      {c.power_voltage != null || c.power_current_ma != null ? (
-                        formatPower(c.power_voltage, c.power_current_ma)
-                      ) : (
-                        <span className="null-value">\u2014</span>
-                      )}
-                    </td>
-                    <td className="midi-controllers__td midi-controllers__td--reliability" style={{ textAlign: 'center' }}>
-                      {c.data_reliability ? (
-                        <span className={`reliability-badge reliability-badge--${c.data_reliability.toLowerCase()}`}>
-                          {c.data_reliability}
-                        </span>
-                      ) : (
-                        <span className="null-value">\u2014</span>
-                      )}
-                    </td>
-                  </tr>
-                  {isExpanded && (
-                    <tr key={`exp-${c.id}`} className="midi-controllers__expanded-row">
-                      <td colSpan={10} className="midi-controllers__expanded-cell">
-                        <div className="midi-controllers__expanded-content">
-                          {c.display_type != null && (
-                            <div className="midi-controllers__detail">
-                              <div className="midi-controllers__detail-label">Display</div>
-                              <div className="midi-controllers__detail-value">{c.display_type}</div>
-                            </div>
-                          )}
-                          <div className="midi-controllers__detail">
-                            <div className="midi-controllers__detail-label">Per-Switch Displays</div>
-                            <div className="midi-controllers__detail-value">
-                              <span className={c.has_per_switch_displays ? 'bool-yes' : 'bool-no'}>
-                                {c.has_per_switch_displays ? 'Yes' : 'No'}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="midi-controllers__detail">
-                            <div className="midi-controllers__detail-label">Expression Inputs</div>
-                            <div className="midi-controllers__detail-value midi-controllers__detail-value--highlight">
-                              {c.expression_input_count}
-                            </div>
-                          </div>
-                          <div className="midi-controllers__detail">
-                            <div className="midi-controllers__detail-label">Aux Switch Inputs</div>
-                            <div className="midi-controllers__detail-value">{c.aux_switch_input_count}</div>
-                          </div>
-                          <div className="midi-controllers__detail">
-                            <div className="midi-controllers__detail-label">Tuner</div>
-                            <div className="midi-controllers__detail-value">
-                              <span className={c.has_tuner ? 'bool-yes' : 'bool-no'}>
-                                {c.has_tuner ? 'Yes' : 'No'}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="midi-controllers__detail">
-                            <div className="midi-controllers__detail-label">Tap Tempo</div>
-                            <div className="midi-controllers__detail-value">
-                              <span className={c.has_tap_tempo ? 'bool-yes' : 'bool-no'}>
-                                {c.has_tap_tempo ? 'Yes' : 'No'}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="midi-controllers__detail">
-                            <div className="midi-controllers__detail-label">Setlist Mode</div>
-                            <div className="midi-controllers__detail-value">
-                              <span className={c.has_setlist_mode ? 'bool-yes' : 'bool-no'}>
-                                {c.has_setlist_mode ? 'Yes' : 'No'}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="midi-controllers__detail">
-                            <div className="midi-controllers__detail-label">Bluetooth MIDI</div>
-                            <div className="midi-controllers__detail-value">
-                              <span className={c.has_bluetooth_midi ? 'bool-yes' : 'bool-no'}>
-                                {c.has_bluetooth_midi ? 'Yes' : 'No'}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="midi-controllers__detail">
-                            <div className="midi-controllers__detail-label">Software Editor</div>
-                            <div className="midi-controllers__detail-value">
-                              <span className={c.software_editor_available ? 'bool-yes' : 'bool-no'}>
-                                {c.software_editor_available ? 'Yes' : 'No'}
-                              </span>
-                            </div>
-                          </div>
-                          {c.software_platforms != null && (
-                            <div className="midi-controllers__detail">
-                              <div className="midi-controllers__detail-label">Platforms</div>
-                              <div className="midi-controllers__detail-value">{c.software_platforms}</div>
-                            </div>
-                          )}
-                          {c.product_page != null && (
-                            <div className="midi-controllers__detail">
-                              <div className="midi-controllers__detail-label">Product Page</div>
-                              <div className="midi-controllers__detail-value">
-                                <a
-                                  href={c.product_page}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={e => e.stopPropagation()}
-                                  className="detail-link"
-                                >
-                                  {c.product_page}
-                                </a>
-                              </div>
-                            </div>
-                          )}
-                          {c.instruction_manual != null && (
-                            <div className="midi-controllers__detail">
-                              <div className="midi-controllers__detail-label">Instruction Manual</div>
-                              <div className="midi-controllers__detail-value">
-                                <a
-                                  href={c.instruction_manual}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={e => e.stopPropagation()}
-                                  className="detail-link"
-                                >
-                                  {c.instruction_manual}
-                                </a>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </>
-              );
-            })}
-          </tbody>
-        </table>
-        {filtered.length === 0 && (
-          <div className="midi-controllers__empty">No controllers match your filters.</div>
-        )}
+    </div>
+    <div className="data-table__detail">
+      <div className="data-table__detail-label">Expression Inputs</div>
+      <div className="data-table__detail-value data-table__detail-value--highlight">
+        {c.expression_input_count}
       </div>
     </div>
-  );
+    <div className="data-table__detail">
+      <div className="data-table__detail-label">Aux Switch Inputs</div>
+      <div className="data-table__detail-value">{c.aux_switch_input_count}</div>
+    </div>
+    <div className="data-table__detail">
+      <div className="data-table__detail-label">Tuner</div>
+      <div className="data-table__detail-value">
+        <span className={c.has_tuner ? 'bool-yes' : 'bool-no'}>{c.has_tuner ? 'Yes' : 'No'}</span>
+      </div>
+    </div>
+    <div className="data-table__detail">
+      <div className="data-table__detail-label">Tap Tempo</div>
+      <div className="data-table__detail-value">
+        <span className={c.has_tap_tempo ? 'bool-yes' : 'bool-no'}>{c.has_tap_tempo ? 'Yes' : 'No'}</span>
+      </div>
+    </div>
+    <div className="data-table__detail">
+      <div className="data-table__detail-label">Setlist Mode</div>
+      <div className="data-table__detail-value">
+        <span className={c.has_setlist_mode ? 'bool-yes' : 'bool-no'}>{c.has_setlist_mode ? 'Yes' : 'No'}</span>
+      </div>
+    </div>
+    <div className="data-table__detail">
+      <div className="data-table__detail-label">Bluetooth MIDI</div>
+      <div className="data-table__detail-value">
+        <span className={c.has_bluetooth_midi ? 'bool-yes' : 'bool-no'}>{c.has_bluetooth_midi ? 'Yes' : 'No'}</span>
+      </div>
+    </div>
+    <div className="data-table__detail">
+      <div className="data-table__detail-label">Software Editor</div>
+      <div className="data-table__detail-value">
+        <span className={c.software_editor_available ? 'bool-yes' : 'bool-no'}>{c.software_editor_available ? 'Yes' : 'No'}</span>
+      </div>
+    </div>
+    {c.software_platforms != null && (
+      <div className="data-table__detail">
+        <div className="data-table__detail-label">Platforms</div>
+        <div className="data-table__detail-value">{c.software_platforms}</div>
+      </div>
+    )}
+    {c.product_page != null && (
+      <div className="data-table__detail">
+        <div className="data-table__detail-label">Product Page</div>
+        <div className="data-table__detail-value">
+          <a href={c.product_page} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="detail-link">
+            {c.product_page}
+          </a>
+        </div>
+      </div>
+    )}
+    {c.instruction_manual != null && (
+      <div className="data-table__detail">
+        <div className="data-table__detail-label">Instruction Manual</div>
+        <div className="data-table__detail-value">
+          <a href={c.instruction_manual} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="detail-link">
+            {c.instruction_manual}
+          </a>
+        </div>
+      </div>
+    )}
+  </>
+);
+
+const stats = (data: MidiController[]) => {
+  const inProd = data.filter(c => c.in_production).length;
+  const loopSwitchers = data.filter(c => c.audio_loop_count > 0).length;
+  return `${data.length} controllers \u00b7 ${inProd} in production \u00b7 ${loopSwitchers} loop switchers`;
 };
+
+const MidiControllers = () => (
+  <DataTable<MidiController>
+    title="MIDI Controller Database"
+    entityName="controller"
+    entityNamePlural="controllers"
+    stats={stats}
+    data={DATA}
+    columns={columns}
+    filters={filters}
+    searchFields={['manufacturer', 'model']}
+    searchPlaceholder="Search controllers..."
+    renderExpandedRow={renderExpandedRow}
+    defaultSortKey="manufacturer"
+  />
+);
 
 export default MidiControllers;
