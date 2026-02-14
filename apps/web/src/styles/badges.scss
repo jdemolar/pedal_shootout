@@ -1,0 +1,134 @@
+// Effect type badges
+.effect-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 10.5px;
+  font-weight: 600;
+  background: #1a1a2a;
+  color: #7a8adf;
+  border: 1px solid rgba(#7a8adf, 0.2);
+
+  &--gain { background: #2a1a1a; color: #df7a7a; border-color: rgba(#df7a7a, 0.2); }
+  &--fuzz { background: #2a1a2a; color: #cf7adf; border-color: rgba(#cf7adf, 0.2); }
+  &--compression { background: #1a2a2a; color: #7adfcf; border-color: rgba(#7adfcf, 0.2); }
+  &--delay { background: #1a1a2a; color: #7a9fdf; border-color: rgba(#7a9fdf, 0.2); }
+  &--reverb { background: #1a2a1a; color: #7adf8a; border-color: rgba(#7adf8a, 0.2); }
+  &--preamp { background: #2a2a1a; color: #dfcf7a; border-color: rgba(#dfcf7a, 0.2); }
+  &--utility { background: #222222; color: #888888; border-color: rgba(#888888, 0.2); }
+  &--multi-effects { background: #2a1a1a; color: #dfaa7a; border-color: rgba(#dfaa7a, 0.2); }
+  &--other { background: #1a1a2a; color: #7a8adf; border-color: rgba(#7a8adf, 0.2); }
+  &--amp-cab-sim { background: #2a2a1a; color: #dfcf7a; border-color: rgba(#dfcf7a, 0.2); }
+}
+
+// Status badges
+.status-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 10.5px;
+  font-weight: 600;
+
+  &--in-production {
+    background: #1a3322;
+    color: #5ccc88;
+    border: 1px solid rgba(#5ccc88, 0.2);
+  }
+
+  &--discontinued {
+    background: #2a2518;
+    color: #c8a840;
+    border: 1px solid rgba(#c8a840, 0.2);
+  }
+
+  &--active {
+    background: #1a3322;
+    color: #5ccc88;
+    border: 1px solid rgba(#5ccc88, 0.2);
+  }
+
+  &--defunct {
+    background: #2a1818;
+    color: #cc6060;
+    border: 1px solid rgba(#cc6060, 0.2);
+  }
+
+  &--unknown {
+    background: #222222;
+    color: #888888;
+    border: 1px solid rgba(#888888, 0.2);
+  }
+}
+
+// Reliability badges
+.reliability-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+
+  &--high {
+    background: #1a3322;
+    color: #5ccc88;
+    border: 1px solid rgba(#5ccc88, 0.2);
+  }
+
+  &--medium {
+    background: #2a2518;
+    color: #c8a840;
+    border: 1px solid rgba(#c8a840, 0.2);
+  }
+
+  &--low {
+    background: #2a1818;
+    color: #cc6060;
+    border: 1px solid rgba(#cc6060, 0.2);
+  }
+}
+
+// Loop switcher badge
+.loop-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 10.5px;
+  font-weight: 600;
+  background: #1a2a2a;
+  color: #7acfcf;
+  border: 1px solid rgba(#7acfcf, 0.2);
+}
+
+// Utility classes
+.null-value {
+  color: #3a3a3a;
+  font-style: italic;
+}
+
+.detail-link {
+  color: #5a9bcf;
+  font-size: 11px;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.bool-yes {
+  color: #5ccc88;
+}
+
+.bool-no {
+  color: #3a3a3a;
+}
+
+.pedal-count-highlight {
+  color: #f0a855;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.pedal-count-zero {
+  color: #3a3a3a;
+}

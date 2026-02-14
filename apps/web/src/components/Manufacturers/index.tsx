@@ -1,5 +1,5 @@
-import './index.scss';
-import { useState, useMemo } from 'react';
+import { ReactNode } from 'react';
+import DataTable, { ColumnDef, FilterConfig } from '../DataTable';
 
 interface Manufacturer {
   id: number;
@@ -248,238 +248,80 @@ const DATA: Manufacturer[] = [{"id":1,"name":"1981 Inventions","country":"USA","
 {"id":232,"name":"ZVex","country":"USA","founded":null,"status":"Active","specialty":"Handpainted boutique effects","website":null,"notes":null,"updated_at":null,"pedal_count":0},
 {"id":231,"name":"Zoom","country":"Japan","founded":null,"status":"Active","specialty":"Multi-effects pedals","website":null,"notes":null,"updated_at":null,"pedal_count":0}];
 
-type SortColumn = keyof Manufacturer;
-type SortDirection = 1 | -1;
-
 const COUNTRIES = ['All', ...Array.from(new Set(DATA.map(d => d.country).filter((c): c is string => c !== null))).sort()];
-const STATUSES = ['All', 'Active', 'Defunct', 'Discontinued', 'Unknown'] as const;
 
-interface ColumnDef {
-  key: SortColumn;
-  label: string;
-  width: number;
-  align?: 'left' | 'center' | 'right';
-}
+const formatWebsiteUrl = (website: string) => {
+  return website.startsWith('http') ? website : `https://${website}`;
+};
 
-const COLUMNS: ColumnDef[] = [
-  { key: 'id', label: '#', width: 40, align: 'center' },
-  { key: 'name', label: 'Manufacturer', width: 200 },
-  { key: 'country', label: 'Country', width: 120 },
-  { key: 'founded', label: 'Founded', width: 80, align: 'center' },
-  { key: 'status', label: 'Status', width: 100, align: 'center' },
-  { key: 'specialty', label: 'Specialty', width: 280 },
-  { key: 'pedal_count', label: 'Pedals', width: 64, align: 'center' },
-  { key: 'website', label: 'Website', width: 160 },
+const columns: ColumnDef<Manufacturer>[] = [
+  { label: '#', width: 40, align: 'center', sortKey: 'id',
+    render: m => <span style={{ color: '#3a3a3a', fontSize: '10px' }}>{m.id}</span> },
+  { label: 'Manufacturer', width: 200, sortKey: 'name',
+    render: m => <span style={{ color: '#f0f0f0', fontSize: '12.5px', fontWeight: 600, fontFamily: "'Helvetica Neue', sans-serif" }}>{m.name}</span> },
+  { label: 'Country', width: 120, sortKey: 'country',
+    render: m => m.country != null ? <span style={{ color: '#a0a0a0' }}>{m.country}</span> : <span className="null-value">{'\u2014'}</span> },
+  { label: 'Founded', width: 80, align: 'center', sortKey: 'founded',
+    render: m => m.founded != null ? <span style={{ color: '#6a6a6a' }}>{m.founded}</span> : <span className="null-value">{'\u2014'}</span> },
+  { label: 'Status', width: 100, align: 'center', sortKey: 'status',
+    render: m => <span className={`status-badge status-badge--${m.status.toLowerCase()}`}>{m.status}</span> },
+  { label: 'Specialty', width: 280, sortKey: 'specialty',
+    render: m => m.specialty != null ? <span style={{ color: '#6a6a6a' }}>{m.specialty}</span> : <span className="null-value">{'\u2014'}</span> },
+  { label: 'Pedals', width: 64, align: 'center', sortKey: 'pedal_count',
+    render: m => m.pedal_count > 0
+      ? <span className="pedal-count-highlight">{m.pedal_count}</span>
+      : <span className="pedal-count-zero">0</span> },
+  { label: 'Website', width: 160, sortKey: 'website',
+    render: m => m.website
+      ? <a href={formatWebsiteUrl(m.website)} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="detail-link">{m.website}</a>
+      : <span className="null-value">{'\u2014'}</span> },
 ];
 
-const Manufacturers = () => {
-  const [search, setSearch] = useState('');
-  const [countryFilter, setCountryFilter] = useState('All');
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [sortCol, setSortCol] = useState<SortColumn>('name');
-  const [sortDir, setSortDir] = useState<SortDirection>(1);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+const filters: FilterConfig<Manufacturer>[] = [
+  { label: 'Country', options: COUNTRIES,
+    predicate: (m, v) => m.country === v },
+  { label: 'Status', options: ['All', 'Active', 'Defunct', 'Discontinued', 'Unknown'],
+    predicate: (m, v) => m.status === v },
+];
 
-  const filtered = useMemo(() => {
-    let result = DATA;
-
-    if (search) {
-      const s = search.toLowerCase();
-      result = result.filter(m => m.name.toLowerCase().includes(s));
-    }
-
-    if (countryFilter !== 'All') {
-      result = result.filter(m => m.country === countryFilter);
-    }
-
-    if (statusFilter !== 'All') {
-      result = result.filter(m => m.status === statusFilter);
-    }
-
-    return [...result].sort((a, b) => {
-      const va = a[sortCol];
-      const vb = b[sortCol];
-
-      if (va == null && vb == null) return 0;
-      if (va == null) return 1;
-      if (vb == null) return -1;
-
-      if (typeof va === 'string' && typeof vb === 'string') {
-        return va.localeCompare(vb) * sortDir;
-      }
-
-      return ((va as number) - (vb as number)) * sortDir;
-    });
-  }, [search, countryFilter, statusFilter, sortCol, sortDir]);
-
-  const handleSort = (col: SortColumn) => {
-    if (sortCol === col) {
-      setSortDir(d => (d === 1 ? -1 : 1));
-    } else {
-      setSortCol(col);
-      setSortDir(1);
-    }
-  };
-
-  const totalPedals = DATA.reduce((sum, m) => sum + m.pedal_count, 0);
-  const activeCount = DATA.filter(m => m.status === 'Active').length;
-
-  const formatWebsiteUrl = (website: string) => {
-    return website.startsWith('http') ? website : `https://${website}`;
-  };
-
-  return (
-    <div className="manufacturers">
-      <div className="manufacturers__header">
-        <div className="manufacturers__title-group">
-          <h1 className="manufacturers__title">Manufacturer Database</h1>
-          <span className="manufacturers__stats">
-            {DATA.length} manufacturers · {activeCount} active · {totalPedals} pedals catalogued
-          </span>
-        </div>
-      </div>
-
-      <div className="manufacturers__filters">
-        <div className="manufacturers__search-wrapper">
-          <span className="manufacturers__search-icon">&#x2315;</span>
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search manufacturer..."
-            className="manufacturers__search"
-          />
-        </div>
-
-        <select
-          value={countryFilter}
-          onChange={e => setCountryFilter(e.target.value)}
-          className="manufacturers__select"
-        >
-          {COUNTRIES.map(c => (
-            <option key={c} value={c}>
-              {c === 'All' ? 'Country: All' : c}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value)}
-          className="manufacturers__select"
-        >
-          {STATUSES.map(s => (
-            <option key={s} value={s}>
-              {s === 'All' ? 'Status: All' : s}
-            </option>
-          ))}
-        </select>
-
-        <span className="manufacturers__filter-count">
-          {filtered.length} manufacturer{filtered.length !== 1 ? 's' : ''} shown
-        </span>
-      </div>
-
-      <div className="manufacturers__table-wrapper">
-        <table className="manufacturers__table">
-          <thead>
-            <tr>
-              {COLUMNS.map(col => (
-                <th
-                  key={col.key}
-                  onClick={() => handleSort(col.key)}
-                  className="manufacturers__th"
-                  style={{ width: col.width, textAlign: col.align || 'left' }}
-                >
-                  {col.label}
-                  <span className={`manufacturers__sort-icon ${sortCol === col.key ? 'active' : ''}`}>
-                    {sortCol === col.key ? (sortDir === 1 ? '▲' : '▼') : '⇅'}
-                  </span>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((m, i) => {
-              const isExpanded = expandedId === m.id;
-
-              return (
-                <>
-                  <tr
-                    key={m.id}
-                    onClick={() => setExpandedId(isExpanded ? null : m.id)}
-                    className={`manufacturers__row ${isExpanded ? 'expanded' : ''} ${i % 2 === 0 ? 'even' : 'odd'}`}
-                  >
-                    <td className="manufacturers__td manufacturers__td--id">{m.id}</td>
-                    <td className="manufacturers__td manufacturers__td--name">{m.name}</td>
-                    <td className="manufacturers__td manufacturers__td--country">
-                      {m.country ?? <span className="null-value">—</span>}
-                    </td>
-                    <td className="manufacturers__td manufacturers__td--founded">
-                      {m.founded ?? <span className="null-value">—</span>}
-                    </td>
-                    <td className="manufacturers__td manufacturers__td--status">
-                      <span className={`status-badge status-badge--${m.status.toLowerCase()}`}>
-                        {m.status}
-                      </span>
-                    </td>
-                    <td className="manufacturers__td manufacturers__td--specialty">
-                      {m.specialty ?? <span className="null-value">—</span>}
-                    </td>
-                    <td className="manufacturers__td manufacturers__td--pedal-count">
-                      {m.pedal_count > 0 ? (
-                        <span className="pedal-count-highlight">{m.pedal_count}</span>
-                      ) : (
-                        <span className="pedal-count-zero">0</span>
-                      )}
-                    </td>
-                    <td className="manufacturers__td manufacturers__td--website">
-                      {m.website ? (
-                        <a
-                          href={formatWebsiteUrl(m.website)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={e => e.stopPropagation()}
-                          className="website-link"
-                        >
-                          {m.website}
-                        </a>
-                      ) : (
-                        <span className="null-value">—</span>
-                      )}
-                    </td>
-                  </tr>
-                  {isExpanded && (
-                    <tr key={`exp-${m.id}`} className="manufacturers__expanded-row">
-                      <td colSpan={8} className="manufacturers__expanded-cell">
-                        <div className="manufacturers__expanded-content">
-                          <div className="manufacturers__detail">
-                            <div className="manufacturers__detail-label">Notes</div>
-                            <div className="manufacturers__detail-value">
-                              {m.notes ?? <span className="null-value">—</span>}
-                            </div>
-                          </div>
-                          <div className="manufacturers__detail">
-                            <div className="manufacturers__detail-label">Pedals in Database</div>
-                            <div className={`manufacturers__detail-value ${m.pedal_count > 0 ? 'highlight' : ''}`}>
-                              {m.pedal_count} pedal{m.pedal_count !== 1 ? 's' : ''}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </>
-              );
-            })}
-          </tbody>
-        </table>
-        {filtered.length === 0 && (
-          <div className="manufacturers__empty">No manufacturers match your filters.</div>
-        )}
+const renderExpandedRow = (m: Manufacturer): ReactNode => (
+  <>
+    <div className="data-table__detail">
+      <div className="data-table__detail-label">Notes</div>
+      <div className="data-table__detail-value">
+        {m.notes ?? <span className="null-value">{'\u2014'}</span>}
       </div>
     </div>
-  );
+    <div className="data-table__detail">
+      <div className="data-table__detail-label">Pedals in Database</div>
+      <div className={`data-table__detail-value ${m.pedal_count > 0 ? 'data-table__detail-value--highlight' : ''}`}>
+        {m.pedal_count} pedal{m.pedal_count !== 1 ? 's' : ''}
+      </div>
+    </div>
+  </>
+);
+
+const stats = (data: Manufacturer[]) => {
+  const totalPedals = data.reduce((sum, m) => sum + m.pedal_count, 0);
+  const activeCount = data.filter(m => m.status === 'Active').length;
+  return `${data.length} manufacturers \u00b7 ${activeCount} active \u00b7 ${totalPedals} pedals catalogued`;
 };
+
+const Manufacturers = () => (
+  <DataTable<Manufacturer>
+    title="Manufacturer Database"
+    entityName="manufacturer"
+    entityNamePlural="manufacturers"
+    stats={stats}
+    data={DATA}
+    columns={columns}
+    filters={filters}
+    searchFields={['name']}
+    searchPlaceholder="Search manufacturer..."
+    renderExpandedRow={renderExpandedRow}
+    defaultSortKey="name"
+    minTableWidth={1050}
+  />
+);
 
 export default Manufacturers;
