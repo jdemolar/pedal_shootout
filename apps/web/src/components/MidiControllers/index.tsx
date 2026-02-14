@@ -1,6 +1,9 @@
 import { ReactNode } from 'react';
 import DataTable, { ColumnDef, FilterConfig } from '../DataTable';
 import { formatMsrp, formatDimensions, formatPower } from '../../utils/formatters';
+import { useApiData } from '../../hooks/useApiData';
+import { api } from '../../services/api';
+import { transformMidiController } from '../../utils/transformers';
 
 interface MidiController {
   id: number;
@@ -33,190 +36,6 @@ interface MidiController {
   power_voltage: string | null;
   power_current_ma: number | null;
 }
-
-// TODO: Replace with API call to Spring Boot backend
-const DATA: MidiController[] = [
-  {
-    "id": 185,
-    "manufacturer": "RJM Music Technology",
-    "model": "Mastermind LT",
-    "in_production": true,
-    "width_mm": 292.1,
-    "depth_mm": 127.0,
-    "height_mm": 69.85,
-    "weight_grams": 862,
-    "msrp_cents": 54900,
-    "product_page": "https://www.rjmmusic.com/mastermind-lt/",
-    "instruction_manual": "https://www.rjmmusic.com/download-content/MMLT/Mastermind%20LT%20Manual-3.1.pdf",
-    "data_reliability": "High",
-    "footswitch_count": 7,
-    "total_preset_slots": 768,
-    "audio_loop_count": 0,
-    "expression_input_count": 1,
-    "aux_switch_input_count": 2,
-    "has_display": true,
-    "display_type": "LCD",
-    "has_per_switch_displays": false,
-    "has_tuner": false,
-    "has_tap_tempo": true,
-    "has_setlist_mode": true,
-    "has_bluetooth_midi": false,
-    "software_editor_available": true,
-    "software_platforms": "macOS, Windows",
-    "power_voltage": "9-12V DC",
-    "power_current_ma": 150
-  },
-  {
-    "id": 186,
-    "manufacturer": "RJM Music Technology",
-    "model": "Mastermind GT/10",
-    "in_production": true,
-    "width_mm": 492.76,
-    "depth_mm": 205.74,
-    "height_mm": 82.55,
-    "weight_grams": 2722,
-    "msrp_cents": 149900,
-    "product_page": "https://www.rjmmusic.com/mastermind-gt-10/",
-    "instruction_manual": "https://www.rjmmusic.com/download-content/MMGT/Mastermind%20GT%20Manual-4.3.pdf",
-    "data_reliability": "High",
-    "footswitch_count": 10,
-    "total_preset_slots": 768,
-    "audio_loop_count": 0,
-    "expression_input_count": 4,
-    "aux_switch_input_count": 4,
-    "has_display": true,
-    "display_type": "LCD",
-    "has_per_switch_displays": true,
-    "has_tuner": false,
-    "has_tap_tempo": true,
-    "has_setlist_mode": true,
-    "has_bluetooth_midi": false,
-    "software_editor_available": true,
-    "software_platforms": "macOS, Windows",
-    "power_voltage": "12V DC",
-    "power_current_ma": 1000
-  },
-  {
-    "id": 187,
-    "manufacturer": "RJM Music Technology",
-    "model": "Mastermind GT/16",
-    "in_production": true,
-    "width_mm": 492.76,
-    "depth_mm": 281.94,
-    "height_mm": 82.55,
-    "weight_grams": 3629,
-    "msrp_cents": 199900,
-    "product_page": "https://www.rjmmusic.com/mastermind-gt-16/",
-    "instruction_manual": "https://www.rjmmusic.com/download-content/MMGT/Mastermind%20GT%20Manual-4.3.pdf",
-    "data_reliability": "High",
-    "footswitch_count": 16,
-    "total_preset_slots": 768,
-    "audio_loop_count": 0,
-    "expression_input_count": 4,
-    "aux_switch_input_count": 4,
-    "has_display": true,
-    "display_type": "LCD",
-    "has_per_switch_displays": true,
-    "has_tuner": false,
-    "has_tap_tempo": true,
-    "has_setlist_mode": true,
-    "has_bluetooth_midi": false,
-    "software_editor_available": true,
-    "software_platforms": "macOS, Windows",
-    "power_voltage": "12V DC",
-    "power_current_ma": 1500
-  },
-  {
-    "id": 188,
-    "manufacturer": "RJM Music Technology",
-    "model": "Mastermind GT/22",
-    "in_production": true,
-    "width_mm": 492.76,
-    "depth_mm": 358.14,
-    "height_mm": 82.55,
-    "weight_grams": 4536,
-    "msrp_cents": 225000,
-    "product_page": "https://www.rjmmusic.com/mastermind-gt-22/",
-    "instruction_manual": "https://www.rjmmusic.com/download-content/MMGT/Mastermind%20GT%20Manual-4.3.pdf",
-    "data_reliability": "High",
-    "footswitch_count": 22,
-    "total_preset_slots": 768,
-    "audio_loop_count": 0,
-    "expression_input_count": 4,
-    "aux_switch_input_count": 4,
-    "has_display": true,
-    "display_type": "LCD",
-    "has_per_switch_displays": true,
-    "has_tuner": false,
-    "has_tap_tempo": true,
-    "has_setlist_mode": true,
-    "has_bluetooth_midi": false,
-    "software_editor_available": true,
-    "software_platforms": "macOS, Windows",
-    "power_voltage": "12V DC",
-    "power_current_ma": 2000
-  },
-  {
-    "id": 189,
-    "manufacturer": "RJM Music Technology",
-    "model": "Mastermind PBC/6X",
-    "in_production": true,
-    "width_mm": 256.54,
-    "depth_mm": 111.76,
-    "height_mm": 60.96,
-    "weight_grams": 907,
-    "msrp_cents": 89900,
-    "product_page": "https://www.rjmmusic.com/mastermind-pbc-6x/",
-    "instruction_manual": "https://www.rjmmusic.com/download-content/PBC6X/PBC6X%20Manual-4.3.pdf",
-    "data_reliability": "High",
-    "footswitch_count": 7,
-    "total_preset_slots": 768,
-    "audio_loop_count": 6,
-    "expression_input_count": 1,
-    "aux_switch_input_count": 2,
-    "has_display": true,
-    "display_type": "LCD",
-    "has_per_switch_displays": false,
-    "has_tuner": true,
-    "has_tap_tempo": true,
-    "has_setlist_mode": true,
-    "has_bluetooth_midi": false,
-    "software_editor_available": true,
-    "software_platforms": "macOS, Windows",
-    "power_voltage": "9-12V DC",
-    "power_current_ma": 220
-  },
-  {
-    "id": 190,
-    "manufacturer": "RJM Music Technology",
-    "model": "Mastermind PBC/10",
-    "in_production": true,
-    "width_mm": 444.5,
-    "depth_mm": 139.7,
-    "height_mm": 84.58,
-    "weight_grams": 1814,
-    "msrp_cents": 124900,
-    "product_page": "https://www.rjmmusic.com/mastermind-pbc-2/",
-    "instruction_manual": "https://www.rjmmusic.com/download-content/PBC/PBC%20Manual-4.0.pdf",
-    "data_reliability": "High",
-    "footswitch_count": 11,
-    "total_preset_slots": 625,
-    "audio_loop_count": 10,
-    "expression_input_count": 1,
-    "aux_switch_input_count": 4,
-    "has_display": true,
-    "display_type": "LCD",
-    "has_per_switch_displays": false,
-    "has_tuner": true,
-    "has_tap_tempo": true,
-    "has_setlist_mode": true,
-    "has_bluetooth_midi": false,
-    "software_editor_available": true,
-    "software_platforms": "macOS, Windows",
-    "power_voltage": "9V DC / 12V DC / 9V AC",
-    "power_current_ma": 500
-  }
-];
 
 const columns: ColumnDef<MidiController>[] = [
   { label: 'Manufacturer', width: 180, sortKey: 'manufacturer',
@@ -357,20 +176,26 @@ const stats = (data: MidiController[]) => {
   return `${data.length} controllers \u00b7 ${inProd} in production \u00b7 ${loopSwitchers} loop switchers`;
 };
 
-const MidiControllers = () => (
-  <DataTable<MidiController>
-    title="MIDI Controller Database"
-    entityName="controller"
-    entityNamePlural="controllers"
-    stats={stats}
-    data={DATA}
-    columns={columns}
-    filters={filters}
-    searchFields={['manufacturer', 'model']}
-    searchPlaceholder="Search controllers..."
-    renderExpandedRow={renderExpandedRow}
-    defaultSortKey="manufacturer"
-  />
-);
+const MidiControllers = () => {
+  const { data, loading, error } = useApiData(api.getMidiControllers, transformMidiController);
+
+  return (
+    <DataTable<MidiController>
+      title="MIDI Controller Database"
+      entityName="controller"
+      entityNamePlural="controllers"
+      stats={stats}
+      data={data}
+      columns={columns}
+      filters={filters}
+      searchFields={['manufacturer', 'model']}
+      searchPlaceholder="Search controllers..."
+      renderExpandedRow={renderExpandedRow}
+      defaultSortKey="manufacturer"
+      loading={loading}
+      error={error}
+    />
+  );
+};
 
 export default MidiControllers;

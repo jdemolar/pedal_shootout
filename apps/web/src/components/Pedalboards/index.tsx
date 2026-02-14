@@ -1,6 +1,9 @@
-import { ReactNode } from 'react';
+import { ReactNode, useMemo } from 'react';
 import DataTable, { ColumnDef, FilterConfig } from '../DataTable';
 import { formatMsrp, formatDimensions } from '../../utils/formatters';
+import { useApiData } from '../../hooks/useApiData';
+import { api } from '../../services/api';
+import { transformPedalboard } from '../../utils/transformers';
 
 interface Pedalboard {
   id: number;
@@ -25,276 +28,6 @@ interface Pedalboard {
   has_integrated_patch_bay: boolean;
   case_included: boolean;
 }
-
-// TODO: Replace with API call to Spring Boot backend
-const DATA: Pedalboard[] = [
-  {
-    "id": 191,
-    "manufacturer": "Creation Music Company",
-    "model": "Aero 18 LITE",
-    "in_production": true,
-    "width_mm": 457.0,
-    "depth_mm": 178.0,
-    "height_mm": 30.0,
-    "weight_grams": 272,
-    "msrp_cents": 13999,
-    "product_page": "https://creationmusiccompany.com/products/v3-aero-18-lite-pedalboard",
-    "instruction_manual": null,
-    "data_reliability": "High",
-    "usable_width_mm": 457.0,
-    "usable_depth_mm": 178.0,
-    "surface_type": "Solid Flat",
-    "material": "Aluminum",
-    "has_second_tier": false,
-    "has_integrated_power": false,
-    "has_integrated_patch_bay": false,
-    "case_included": false
-  },
-  {
-    "id": 192,
-    "manufacturer": "Creation Music Company",
-    "model": "Aero 18",
-    "in_production": true,
-    "width_mm": 457.0,
-    "depth_mm": 318.0,
-    "height_mm": 30.0,
-    "weight_grams": 363,
-    "msrp_cents": 16999,
-    "product_page": "https://creationmusiccompany.com/products/aero-18-pedalboard",
-    "instruction_manual": null,
-    "data_reliability": "High",
-    "usable_width_mm": 457.0,
-    "usable_depth_mm": 318.0,
-    "surface_type": "Solid Flat",
-    "material": "Aluminum",
-    "has_second_tier": false,
-    "has_integrated_power": false,
-    "has_integrated_patch_bay": false,
-    "case_included": false
-  },
-  {
-    "id": 193,
-    "manufacturer": "Creation Music Company",
-    "model": "Aero 24",
-    "in_production": true,
-    "width_mm": 610.0,
-    "depth_mm": 318.0,
-    "height_mm": 30.0,
-    "weight_grams": 589,
-    "msrp_cents": 18999,
-    "product_page": "https://creationmusiccompany.com/products/aero-24-pedalboard",
-    "instruction_manual": null,
-    "data_reliability": "High",
-    "usable_width_mm": 610.0,
-    "usable_depth_mm": 318.0,
-    "surface_type": "Solid Flat",
-    "material": "Aluminum",
-    "has_second_tier": false,
-    "has_integrated_power": false,
-    "has_integrated_patch_bay": false,
-    "case_included": false
-  },
-  {
-    "id": 194,
-    "manufacturer": "Creation Music Company",
-    "model": "Aero 24+",
-    "in_production": true,
-    "width_mm": 610.0,
-    "depth_mm": 406.0,
-    "height_mm": 30.0,
-    "weight_grams": 589,
-    "msrp_cents": 20999,
-    "product_page": "https://creationmusiccompany.com/products/aero-24-pedalboard-1",
-    "instruction_manual": null,
-    "data_reliability": "High",
-    "usable_width_mm": 610.0,
-    "usable_depth_mm": 406.0,
-    "surface_type": "Solid Flat",
-    "material": "Aluminum",
-    "has_second_tier": false,
-    "has_integrated_power": false,
-    "has_integrated_patch_bay": false,
-    "case_included": false
-  },
-  {
-    "id": 195,
-    "manufacturer": "Creation Music Company",
-    "model": "Aero 28",
-    "in_production": true,
-    "width_mm": 711.0,
-    "depth_mm": 356.0,
-    "height_mm": 30.0,
-    "weight_grams": 589,
-    "msrp_cents": 21999,
-    "product_page": "https://creationmusiccompany.com/products/aero-28-pedalboard-1",
-    "instruction_manual": null,
-    "data_reliability": "High",
-    "usable_width_mm": 711.0,
-    "usable_depth_mm": 356.0,
-    "surface_type": "Solid Flat",
-    "material": "Aluminum",
-    "has_second_tier": false,
-    "has_integrated_power": false,
-    "has_integrated_patch_bay": false,
-    "case_included": false
-  },
-  {
-    "id": 196,
-    "manufacturer": "Creation Music Company",
-    "model": "Aero 32+",
-    "in_production": true,
-    "width_mm": 813.0,
-    "depth_mm": 406.0,
-    "height_mm": 30.0,
-    "weight_grams": 907,
-    "msrp_cents": 23999,
-    "product_page": "https://creationmusiccompany.com/products/aero-32-pedalboard",
-    "instruction_manual": null,
-    "data_reliability": "High",
-    "usable_width_mm": 813.0,
-    "usable_depth_mm": 406.0,
-    "surface_type": "Solid Flat",
-    "material": "Aluminum",
-    "has_second_tier": false,
-    "has_integrated_power": false,
-    "has_integrated_patch_bay": false,
-    "case_included": false
-  },
-  {
-    "id": 197,
-    "manufacturer": "Creation Music Company",
-    "model": "Elevation 18",
-    "in_production": true,
-    "width_mm": 457.0,
-    "depth_mm": 318.0,
-    "height_mm": 98.0,
-    "weight_grams": 907,
-    "msrp_cents": 26999,
-    "product_page": "https://creationmusiccompany.com/products/elevation-18",
-    "instruction_manual": null,
-    "data_reliability": "High",
-    "usable_width_mm": 457.0,
-    "usable_depth_mm": 318.0,
-    "surface_type": "Solid Flat",
-    "material": "Aluminum",
-    "has_second_tier": false,
-    "has_integrated_power": false,
-    "has_integrated_patch_bay": false,
-    "case_included": false
-  },
-  {
-    "id": 198,
-    "manufacturer": "Creation Music Company",
-    "model": "Elevation 24",
-    "in_production": true,
-    "width_mm": 610.0,
-    "depth_mm": 318.0,
-    "height_mm": 98.0,
-    "weight_grams": 907,
-    "msrp_cents": 29999,
-    "product_page": "https://creationmusiccompany.com/products/v3-elevation-24-pedalboard",
-    "instruction_manual": null,
-    "data_reliability": "High",
-    "usable_width_mm": 610.0,
-    "usable_depth_mm": 318.0,
-    "surface_type": "Solid Flat",
-    "material": "Aluminum",
-    "has_second_tier": false,
-    "has_integrated_power": false,
-    "has_integrated_patch_bay": false,
-    "case_included": false
-  },
-  {
-    "id": 199,
-    "manufacturer": "Creation Music Company",
-    "model": "Elevation 24+",
-    "in_production": true,
-    "width_mm": 610.0,
-    "depth_mm": 406.0,
-    "height_mm": 98.0,
-    "weight_grams": 907,
-    "msrp_cents": 31999,
-    "product_page": "https://creationmusiccompany.com/products/v3-elevation-24-pedalboard-1",
-    "instruction_manual": null,
-    "data_reliability": "High",
-    "usable_width_mm": 610.0,
-    "usable_depth_mm": 406.0,
-    "surface_type": "Solid Flat",
-    "material": "Aluminum",
-    "has_second_tier": false,
-    "has_integrated_power": false,
-    "has_integrated_patch_bay": false,
-    "case_included": false
-  },
-  {
-    "id": 200,
-    "manufacturer": "Creation Music Company",
-    "model": "Elevation 28",
-    "in_production": true,
-    "width_mm": 711.0,
-    "depth_mm": 356.0,
-    "height_mm": 98.0,
-    "weight_grams": 1089,
-    "msrp_cents": 32999,
-    "product_page": "https://creationmusiccompany.com/products/v3-elevation-28-pedalboard",
-    "instruction_manual": null,
-    "data_reliability": "High",
-    "usable_width_mm": 711.0,
-    "usable_depth_mm": 356.0,
-    "surface_type": "Solid Flat",
-    "material": "Aluminum",
-    "has_second_tier": false,
-    "has_integrated_power": false,
-    "has_integrated_patch_bay": false,
-    "case_included": false
-  },
-  {
-    "id": 201,
-    "manufacturer": "Creation Music Company",
-    "model": "Elevation 32+",
-    "in_production": true,
-    "width_mm": 813.0,
-    "depth_mm": 406.0,
-    "height_mm": 98.0,
-    "weight_grams": 1451,
-    "msrp_cents": 36999,
-    "product_page": "https://creationmusiccompany.com/products/v3-elevation-32-pedalboard",
-    "instruction_manual": null,
-    "data_reliability": "High",
-    "usable_width_mm": 813.0,
-    "usable_depth_mm": 406.0,
-    "surface_type": "Solid Flat",
-    "material": "Aluminum",
-    "has_second_tier": false,
-    "has_integrated_power": false,
-    "has_integrated_patch_bay": false,
-    "case_included": false
-  },
-  {
-    "id": 202,
-    "manufacturer": "Creation Music Company",
-    "model": "The Board (Standard Sizes)",
-    "in_production": true,
-    "width_mm": null,
-    "depth_mm": null,
-    "height_mm": 19.0,
-    "weight_grams": null,
-    "msrp_cents": 4999,
-    "product_page": "https://creationmusiccompany.com/products/the-board-standard-sized",
-    "instruction_manual": null,
-    "data_reliability": "High",
-    "usable_width_mm": null,
-    "usable_depth_mm": null,
-    "surface_type": "Solid Flat",
-    "material": "Phenolic birch plywood",
-    "has_second_tier": false,
-    "has_integrated_power": false,
-    "has_integrated_patch_bay": false,
-    "case_included": false
-  }
-];
-
-const MATERIALS = ['All', ...Array.from(new Set(DATA.map(d => d.material).filter((m): m is string => m !== null))).sort()];
 
 const columns: ColumnDef<Pedalboard>[] = [
   { label: 'Manufacturer', width: 180, sortKey: 'manufacturer',
@@ -331,15 +64,6 @@ const columns: ColumnDef<Pedalboard>[] = [
     render: p => p.data_reliability
       ? <span className={`reliability-badge reliability-badge--${p.data_reliability.toLowerCase()}`}>{p.data_reliability}</span>
       : <span className="null-value">{'\u2014'}</span> },
-];
-
-const filters: FilterConfig<Pedalboard>[] = [
-  { label: 'Material', options: MATERIALS,
-    predicate: (p, v) => p.material === v },
-  { label: 'Status', options: ['All', 'In Production', 'Discontinued'],
-    predicate: (p, v) => (v === 'In Production') === p.in_production },
-  { label: 'Reliability', options: ['All', 'High', 'Medium', 'Low'],
-    predicate: (p, v) => p.data_reliability === v },
 ];
 
 const renderExpandedRow = (p: Pedalboard): ReactNode => (
@@ -411,20 +135,40 @@ const stats = (data: Pedalboard[]) => {
   return `${data.length} boards \u00b7 ${inProd} in production \u00b7 ${materials} materials`;
 };
 
-const Pedalboards = () => (
-  <DataTable<Pedalboard>
-    title="Pedalboard Database"
-    entityName="board"
-    entityNamePlural="boards"
-    stats={stats}
-    data={DATA}
-    columns={columns}
-    filters={filters}
-    searchFields={['manufacturer', 'model']}
-    searchPlaceholder="Search pedalboards..."
-    renderExpandedRow={renderExpandedRow}
-    defaultSortKey="manufacturer"
-  />
-);
+const Pedalboards = () => {
+  const { data, loading, error } = useApiData(api.getPedalboards, transformPedalboard);
+
+  const materials = useMemo(
+    () => ['All', ...Array.from(new Set(data.map(d => d.material).filter((m): m is string => m !== null))).sort()],
+    [data]
+  );
+
+  const filters: FilterConfig<Pedalboard>[] = useMemo(() => [
+    { label: 'Material', options: materials,
+      predicate: (p, v) => p.material === v },
+    { label: 'Status', options: ['All', 'In Production', 'Discontinued'],
+      predicate: (p, v) => (v === 'In Production') === p.in_production },
+    { label: 'Reliability', options: ['All', 'High', 'Medium', 'Low'],
+      predicate: (p, v) => p.data_reliability === v },
+  ], [materials]);
+
+  return (
+    <DataTable<Pedalboard>
+      title="Pedalboard Database"
+      entityName="board"
+      entityNamePlural="boards"
+      stats={stats}
+      data={data}
+      columns={columns}
+      filters={filters}
+      searchFields={['manufacturer', 'model']}
+      searchPlaceholder="Search pedalboards..."
+      renderExpandedRow={renderExpandedRow}
+      defaultSortKey="manufacturer"
+      loading={loading}
+      error={error}
+    />
+  );
+};
 
 export default Pedalboards;
