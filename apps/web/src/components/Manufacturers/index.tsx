@@ -14,7 +14,7 @@ interface Manufacturer {
   website: string | null;
   notes: string | null;
   updated_at: string | null;
-  pedal_count: number;
+  product_count: number;
 }
 
 const formatWebsiteUrl = (website: string) => {
@@ -34,9 +34,9 @@ const columns: ColumnDef<Manufacturer>[] = [
     render: m => <span className={`status-badge status-badge--${m.status.toLowerCase()}`}>{m.status}</span> },
   { label: 'Specialty', width: 280, sortKey: 'specialty',
     render: m => m.specialty != null ? <span style={{ color: '#6a6a6a' }}>{m.specialty}</span> : <span className="null-value">{'\u2014'}</span> },
-  { label: 'Pedals', width: 64, align: 'center', sortKey: 'pedal_count',
-    render: m => m.pedal_count > 0
-      ? <span className="pedal-count-highlight">{m.pedal_count}</span>
+  { label: 'Products', width: 64, align: 'center', sortKey: 'product_count',
+    render: m => m.product_count > 0
+      ? <span className="pedal-count-highlight">{m.product_count}</span>
       : <span className="pedal-count-zero">0</span> },
   { label: 'Website', width: 160, sortKey: 'website',
     render: m => m.website
@@ -53,18 +53,18 @@ const renderExpandedRow = (m: Manufacturer): ReactNode => (
       </div>
     </div>
     <div className="data-table__detail">
-      <div className="data-table__detail-label">Pedals in Database</div>
-      <div className={`data-table__detail-value ${m.pedal_count > 0 ? 'data-table__detail-value--highlight' : ''}`}>
-        {m.pedal_count} pedal{m.pedal_count !== 1 ? 's' : ''}
+      <div className="data-table__detail-label">Products in Database</div>
+      <div className={`data-table__detail-value ${m.product_count > 0 ? 'data-table__detail-value--highlight' : ''}`}>
+        {m.product_count} product{m.product_count !== 1 ? 's' : ''}
       </div>
     </div>
   </>
 );
 
 const stats = (data: Manufacturer[]) => {
-  const totalPedals = data.reduce((sum, m) => sum + m.pedal_count, 0);
+  const totalProducts = data.reduce((sum, m) => sum + m.product_count, 0);
   const activeCount = data.filter(m => m.status === 'Active').length;
-  return `${data.length} manufacturers \u00b7 ${activeCount} active \u00b7 ${totalPedals} pedals catalogued`;
+  return `${data.length} manufacturers \u00b7 ${activeCount} active \u00b7 ${totalProducts} products catalogued`;
 };
 
 const Manufacturers = () => {
