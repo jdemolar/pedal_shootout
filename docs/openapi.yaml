@@ -1,0 +1,1790 @@
+openapi: 3.0.3
+info:
+  title: Pedal Shootout API
+  description: |
+    REST API for the Pedal Shootout guitar gear database. Provides read-only access
+    to a comprehensive catalog of guitar pedals, power supplies, pedalboards, MIDI
+    controllers, utility devices, and plugs.
+
+    The API is organized into two layers:
+    - **Layer 1 (CRUD):** Standard resource endpoints for browsing and retrieving gear data.
+    - **Layer 2 (Features):** Use-case endpoints that combine data from multiple tables
+      to support planning tools (power budget, board layout, MIDI compatibility).
+
+    All endpoints are GET-only. MSRP values are stored as integers in cents (e.g., `9900` = $99.00)
+    and also provided as formatted display strings (e.g., `"$99.00"`).
+  version: 1.0.0
+  contact:
+    name: Pedal Shootout
+
+servers:
+  - url: http://localhost:8081
+    description: Local development server
+
+tags:
+  - name: Manufacturers
+    description: Guitar gear manufacturers
+  - name: Products
+    description: Generic product endpoints (all product types)
+  - name: Pedals
+    description: Effects pedals with full detail
+  - name: Power Supplies
+    description: Pedalboard power supplies
+  - name: Pedalboards
+    description: Pedalboards and their specifications
+  - name: MIDI Controllers
+    description: MIDI foot controllers
+  - name: Utilities
+    description: Utility devices (DI boxes, tuners, volume pedals, etc.)
+  - name: Plugs
+    description: Cable plugs and connectors
+  - name: Power Budget
+    description: Power budget calculation tools
+  - name: Board Planner
+    description: Pedalboard layout planning tools
+  - name: MIDI Planner
+    description: MIDI compatibility planning tools
+
+paths:
+  # ──────────────────────────────────────────────
+  # Manufacturers
+  # ──────────────────────────────────────────────
+  /api/manufacturers:
+    get:
+      tags: [Manufacturers]
+      summary: List all manufacturers
+      operationId: getAllManufacturers
+      parameters:
+        - name: search
+          in: query
+          required: false
+          description: Filter manufacturers by name (case-insensitive partial match)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of manufacturers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Manufacturer'
+
+  /api/manufacturers/{id}:
+    get:
+      tags: [Manufacturers]
+      summary: Get a manufacturer by ID
+      operationId: getManufacturerById
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Manufacturer found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Manufacturer'
+        '404':
+          description: Manufacturer not found
+
+  /api/manufacturers/{id}/products:
+    get:
+      tags: [Manufacturers]
+      summary: Get all products by a manufacturer
+      operationId: getManufacturerProducts
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: List of products by this manufacturer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductSummary'
+        '404':
+          description: No products found for this manufacturer
+
+  # ──────────────────────────────────────────────
+  # Products
+  # ──────────────────────────────────────────────
+  /api/products:
+    get:
+      tags: [Products]
+      summary: List all products
+      operationId: getAllProducts
+      parameters:
+        - name: typeId
+          in: query
+          required: false
+          description: |
+            Filter by product type ID:
+            - `1` = pedal
+            - `2` = power_supply
+            - `3` = pedalboard
+            - `4` = midi_controller
+            - `5` = utility
+            - `6` = plug
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of product summaries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductSummary'
+
+  /api/products/{id}:
+    get:
+      tags: [Products]
+      summary: Get a product by ID
+      operationId: getProductById
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Full product detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail'
+        '404':
+          description: Product not found
+
+  /api/products/{id}/jacks:
+    get:
+      tags: [Products]
+      summary: Get jacks for a product
+      operationId: getProductJacks
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: List of jacks for this product
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Jack'
+
+  /api/product-types:
+    get:
+      tags: [Products]
+      summary: List all product types
+      operationId: getProductTypes
+      description: Returns the reference table of product type IDs and names.
+      responses:
+        '200':
+          description: List of product types
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductType'
+
+  # ──────────────────────────────────────────────
+  # Pedals
+  # ──────────────────────────────────────────────
+  /api/pedals:
+    get:
+      tags: [Pedals]
+      summary: List all pedals
+      operationId: getAllPedals
+      parameters:
+        - name: effectType
+          in: query
+          required: false
+          description: Filter by effect type (e.g., Delay, Reverb, Overdrive)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of pedals with full details and jacks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pedal'
+
+  /api/pedals/{id}:
+    get:
+      tags: [Pedals]
+      summary: Get a pedal by ID
+      operationId: getPedalById
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Pedal with full details and jacks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pedal'
+        '404':
+          description: Pedal not found
+
+  # ──────────────────────────────────────────────
+  # Power Supplies
+  # ──────────────────────────────────────────────
+  /api/power-supplies:
+    get:
+      tags: [Power Supplies]
+      summary: List all power supplies
+      operationId: getAllPowerSupplies
+      responses:
+        '200':
+          description: List of power supplies with full details and jacks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PowerSupply'
+
+  /api/power-supplies/{id}:
+    get:
+      tags: [Power Supplies]
+      summary: Get a power supply by ID
+      operationId: getPowerSupplyById
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Power supply with full details and jacks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PowerSupply'
+        '404':
+          description: Power supply not found
+
+  # ──────────────────────────────────────────────
+  # Pedalboards
+  # ──────────────────────────────────────────────
+  /api/pedalboards:
+    get:
+      tags: [Pedalboards]
+      summary: List all pedalboards
+      operationId: getAllPedalboards
+      responses:
+        '200':
+          description: List of pedalboards with full details and jacks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pedalboard'
+
+  /api/pedalboards/{id}:
+    get:
+      tags: [Pedalboards]
+      summary: Get a pedalboard by ID
+      operationId: getPedalboardById
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Pedalboard with full details and jacks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pedalboard'
+        '404':
+          description: Pedalboard not found
+
+  # ──────────────────────────────────────────────
+  # MIDI Controllers
+  # ──────────────────────────────────────────────
+  /api/midi-controllers:
+    get:
+      tags: [MIDI Controllers]
+      summary: List all MIDI controllers
+      operationId: getAllMidiControllers
+      responses:
+        '200':
+          description: List of MIDI controllers with full details and jacks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MidiController'
+
+  /api/midi-controllers/{id}:
+    get:
+      tags: [MIDI Controllers]
+      summary: Get a MIDI controller by ID
+      operationId: getMidiControllerById
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: MIDI controller with full details and jacks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MidiController'
+        '404':
+          description: MIDI controller not found
+
+  # ──────────────────────────────────────────────
+  # Utilities
+  # ──────────────────────────────────────────────
+  /api/utilities:
+    get:
+      tags: [Utilities]
+      summary: List all utility devices
+      operationId: getAllUtilities
+      parameters:
+        - name: utilityType
+          in: query
+          required: false
+          description: Filter by utility type (e.g., DI Box, Tuner, Volume Pedal)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of utilities with full details and jacks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Utility'
+
+  /api/utilities/{id}:
+    get:
+      tags: [Utilities]
+      summary: Get a utility device by ID
+      operationId: getUtilityById
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Utility with full details and jacks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Utility'
+        '404':
+          description: Utility not found
+
+  # ──────────────────────────────────────────────
+  # Plugs
+  # ──────────────────────────────────────────────
+  /api/plugs:
+    get:
+      tags: [Plugs]
+      summary: List all plugs
+      operationId: getAllPlugs
+      responses:
+        '200':
+          description: List of plugs with details and jacks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Plug'
+
+  /api/plugs/{id}:
+    get:
+      tags: [Plugs]
+      summary: Get a plug by ID
+      operationId: getPlugById
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Plug with details and jacks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plug'
+        '404':
+          description: Plug not found
+
+  # ──────────────────────────────────────────────
+  # Power Budget (Layer 2)
+  # ──────────────────────────────────────────────
+  /api/power-budget/calculate:
+    get:
+      tags: [Power Budget]
+      summary: Calculate power budget for a supply and pedals
+      operationId: calculatePowerBudget
+      description: |
+        Checks whether a given power supply has enough capacity to power the
+        specified pedals. Returns a breakdown of each pedal's power draw and
+        the remaining headroom.
+      parameters:
+        - name: supplyId
+          in: query
+          required: true
+          description: ID of the power supply to check
+          schema:
+            type: integer
+        - name: pedalIds
+          in: query
+          required: true
+          description: Comma-separated list of pedal IDs
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+      responses:
+        '200':
+          description: Power budget calculation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PowerBudgetCalculationResult'
+        '404':
+          description: Power supply not found
+
+  /api/power-budget/supplies-for-pedals:
+    get:
+      tags: [Power Budget]
+      summary: Find compatible power supplies for pedals
+      operationId: findSuppliesForPedals
+      description: |
+        Given a set of pedals, returns all power supplies that have enough
+        total current capacity to power them, sorted by headroom.
+      parameters:
+        - name: pedalIds
+          in: query
+          required: true
+          description: Comma-separated list of pedal IDs
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+      responses:
+        '200':
+          description: List of compatible power supplies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PowerBudgetSupplyMatch'
+
+  # ──────────────────────────────────────────────
+  # Board Planner (Layer 2)
+  # ──────────────────────────────────────────────
+  /api/board-planner/components:
+    get:
+      tags: [Board Planner]
+      summary: Get all components for board planning
+      operationId: getBoardPlannerComponents
+      description: Returns all pedalboards, power supplies, and pedals available for layout planning.
+      responses:
+        '200':
+          description: All available components
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardPlannerComponents'
+
+  /api/board-planner/fit-check:
+    get:
+      tags: [Board Planner]
+      summary: Check if pedals fit on a pedalboard
+      operationId: fitCheck
+      description: |
+        Calculates whether the specified pedals will physically fit on the
+        given pedalboard based on usable surface area.
+      parameters:
+        - name: boardId
+          in: query
+          required: true
+          description: ID of the pedalboard
+          schema:
+            type: integer
+        - name: pedalIds
+          in: query
+          required: true
+          description: Comma-separated list of pedal IDs
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+      responses:
+        '200':
+          description: Fit check result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardPlannerFitCheckResult'
+        '404':
+          description: Pedalboard not found
+
+  # ──────────────────────────────────────────────
+  # MIDI Planner (Layer 2)
+  # ──────────────────────────────────────────────
+  /api/midi-planner/devices:
+    get:
+      tags: [MIDI Planner]
+      summary: List all MIDI-capable devices
+      operationId: getMidiDevices
+      description: Returns all pedals and controllers that have MIDI capabilities.
+      responses:
+        '200':
+          description: List of MIDI-capable devices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MidiDevice'
+
+  /api/midi-planner/compatibility:
+    get:
+      tags: [MIDI Planner]
+      summary: Check MIDI compatibility
+      operationId: checkMidiCompatibility
+      description: |
+        Checks whether a MIDI controller is compatible with the specified pedals
+        based on MIDI capabilities, connection types, and channel availability.
+      parameters:
+        - name: controllerId
+          in: query
+          required: true
+          description: ID of the MIDI controller
+          schema:
+            type: integer
+        - name: pedalIds
+          in: query
+          required: true
+          description: Comma-separated list of pedal IDs
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+      responses:
+        '200':
+          description: MIDI compatibility result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MidiCompatibilityResult'
+        '404':
+          description: Controller not found
+
+# ════════════════════════════════════════════════
+# Components
+# ════════════════════════════════════════════════
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      description: Resource ID
+      schema:
+        type: integer
+
+  schemas:
+    # ──────────────────────────────────────────
+    # Shared / Reference
+    # ──────────────────────────────────────────
+    Jack:
+      type: object
+      description: A physical connector (audio I/O, power, MIDI, etc.) on a product.
+      properties:
+        id:
+          type: integer
+        category:
+          type: string
+          nullable: true
+          description: "Jack category (e.g., audio, power, midi, usb, expression)"
+        direction:
+          type: string
+          nullable: true
+          description: "Signal direction (input, output, bidirectional)"
+        jackName:
+          type: string
+          nullable: true
+          description: "Label or name for this jack (e.g., Input, Output 1, EXP)"
+        position:
+          type: string
+          nullable: true
+          description: "Physical position on the enclosure (top, bottom, left, right)"
+        connectorType:
+          type: string
+          nullable: true
+          description: "Connector type (e.g., 1/4\" TS, 1/4\" TRS, XLR, 5-pin DIN, USB-C)"
+        impedanceOhms:
+          type: integer
+          nullable: true
+        voltage:
+          type: string
+          nullable: true
+          description: "Voltage for power jacks (e.g., 9V, 12V, 18V)"
+        currentMa:
+          type: integer
+          nullable: true
+          description: "Current draw/supply in milliamps"
+        polarity:
+          type: string
+          nullable: true
+          description: "Power polarity (e.g., center-negative, center-positive)"
+        function:
+          type: string
+          nullable: true
+          description: "Functional description of the jack"
+        powerOverConnector:
+          type: boolean
+          nullable: true
+        isIsolated:
+          type: boolean
+          nullable: true
+        isBuffered:
+          type: boolean
+          nullable: true
+        bufferSwitchable:
+          type: boolean
+          nullable: true
+        hasGroundLift:
+          type: boolean
+          nullable: true
+        hasPhaseInvert:
+          type: boolean
+          nullable: true
+        normalledToJackId:
+          type: integer
+          nullable: true
+          description: "ID of the jack this is normalled to"
+        normallingType:
+          type: string
+          nullable: true
+        groupId:
+          type: string
+          nullable: true
+          description: "Groups related jacks (e.g., stereo pair, send/return loop)"
+
+    ProductType:
+      type: object
+      description: |
+        Reference table entry for product categories.
+        Fixed IDs: 1=pedal, 2=power_supply, 3=pedalboard, 4=midi_controller, 5=utility, 6=plug
+      properties:
+        id:
+          type: integer
+          example: 1
+        typeName:
+          type: string
+          example: pedal
+        description:
+          type: string
+          nullable: true
+
+    # ──────────────────────────────────────────
+    # Manufacturer
+    # ──────────────────────────────────────────
+    Manufacturer:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        country:
+          type: string
+          nullable: true
+        founded:
+          type: string
+          nullable: true
+          description: "Year or decade founded (e.g., 2011, 1970s)"
+        status:
+          type: string
+          description: "Manufacturer status"
+          enum: [Active, Defunct, Discontinued, Unknown]
+        specialty:
+          type: string
+          nullable: true
+          description: "Primary product focus (e.g., Effects Pedals, MIDI Controllers)"
+        website:
+          type: string
+          nullable: true
+        productCount:
+          type: integer
+          format: int64
+          description: "Total number of products by this manufacturer in the database"
+
+    # ──────────────────────────────────────────
+    # Product (generic)
+    # ──────────────────────────────────────────
+    ProductSummary:
+      type: object
+      description: Summary view of a product without type-specific details.
+      properties:
+        id:
+          type: integer
+        model:
+          type: string
+        manufacturerName:
+          type: string
+        manufacturerId:
+          type: integer
+        productType:
+          type: string
+          description: "Product type name (pedal, power_supply, pedalboard, etc.)"
+        productTypeId:
+          type: integer
+        colorOptions:
+          type: string
+          nullable: true
+        inProduction:
+          type: boolean
+        widthMm:
+          type: number
+          format: double
+          nullable: true
+        depthMm:
+          type: number
+          format: double
+          nullable: true
+        heightMm:
+          type: number
+          format: double
+          nullable: true
+        weightGrams:
+          type: integer
+          nullable: true
+        msrpDisplay:
+          type: string
+          nullable: true
+          description: "Formatted MSRP string (e.g., $99.00)"
+          example: "$99.00"
+        msrpCents:
+          type: integer
+          nullable: true
+          description: "MSRP in cents (e.g., 9900 = $99.00)"
+          example: 9900
+        productPage:
+          type: string
+          nullable: true
+          description: "URL of the manufacturer's product page"
+        imagePath:
+          type: string
+          nullable: true
+
+    ProductDetail:
+      type: object
+      description: Full product detail including jacks. Used for single-product views.
+      allOf:
+        - $ref: '#/components/schemas/ProductSummary'
+        - type: object
+          properties:
+            instructionManual:
+              type: string
+              nullable: true
+              description: "URL of the product's instruction manual (typically PDF)"
+            description:
+              type: string
+              nullable: true
+            tags:
+              type: string
+              nullable: true
+            jacks:
+              type: array
+              items:
+                $ref: '#/components/schemas/Jack'
+
+    # ──────────────────────────────────────────
+    # Pedal
+    # ──────────────────────────────────────────
+    PedalDetail:
+      type: object
+      description: Pedal-specific detail fields.
+      properties:
+        effectType:
+          type: string
+          nullable: true
+          description: "Effect category (e.g., Delay, Reverb, Overdrive, Fuzz)"
+        circuitType:
+          type: string
+          nullable: true
+          description: "Circuit architecture (e.g., Analog, Digital, Hybrid)"
+        circuitRoutingOptions:
+          type: string
+          nullable: true
+        signalType:
+          type: string
+          nullable: true
+          description: "Signal processing type (Analog, Digital, Both)"
+        bypassType:
+          type: string
+          nullable: true
+          description: "Bypass method (e.g., True Bypass, Buffered, Relay)"
+        monoStereo:
+          type: string
+          nullable: true
+          description: "I/O configuration (Mono, Stereo, Mono In/Stereo Out)"
+        audioMix:
+          type: string
+          nullable: true
+        hasAnalogDryThrough:
+          type: boolean
+          nullable: true
+        hasSpillover:
+          type: boolean
+          nullable: true
+        sampleRateKhz:
+          type: integer
+          nullable: true
+        bitDepth:
+          type: integer
+          nullable: true
+        latencyMs:
+          type: number
+          format: double
+          nullable: true
+        presetCount:
+          type: integer
+          nullable: true
+        hasTapTempo:
+          type: boolean
+          nullable: true
+        midiCapable:
+          type: boolean
+          nullable: true
+        midiReceiveCapabilities:
+          type: string
+          nullable: true
+        midiSendCapabilities:
+          type: string
+          nullable: true
+        hasSoftwareEditor:
+          type: boolean
+          nullable: true
+        softwarePlatforms:
+          type: string
+          nullable: true
+        isFirmwareUpdatable:
+          type: boolean
+          nullable: true
+        hasUsbAudio:
+          type: boolean
+          nullable: true
+        batteryCapable:
+          type: boolean
+          nullable: true
+        fxLoopCount:
+          type: integer
+          nullable: true
+        hasReorderableLoops:
+          type: boolean
+          nullable: true
+
+    Pedal:
+      type: object
+      description: Full pedal DTO combining product info, pedal-specific details, and jacks.
+      properties:
+        id:
+          type: integer
+        model:
+          type: string
+        manufacturerName:
+          type: string
+        manufacturerId:
+          type: integer
+        colorOptions:
+          type: string
+          nullable: true
+        inProduction:
+          type: boolean
+        widthMm:
+          type: number
+          format: double
+          nullable: true
+        depthMm:
+          type: number
+          format: double
+          nullable: true
+        heightMm:
+          type: number
+          format: double
+          nullable: true
+        weightGrams:
+          type: integer
+          nullable: true
+        msrpDisplay:
+          type: string
+          nullable: true
+          example: "$199.00"
+        msrpCents:
+          type: integer
+          nullable: true
+          example: 19900
+        productPage:
+          type: string
+          nullable: true
+        instructionManual:
+          type: string
+          nullable: true
+        imagePath:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        tags:
+          type: string
+          nullable: true
+        dataReliability:
+          type: string
+          nullable: true
+          enum: [High, Medium, Low]
+        pedalDetails:
+          $ref: '#/components/schemas/PedalDetail'
+        jacks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Jack'
+
+    # ──────────────────────────────────────────
+    # Power Supply
+    # ──────────────────────────────────────────
+    PowerSupply:
+      type: object
+      description: Full power supply DTO with product info, power supply details, and jacks.
+      properties:
+        id:
+          type: integer
+        model:
+          type: string
+        manufacturerName:
+          type: string
+        manufacturerId:
+          type: integer
+        colorOptions:
+          type: string
+          nullable: true
+        inProduction:
+          type: boolean
+        widthMm:
+          type: number
+          format: double
+          nullable: true
+        depthMm:
+          type: number
+          format: double
+          nullable: true
+        heightMm:
+          type: number
+          format: double
+          nullable: true
+        weightGrams:
+          type: integer
+          nullable: true
+        msrpDisplay:
+          type: string
+          nullable: true
+        msrpCents:
+          type: integer
+          nullable: true
+        productPage:
+          type: string
+          nullable: true
+        instructionManual:
+          type: string
+          nullable: true
+        imagePath:
+          type: string
+          nullable: true
+        dataReliability:
+          type: string
+          nullable: true
+          enum: [High, Medium, Low]
+        supplyType:
+          type: string
+          nullable: true
+          description: "Supply type (e.g., Isolated, Non-Isolated, Hybrid)"
+        topology:
+          type: string
+          nullable: true
+          description: "Power supply topology (e.g., Linear, Switching)"
+        inputVoltageRange:
+          type: string
+          nullable: true
+          description: "Acceptable input voltage range (e.g., 100-240V AC)"
+        inputFrequency:
+          type: string
+          nullable: true
+          description: "Input frequency range (e.g., 50/60Hz)"
+        totalOutputCount:
+          type: integer
+          description: "Total number of output ports"
+        totalCurrentMa:
+          type: integer
+          nullable: true
+          description: "Total current capacity in milliamps"
+        isolatedOutputCount:
+          type: integer
+          nullable: true
+          description: "Number of electrically isolated outputs"
+        availableVoltages:
+          type: string
+          nullable: true
+          description: "Available output voltages (e.g., 9V, 12V, 18V)"
+        hasVariableVoltage:
+          type: boolean
+          description: "Whether any output has adjustable voltage"
+        voltageRange:
+          type: string
+          nullable: true
+          description: "Adjustable voltage range (e.g., 9-18V)"
+        mountingType:
+          type: string
+          nullable: true
+          description: "Mounting method (e.g., Under Board, On Board, External, Rack)"
+        bracketIncluded:
+          type: boolean
+          description: "Whether a mounting bracket is included"
+        isExpandable:
+          type: boolean
+          description: "Whether additional outputs can be added via expansion"
+        expansionPortType:
+          type: string
+          nullable: true
+          description: "Type of expansion connector"
+        isBatteryPowered:
+          type: boolean
+          description: "Whether the supply has an internal battery"
+        batteryCapacityWh:
+          type: number
+          format: double
+          nullable: true
+          description: "Battery capacity in watt-hours"
+        jacks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Jack'
+
+    # ──────────────────────────────────────────
+    # Pedalboard
+    # ──────────────────────────────────────────
+    Pedalboard:
+      type: object
+      description: Full pedalboard DTO with product info, pedalboard details, and jacks.
+      properties:
+        id:
+          type: integer
+        model:
+          type: string
+        manufacturerName:
+          type: string
+        manufacturerId:
+          type: integer
+        colorOptions:
+          type: string
+          nullable: true
+        inProduction:
+          type: boolean
+        widthMm:
+          type: number
+          format: double
+          nullable: true
+        depthMm:
+          type: number
+          format: double
+          nullable: true
+        heightMm:
+          type: number
+          format: double
+          nullable: true
+        weightGrams:
+          type: integer
+          nullable: true
+        msrpDisplay:
+          type: string
+          nullable: true
+        msrpCents:
+          type: integer
+          nullable: true
+        productPage:
+          type: string
+          nullable: true
+        instructionManual:
+          type: string
+          nullable: true
+        imagePath:
+          type: string
+          nullable: true
+        dataReliability:
+          type: string
+          nullable: true
+          enum: [High, Medium, Low]
+        usableWidthMm:
+          type: number
+          format: double
+          nullable: true
+          description: "Usable width for pedal placement"
+        usableDepthMm:
+          type: number
+          format: double
+          nullable: true
+          description: "Usable depth for pedal placement"
+        surfaceType:
+          type: string
+          nullable: true
+          description: "Surface type (e.g., Velcro, Rail, Flat)"
+        railSpacingMm:
+          type: number
+          format: double
+          nullable: true
+        material:
+          type: string
+          nullable: true
+          description: "Construction material (e.g., Aluminum, Steel, Wood)"
+        tiltAngleDegrees:
+          type: number
+          format: double
+          nullable: true
+        underClearanceMm:
+          type: number
+          format: double
+          nullable: true
+          description: "Clearance under the board for power supply mounting"
+        hasSecondTier:
+          type: boolean
+        tier2UsableWidthMm:
+          type: number
+          format: double
+          nullable: true
+        tier2UsableDepthMm:
+          type: number
+          format: double
+          nullable: true
+        tier2UnderClearanceMm:
+          type: number
+          format: double
+          nullable: true
+        tier2HeightMm:
+          type: number
+          format: double
+          nullable: true
+        hasIntegratedPower:
+          type: boolean
+          description: "Whether the board includes a built-in power supply"
+        integratedPowerProductId:
+          type: integer
+          nullable: true
+          description: "Product ID of the integrated power supply (FK to products)"
+        hasIntegratedPatchBay:
+          type: boolean
+        caseIncluded:
+          type: boolean
+        caseType:
+          type: string
+          nullable: true
+          description: "Type of included case (e.g., Soft Case, Hard Case, Gig Bag)"
+        maxLoadKg:
+          type: number
+          format: double
+          nullable: true
+        jacks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Jack'
+
+    # ──────────────────────────────────────────
+    # MIDI Controller
+    # ──────────────────────────────────────────
+    MidiController:
+      type: object
+      description: Full MIDI controller DTO with product info, controller details, and jacks.
+      properties:
+        id:
+          type: integer
+        model:
+          type: string
+        manufacturerName:
+          type: string
+        manufacturerId:
+          type: integer
+        colorOptions:
+          type: string
+          nullable: true
+        inProduction:
+          type: boolean
+        widthMm:
+          type: number
+          format: double
+          nullable: true
+        depthMm:
+          type: number
+          format: double
+          nullable: true
+        heightMm:
+          type: number
+          format: double
+          nullable: true
+        weightGrams:
+          type: integer
+          nullable: true
+        msrpDisplay:
+          type: string
+          nullable: true
+        msrpCents:
+          type: integer
+          nullable: true
+        productPage:
+          type: string
+          nullable: true
+        instructionManual:
+          type: string
+          nullable: true
+        imagePath:
+          type: string
+          nullable: true
+        dataReliability:
+          type: string
+          nullable: true
+          enum: [High, Medium, Low]
+        footswitchCount:
+          type: integer
+          description: "Number of footswitches"
+        footswitchType:
+          type: string
+          nullable: true
+          description: "Footswitch mechanism (e.g., Momentary, Latching)"
+        hasLedIndicators:
+          type: boolean
+          nullable: true
+        ledColorOptions:
+          type: string
+          nullable: true
+        bankCount:
+          type: integer
+          nullable: true
+        presetsPerBank:
+          type: integer
+          nullable: true
+        totalPresetSlots:
+          type: integer
+          nullable: true
+        hasDisplay:
+          type: boolean
+        displayType:
+          type: string
+          nullable: true
+          description: "Display technology (e.g., LCD, OLED, LED)"
+        displaySize:
+          type: string
+          nullable: true
+        expressionInputCount:
+          type: integer
+          description: "Number of expression pedal inputs"
+        midiChannels:
+          type: integer
+          nullable: true
+        supportsMidiClock:
+          type: boolean
+          nullable: true
+        supportsSysex:
+          type: boolean
+          nullable: true
+        softwareEditorAvailable:
+          type: boolean
+        softwarePlatforms:
+          type: string
+          nullable: true
+          description: "Supported platforms (e.g., Windows, macOS, iOS)"
+        onDeviceProgramming:
+          type: boolean
+          nullable: true
+        isFirmwareUpdatable:
+          type: boolean
+          nullable: true
+        configFormat:
+          type: string
+          nullable: true
+        configFormatDocumented:
+          type: boolean
+          nullable: true
+        hasTuner:
+          type: boolean
+        hasTapTempo:
+          type: boolean
+        hasSetlistMode:
+          type: boolean
+        hasPerSwitchDisplays:
+          type: boolean
+        auxSwitchInputCount:
+          type: integer
+        hasUsbHost:
+          type: boolean
+          nullable: true
+        hasBluetoothMidi:
+          type: boolean
+        audioLoopCount:
+          type: integer
+          description: "Number of audio effects loops"
+        hasReorderableLoops:
+          type: boolean
+          nullable: true
+        loopBypassType:
+          type: string
+          nullable: true
+        hasParallelRouting:
+          type: boolean
+          nullable: true
+        hasGaplessSwitching:
+          type: boolean
+          nullable: true
+        hasSpillover:
+          type: boolean
+          nullable: true
+        jacks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Jack'
+
+    # ──────────────────────────────────────────
+    # Utility
+    # ──────────────────────────────────────────
+    Utility:
+      type: object
+      description: |
+        Full utility device DTO. Covers DI boxes, tuners, volume pedals,
+        headphone amps, reamp boxes, signal buffers, and more.
+      properties:
+        id:
+          type: integer
+        model:
+          type: string
+        manufacturerName:
+          type: string
+        manufacturerId:
+          type: integer
+        colorOptions:
+          type: string
+          nullable: true
+        inProduction:
+          type: boolean
+        widthMm:
+          type: number
+          format: double
+          nullable: true
+        depthMm:
+          type: number
+          format: double
+          nullable: true
+        heightMm:
+          type: number
+          format: double
+          nullable: true
+        weightGrams:
+          type: integer
+          nullable: true
+        msrpDisplay:
+          type: string
+          nullable: true
+        msrpCents:
+          type: integer
+          nullable: true
+        productPage:
+          type: string
+          nullable: true
+        instructionManual:
+          type: string
+          nullable: true
+        imagePath:
+          type: string
+          nullable: true
+        dataReliability:
+          type: string
+          nullable: true
+          enum: [High, Medium, Low]
+        utilityType:
+          type: string
+          description: "Device category (e.g., DI Box, Tuner, Volume Pedal, Headphone Amp, Reamp Box)"
+        isActive:
+          type: boolean
+          description: "Whether the device requires power (active) or is passive"
+        signalType:
+          type: string
+          nullable: true
+          enum: [Analog, Digital, Both]
+        bypassType:
+          type: string
+          nullable: true
+        hasGroundLift:
+          type: boolean
+        hasPad:
+          type: boolean
+          nullable: true
+        padDb:
+          type: integer
+          nullable: true
+          description: "Pad attenuation in dB"
+        tuningDisplayType:
+          type: string
+          nullable: true
+          description: "Tuner display type (e.g., LED, LCD, Strobe)"
+        tuningAccuracyCents:
+          type: number
+          format: double
+          nullable: true
+          description: "Tuning accuracy in cents"
+        polyphonicTuning:
+          type: boolean
+          nullable: true
+        sweepType:
+          type: string
+          nullable: true
+          description: "Volume pedal sweep type (e.g., Linear, Logarithmic)"
+        hasTunerOut:
+          type: boolean
+          nullable: true
+        hasMinimumVolume:
+          type: boolean
+          nullable: true
+        hasPolaritySwitch:
+          type: boolean
+          nullable: true
+        powerHandlingWatts:
+          type: integer
+          nullable: true
+          description: "Power handling capacity for load boxes / attenuators"
+        hasReactiveLoad:
+          type: boolean
+          nullable: true
+        hasAttenuation:
+          type: boolean
+          nullable: true
+        attenuationRangeDb:
+          type: string
+          nullable: true
+        hasCabSim:
+          type: boolean
+          nullable: true
+        jacks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Jack'
+
+    # ──────────────────────────────────────────
+    # Plug
+    # ──────────────────────────────────────────
+    Plug:
+      type: object
+      description: Cable plug / connector with physical dimensions for layout planning.
+      properties:
+        id:
+          type: integer
+        model:
+          type: string
+        manufacturerName:
+          type: string
+        manufacturerId:
+          type: integer
+        colorOptions:
+          type: string
+          nullable: true
+        inProduction:
+          type: boolean
+        msrpDisplay:
+          type: string
+          nullable: true
+        msrpCents:
+          type: integer
+          nullable: true
+        productPage:
+          type: string
+          nullable: true
+        imagePath:
+          type: string
+          nullable: true
+        plugType:
+          type: string
+          nullable: true
+          description: "Plug type (e.g., 1/4\" TS, 1/4\" TRS, XLR)"
+        connectorType:
+          type: string
+          nullable: true
+        isRightAngle:
+          type: boolean
+          nullable: true
+        isPancake:
+          type: boolean
+          nullable: true
+          description: "Whether this is a flat/pancake-style plug"
+        plugWidthMm:
+          type: number
+          format: double
+          nullable: true
+        plugDepthMm:
+          type: number
+          format: double
+          nullable: true
+        plugHeightMm:
+          type: number
+          format: double
+          nullable: true
+        cableExitDirection:
+          type: string
+          nullable: true
+          description: "Direction the cable exits the plug body"
+        isSolderless:
+          type: boolean
+          nullable: true
+        housingMaterial:
+          type: string
+          nullable: true
+        hasLockingMechanism:
+          type: boolean
+          nullable: true
+        jacks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Jack'
+
+    # ──────────────────────────────────────────
+    # Power Budget (Layer 2)
+    # ──────────────────────────────────────────
+    PowerBudgetPedalPower:
+      type: object
+      description: Power draw information for a single pedal.
+      properties:
+        id:
+          type: integer
+        model:
+          type: string
+        manufacturerName:
+          type: string
+        voltage:
+          type: string
+          nullable: true
+          description: "Required voltage (e.g., 9V)"
+        currentMa:
+          type: integer
+          nullable: true
+          description: "Current draw in milliamps"
+        polarity:
+          type: string
+          nullable: true
+          description: "Required polarity (e.g., center-negative)"
+
+    PowerBudgetCalculationResult:
+      type: object
+      description: Result of a power budget calculation.
+      properties:
+        supplyId:
+          type: integer
+        supplyModel:
+          type: string
+        totalCapacityMa:
+          type: integer
+          description: "Total current capacity of the supply in mA"
+        totalDrawMa:
+          type: integer
+          description: "Total current draw of all pedals in mA"
+        remainingMa:
+          type: integer
+          description: "Remaining capacity (totalCapacityMa - totalDrawMa)"
+        withinBudget:
+          type: boolean
+          description: "Whether the supply can handle the total draw"
+        pedals:
+          type: array
+          items:
+            $ref: '#/components/schemas/PowerBudgetPedalPower'
+        summary:
+          type: string
+          description: "Human-readable summary of the calculation"
+
+    PowerBudgetSupplyMatch:
+      type: object
+      description: A power supply that can handle the requested pedals.
+      properties:
+        id:
+          type: integer
+        model:
+          type: string
+        manufacturerName:
+          type: string
+        totalCapacityMa:
+          type: integer
+        requiredMa:
+          type: integer
+        headroomMa:
+          type: integer
+          description: "Extra capacity beyond what's required"
+        msrpDisplay:
+          type: string
+          nullable: true
+
+    # ──────────────────────────────────────────
+    # Board Planner (Layer 2)
+    # ──────────────────────────────────────────
+    BoardPlannerComponents:
+      type: object
+      description: All components available for board layout planning.
+      properties:
+        pedalboards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pedalboard'
+        powerSupplies:
+          type: array
+          items:
+            $ref: '#/components/schemas/PowerSupply'
+        pedals:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pedal'
+
+    BoardPlannerPedalFootprint:
+      type: object
+      description: A pedal's physical footprint for fit checking.
+      properties:
+        id:
+          type: integer
+        model:
+          type: string
+        manufacturerName:
+          type: string
+        widthMm:
+          type: number
+          format: double
+          nullable: true
+        depthMm:
+          type: number
+          format: double
+          nullable: true
+        heightMm:
+          type: number
+          format: double
+          nullable: true
+
+    BoardPlannerFitCheckResult:
+      type: object
+      description: Result of checking whether pedals fit on a pedalboard.
+      properties:
+        boardId:
+          type: integer
+        boardModel:
+          type: string
+        boardUsableWidthMm:
+          type: number
+          format: double
+          nullable: true
+        boardUsableDepthMm:
+          type: number
+          format: double
+          nullable: true
+        totalPedalAreaMm2:
+          type: number
+          format: double
+          description: "Combined footprint area of all pedals in mm^2"
+        boardAreaMm2:
+          type: number
+          format: double
+          description: "Usable surface area of the board in mm^2"
+        fitsByArea:
+          type: boolean
+          description: "Whether the total pedal area fits within the board area"
+        pedals:
+          type: array
+          items:
+            $ref: '#/components/schemas/BoardPlannerPedalFootprint'
+        summary:
+          type: string
+
+    # ──────────────────────────────────────────
+    # MIDI Planner (Layer 2)
+    # ──────────────────────────────────────────
+    MidiDevice:
+      type: object
+      description: A MIDI-capable device (pedal or controller).
+      properties:
+        id:
+          type: integer
+        model:
+          type: string
+        manufacturerName:
+          type: string
+        productType:
+          type: string
+          description: "Product type (pedal, midi_controller, etc.)"
+        midiCapable:
+          type: boolean
+          nullable: true
+        midiReceiveCapabilities:
+          type: string
+          nullable: true
+          description: "MIDI messages this device can receive (e.g., PC, CC, SysEx)"
+        midiSendCapabilities:
+          type: string
+          nullable: true
+        presetCount:
+          type: integer
+          nullable: true
+        midiJacks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Jack'
+          description: "MIDI-specific jacks on this device"
+
+    MidiPedalCompatibility:
+      type: object
+      description: Compatibility assessment for a single pedal with a MIDI controller.
+      properties:
+        id:
+          type: integer
+        model:
+          type: string
+        manufacturerName:
+          type: string
+        midiCapable:
+          type: boolean
+        midiReceiveCapabilities:
+          type: string
+          nullable: true
+        hasMidiInput:
+          type: boolean
+          description: "Whether the pedal has a MIDI input jack"
+        connectionType:
+          type: string
+          nullable: true
+          description: "How to connect (e.g., 5-pin DIN, 1/4\" TRS MIDI)"
+        notes:
+          type: string
+          nullable: true
+          description: "Additional compatibility notes"
+
+    MidiCompatibilityResult:
+      type: object
+      description: Result of checking MIDI compatibility between a controller and pedals.
+      properties:
+        controllerId:
+          type: integer
+        controllerModel:
+          type: string
+        pedals:
+          type: array
+          items:
+            $ref: '#/components/schemas/MidiPedalCompatibility'
+        summary:
+          type: string
+          description: "Human-readable compatibility summary"
