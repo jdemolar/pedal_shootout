@@ -136,9 +136,6 @@ The API returns camelCase (Java convention). Frontend components use snake_case.
 - 100% coverage threshold configured
 - Uses jsdom test environment with @testing-library/jest-dom matchers
 
-**Environment:**
-The `apps/web/.env` file contains `REACT_APP_REALM_APP_ID` for MongoDB Realm connection.
-
 ---
 
 # Database
@@ -171,33 +168,6 @@ PostgreSQL enforces foreign keys by default — no PRAGMA needed.
 ```bash
 # Connect to the database
 psql -U pedal_shootout_app -d pedal_shootout
-
-# View all manufacturers
-SELECT * FROM manufacturers;
-
-# View products with type and manufacturer
-SELECT p.model, m.name AS manufacturer, pt.type_name
-FROM products p
-JOIN manufacturers m ON p.manufacturer_id = m.id
-JOIN product_types pt ON p.product_type_id = pt.id;
-
-# Find all delay pedals
-SELECT p.model, m.name AS manufacturer
-FROM products p
-JOIN manufacturers m ON p.manufacturer_id = m.id
-JOIN pedal_details pd ON p.id = pd.product_id
-WHERE pd.effect_type = 'Delay';
-```
-
-## Creating the Database from Schema
-
-```bash
-# Create user and database (one-time setup)
-psql postgres -c "CREATE USER pedal_shootout_app WITH PASSWORD 'localdev';"
-psql postgres -c "CREATE DATABASE pedal_shootout OWNER pedal_shootout_app;"
-
-# Apply schema
-PGPASSWORD=localdev psql -U pedal_shootout_app -d pedal_shootout -f data/schema/gear_postgres.sql
 ```
 
 ### Adding a Product with an Unrecognized Manufacturer
@@ -263,11 +233,7 @@ Stores the URL of the product's instruction manual (typically a PDF). Populate t
 2. **Established gear review sites** (Premier Guitar, Reverb, etc.)
 3. **Professional demo videos** with on-screen specifications
 4. **pedalplayground.com** — particularly useful for **dimensions**
-   - Open-source, community-contributed pedal database (hosted on GitHub)
-   - Each pedal entry requires dimensions in inches, including jacks and protrusions
-   - Contributors submit measured dimensions alongside top-down pedal images; the project maintainers review and merge via pull requests
-   - Dimensions are the primary value here — the site is a pedalboard layout planner, not a general spec database, so it does not cover I/O, power, or pricing
-   - Many manufacturers (including JHS) do not publish dimensions on their own product pages, making pedalplayground.com one of the few reliable sources for this data
+   - Open-source, community-contributed pedal database
 
 #### Low Reliability Sources
 1. **User forums** (unless official manufacturer representative)
@@ -401,9 +367,3 @@ VALUES (<id>, 'power', 'input', '2.1mm barrel', '9V', <current_ma>, 'center-nega
 
 **Common category values:** `'audio'`, `'power'`, `'midi'`, `'expression'`, `'usb'`, `'aux'`
 **Common direction values:** `'input'`, `'output'`, `'bidirectional'`
-
-## Database Maintenance Notes
-- Regularly verify and update reliability ratings as new sources emerge
-- When crowd-sourcing begins, all user-submitted data starts as "Low" until verified
-- Cross-reference specifications across multiple sources when possible
-- Flag conflicts between sources for manual review

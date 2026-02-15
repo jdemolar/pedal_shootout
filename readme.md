@@ -31,6 +31,18 @@ If `psql` isn't found, add it to your PATH:
 export PATH="/usr/local/opt/postgresql@17/bin:$PATH"
 ```
 
+### Creating the Database from Schema
+
+```bash
+# Create user and database (one-time setup)
+psql postgres -c "CREATE USER pedal_shootout_app WITH PASSWORD 'localdev';"
+psql postgres -c "CREATE DATABASE pedal_shootout OWNER pedal_shootout_app;"
+
+# Apply schema
+PGPASSWORD=localdev psql -U pedal_shootout_app -d pedal_shootout -f data/schema/gear_postgres.sql
+```
+
+
 ### Useful Queries
 
 ```sql
