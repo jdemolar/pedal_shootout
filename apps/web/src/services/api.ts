@@ -3,6 +3,7 @@ import {
   ManufacturerApiResponse,
   MidiControllerApiResponse,
   PedalboardApiResponse,
+  PowerSupplyApiResponse,
   UtilityApiResponse,
 } from '../types/api';
 
@@ -21,5 +22,6 @@ export const api = {
   getManufacturers: () => get<ManufacturerApiResponse[]>('/api/manufacturers'),
   getMidiControllers: () => get<MidiControllerApiResponse[]>('/api/midi-controllers'),
   getPedalboards: () => get<PedalboardApiResponse[]>('/api/pedalboards'),
+  getPowerSupplies: () => get<PowerSupplyApiResponse[]>('/api/power-supplies'),
   getUtilities: () => get<UtilityApiResponse[]>('/api/utilities'),
 };

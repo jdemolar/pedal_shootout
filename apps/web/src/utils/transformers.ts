@@ -3,6 +3,7 @@ import {
   ManufacturerApiResponse,
   MidiControllerApiResponse,
   PedalboardApiResponse,
+  PowerSupplyApiResponse,
   UtilityApiResponse,
   JackApiResponse,
 } from '../types/api';
@@ -118,6 +119,39 @@ export function transformPedalboard(dto: PedalboardApiResponse) {
     has_integrated_power: dto.hasIntegratedPower,
     has_integrated_patch_bay: dto.hasIntegratedPatchBay,
     case_included: dto.caseIncluded,
+  };
+}
+
+export function transformPowerSupply(dto: PowerSupplyApiResponse) {
+  return {
+    id: dto.id,
+    manufacturer: dto.manufacturerName,
+    model: dto.model,
+    in_production: dto.inProduction,
+    width_mm: dto.widthMm,
+    depth_mm: dto.depthMm,
+    height_mm: dto.heightMm,
+    weight_grams: dto.weightGrams,
+    msrp_cents: dto.msrpCents,
+    product_page: dto.productPage,
+    instruction_manual: dto.instructionManual,
+    data_reliability: dto.dataReliability as 'High' | 'Medium' | 'Low' | null,
+    supply_type: dto.supplyType,
+    topology: dto.topology,
+    input_voltage_range: dto.inputVoltageRange,
+    input_frequency: dto.inputFrequency,
+    total_output_count: dto.totalOutputCount,
+    total_current_ma: dto.totalCurrentMa,
+    isolated_output_count: dto.isolatedOutputCount ?? 0,
+    available_voltages: dto.availableVoltages,
+    has_variable_voltage: dto.hasVariableVoltage,
+    voltage_range: dto.voltageRange,
+    mounting_type: dto.mountingType,
+    bracket_included: dto.bracketIncluded,
+    is_expandable: dto.isExpandable,
+    expansion_port_type: dto.expansionPortType,
+    is_battery_powered: dto.isBatteryPowered,
+    battery_capacity_wh: dto.batteryCapacityWh,
   };
 }
 

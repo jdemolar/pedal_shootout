@@ -10,6 +10,7 @@ import Manufacturers from '../Manufacturers';
 import Pedals from '../Pedals';
 import MidiControllers from '../MidiControllers';
 import Pedalboards from '../Pedalboards';
+import PowerSupplies from '../PowerSupplies';
 import Utilities from '../Utilities';
 
 const App = () => {
@@ -22,6 +23,7 @@ const App = () => {
 		{label: 'Pedals',				link: 'pedals',				component: <Pedals />},
 		{label: 'MIDI Controllers',		link: 'midi-controllers',	component: <MidiControllers />},
 		{label: 'Pedalboards',			link: 'pedalboards',		component: <Pedalboards />},
+		{label: 'Power Supplies',		link: 'power-supplies',		component: <PowerSupplies />},
 		{label: 'Utilities',			link: 'utilities',			component: <Utilities />},
 	];
 

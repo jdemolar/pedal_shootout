@@ -173,6 +173,42 @@ export interface PedalboardApiResponse {
   jacks: JackApiResponse[];
 }
 
+export interface PowerSupplyApiResponse {
+  id: number;
+  model: string;
+  manufacturerName: string;
+  manufacturerId: number;
+  colorOptions: string | null;
+  inProduction: boolean;
+  widthMm: number | null;
+  depthMm: number | null;
+  heightMm: number | null;
+  weightGrams: number | null;
+  msrpDisplay: string | null;
+  msrpCents: number | null;
+  productPage: string | null;
+  instructionManual: string | null;
+  imagePath: string | null;
+  dataReliability: string | null;
+  supplyType: string | null;
+  topology: string | null;
+  inputVoltageRange: string | null;
+  inputFrequency: string | null;
+  totalOutputCount: number;
+  totalCurrentMa: number | null;
+  isolatedOutputCount: number | null;
+  availableVoltages: string | null;
+  hasVariableVoltage: boolean;
+  voltageRange: string | null;
+  mountingType: string | null;
+  bracketIncluded: boolean;
+  isExpandable: boolean;
+  expansionPortType: string | null;
+  isBatteryPowered: boolean;
+  batteryCapacityWh: number | null;
+  jacks: JackApiResponse[];
+}
+
 export interface UtilityApiResponse {
   id: number;
   model: string;
