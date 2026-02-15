@@ -33,9 +33,8 @@
 
 7. Add product instructions (especially MIDI controllers)
 
-Add instruction manuals for popular midi controllers to provide a guide on pedalboard programming. Although there may be multiple ways of accomplishing various goals with a controller, having a guide can at least recommend solutions when given a specific problem.
-
-This will be where real value could come into effect. Having AI equipped with instruction manuals could enable users to have a plain-language interface for programming their midi controllers for their desired workflow with their specific pedals.
+- Add instruction manuals for popular midi controllers to provide a guide on pedalboard programming. Although there may be multiple ways of accomplishing various goals with a controller, having a guide can at least recommend solutions when given a specific problem.
+- This will be where real value could come into effect. Having AI equipped with instruction manuals could enable users to have a plain-language interface for programming their midi controllers for their desired workflow with their specific pedals.
 
 8. Move app into cloud infrastructure
 
