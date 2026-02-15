@@ -13,6 +13,14 @@ Pedal Shootout is a guitar gear database and comparison tool. It consists of:
 ```
 pedal_shootout/
 ├── apps/
+│   ├── api/                    # Spring Boot API (Java 17)
+│   │   ├── src/main/java/com/pedalshootout/api/
+│   │   │   ├── controller/     # REST controllers
+│   │   │   ├── dto/            # Data Transfer Objects
+│   │   │   ├── entity/         # JPA entities
+│   │   │   ├── repository/     # Spring Data JPA repositories
+│   │   │   └── service/        # Business logic
+│   │   └── pom.xml             # Maven build config
 │   └── web/                    # React frontend
 │       ├── src/                # Source code
 │       ├── package.json        # Web app dependencies
@@ -52,6 +60,12 @@ npm run build            # Production build
 npm test                 # Run tests
 npm run test:watch       # Tests in watch mode
 npm run test:coverage    # Tests with coverage report
+
+# Spring Boot API (from apps/api/ directory)
+cd apps/api
+./mvnw spring-boot:run   # Start API server (localhost:8081)
+./mvnw compile -q        # Compile check (no tests)
+./mvnw test              # Run tests
 ```
 
 ## Tech Stack
@@ -61,7 +75,14 @@ npm run test:coverage    # Tests with coverage report
 - Webpack 5 for bundling
 - SASS/SCSS for styling
 - Jest + React Testing Library for tests
-- MongoDB Realm Web for backend data (current, will migrate to Spring Boot API)
+
+**API:**
+- Spring Boot 3.4.3 with Java 17
+- Spring Data JPA + PostgreSQL
+- Runs on port 8081; frontend dev server on port 8080
+- CORS configured for `localhost:8080`, GET-only
+- All endpoints are read-only (GET)
+- OpenAPI spec at `docs/openapi.yaml`
 
 **Database:**
 - PostgreSQL 17 with Class Table Inheritance pattern
@@ -90,6 +111,25 @@ npm run test:coverage    # Tests with coverage report
 - `FeatureTable` - Primary comparison view, fetches data from Realm on mount
 - `FeatureRow` - Renders pedal specs with complex data handling (tooltips, lists)
 - `PedalSpecForm` - Form for submitting new pedal specifications
+
+**Shared Components and Utilities:**
+- `DataTable<T>` (`components/DataTable/index.tsx`) — Generic table with sorting, filtering, search, and expandable rows. All data views use this.
+- `useApiData<TRaw, TDisplay>` (`hooks/useApiData.ts`) — Hook that fetches from the API, transforms data, and manages loading/error states.
+- `api` object (`services/api.ts`) — Centralized API client with typed methods (`api.getPedals()`, `api.getManufacturers()`, etc.).
+- Transformer functions (`utils/transformers.ts`) — One per entity type (e.g., `transformPedal`, `transformPowerSupply`). Maps API camelCase to component snake_case.
+- `formatMsrp`, `formatDimensions`, `formatPower` (`utils/formatters.ts`) — Shared display formatters.
+- `ColumnDef<T>` and `FilterConfig<T>` (`DataTable/index.tsx`) — Exported interfaces used by every data view to define columns and filters.
+
+**Adding a New Data View (checklist):**
+1. Add `XxxApiResponse` interface to `types/api.ts` (matches DTO JSON shape)
+2. Add `getXxx` method to `services/api.ts`
+3. Add `transformXxx` function to `utils/transformers.ts`
+4. Create `components/Xxx/index.tsx` with interface, columns, filters, expanded row, stats
+5. Add import and nav entry to `components/App/index.tsx`
+6. Verify: `./mvnw compile -q` (API) and `npm run web:build` (frontend)
+
+**API ↔ Frontend Field Naming:**
+The API returns camelCase (Java convention). Frontend components use snake_case. The transformer function in `utils/transformers.ts` is the single place where this mapping happens. Do not convert field names anywhere else.
 
 **Testing:**
 - Tests in `apps/web/src/__tests__/` with `.test.tsx` or `.test.ts` extension
@@ -251,6 +291,14 @@ When data is not immediately available on the manufacturer's website:
 
 *This list will be updated as more reliable sources are discovered*
 
+### Web Fetching Notes (for automated research)
+- **Manufacturer websites** are often JavaScript-rendered SPAs. Fetching their product pages via HTTP typically returns only `<script>` tags with no usable specs. Do not rely on direct web fetches to manufacturer sites for spec data.
+- **Sweetwater** product pages consistently return full HTML with specs and are the most reliable source for automated fetching.
+- **Thomann** product pages are also reliably fetchable.
+- **Perfect Circuit** and **zZounds** often return 403 errors or block automated requests.
+- **Reverb.com** listing pages are fetchable but specs may be incomplete.
+- When a manufacturer site doesn't yield specs, search for the product on Sweetwater or Thomann first, then fall back to other retailers or review sites.
+
 ## Data Reliability Column
 
 Each row should have a "Data Reliability" rating:
@@ -277,6 +325,82 @@ Each row should have a "Data Reliability" rating:
 - Data from unknown sources starts as "Low"
 - Upgrade ratings when additional sources confirm the data
 - Document reasoning for reliability rating if ambiguous
+
+## CHECK Constraints Quick Reference
+
+The schema enforces allowed values via CHECK constraints. Inserts will fail if a value doesn't match.
+
+**`products`**
+- `data_reliability`: `'High'`, `'Medium'`, `'Low'`
+
+**`manufacturers`**
+- `status`: `'Active'`, `'Defunct'`, `'Discontinued'`, `'Unknown'`
+
+**`pedal_details`**
+- `effect_type`: `'Gain'`, `'Fuzz'`, `'Compression'`, `'Delay'`, `'Reverb'`, `'Chorus'`, `'Flanger'`, `'Phaser'`, `'Tremolo'`, `'Vibrato'`, `'Rotary'`, `'Univibe'`, `'Ring Modulator'`, `'Pitch Shifter'`, `'Wah'`, `'Filter'`, `'Multi Effects'`, `'Utility'`, `'Preamp'`, `'Amp/Cab Sim'`, `'Other'`
+- `signal_type`: `'Analog'`, `'Digital'`, `'Hybrid'`
+- `bypass_type`: `'True Bypass'`, `'Buffered Bypass'`, `'Relay Bypass'`, `'DSP Bypass'`, `'Both'`
+- `mono_stereo`: `'Mono'`, `'Stereo In/Out'`, `'Mono In/Stereo Out'`
+
+**`power_supply_details`**
+- `supply_type`: `'Isolated'`, `'Non-Isolated'`, `'Hybrid'`
+- `topology`: `'Switch Mode'`, `'Toroidal'`, `'Linear'`, `'Unknown'`
+- `mounting_type`: `'Under Board'`, `'On Board'`, `'External'`, `'Rack'`
+
+**`pedalboard_details`**
+- `surface_type`: `'Loop Velcro'`, `'Hook Velcro'`, `'Bare Rails'`, `'Perforated'`, `'Solid Flat'`, `'Other'`
+- `case_type`: `'Soft Case'`, `'Hard Case'`, `'Flight Case'`, `'Gig Bag'`, `'None'`
+
+**`midi_controller_details`**
+- `footswitch_type`: `'Momentary'`, `'Latching'`, `'Dual-Action'`, `'Mixed'`
+
+**`utility_details`**
+- `utility_type` (22 values): `'DI Box'`, `'Reamp Box'`, `'Buffer'`, `'Splitter'`, `'A/B Box'`, `'A/B/Y Box'`, `'Tuner'`, `'Volume Pedal'`, `'Expression Pedal'`, `'Noise Gate'`, `'Power Conditioner'`, `'Signal Router'`, `'Impedance Matcher'`, `'Headphone Amp'`, `'Mixer'`, `'Junction Box'`, `'Patch Bay'`, `'Mute Switch'`, `'Amp Switcher'`, `'Load Box'`, `'Line Level Converter'`, `'Other'`
+- `signal_type`: `'Analog'`, `'Digital'`, `'Both'`
+
+**`product_compatibility`**
+- `compatibility_type`: `'Mounting'`, `'Power'`, `'MIDI'`, `'Accessory'`, `'Replacement'`
+
+## Required Fields Per Detail Table
+
+Each detail table has a `product_id` PK (always required). Below are the additional NOT NULL fields — everything else is nullable or has a DEFAULT.
+
+| Table | Required Fields (NOT NULL) |
+|---|---|
+| `products` | `manufacturer_id`, `product_type_id`, `model` |
+| `pedal_details` | *(none beyond product_id — all fields nullable or have defaults)* |
+| `power_supply_details` | `total_output_count` |
+| `pedalboard_details` | *(none beyond product_id)* |
+| `midi_controller_details` | `footswitch_count` |
+| `utility_details` | `utility_type` |
+| `plug_details` | `plug_type`, `connector_type` |
+| `jacks` | `product_id`, `category`, `direction`, `connector_type` |
+
+## Standard Field Value Conventions
+
+- **Dimensions**: Stored as `DOUBLE PRECISION` in millimeters (`width_mm`, `depth_mm`, `height_mm`)
+- **Weight**: Stored as `INTEGER` in grams (`weight_grams`)
+- **MSRP**: Stored as `INTEGER` in cents (`msrp_cents`). `$99.00` = `9900`. Use `NULL` for unknown, never `0`.
+- **Booleans**: Use `TRUE`/`FALSE`. Most default to `FALSE`.
+- **`in_production`**: `TRUE` = currently available, `FALSE` = discontinued. Defaults to `TRUE`.
+- **`notes`**: Internal-only field on `products` table. Not exposed via the API. Use for data curation notes (e.g., "jacks are user-configurable — see manual").
+
+## Jack Insertion Patterns
+
+Jacks represent physical connectors. Only insert jacks for ports that exist on the product.
+
+**Power input jack (most common — needed for any active device):**
+```sql
+INSERT INTO jacks (product_id, category, direction, connector_type, voltage, current_ma, polarity)
+VALUES (<id>, 'power', 'input', '2.1mm barrel', '9V', <current_ma>, 'center-negative');
+```
+
+**Passive devices** (passive DI boxes, passive reamp boxes, etc.) do not need power jacks.
+
+**Required fields for every jack:** `product_id`, `category`, `direction`, `connector_type`. Everything else is optional.
+
+**Common category values:** `'audio'`, `'power'`, `'midi'`, `'expression'`, `'usb'`, `'aux'`
+**Common direction values:** `'input'`, `'output'`, `'bidirectional'`
 
 ## Database Maintenance Notes
 - Regularly verify and update reliability ratings as new sources emerge
