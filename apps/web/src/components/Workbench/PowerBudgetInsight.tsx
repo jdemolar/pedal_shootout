@@ -119,8 +119,11 @@ const PowerBudgetInsight = ({ rows }: PowerBudgetInsightProps) => {
       {status === 'no-supply' && (
         <div className="power-budget__prompt">
           <p>No power supply in workbench.</p>
-          <Link to="/power-supplies" className="power-budget__link">
-            Find power supplies {'\u2192'}
+          <Link
+            to={totalDraw > 0 ? `/power-supplies?minCurrent=${totalDraw}` : '/power-supplies'}
+            className="power-budget__link"
+          >
+            See all compatible power supplies {'\u2192'}
           </Link>
         </div>
       )}
@@ -147,7 +150,10 @@ const PowerBudgetInsight = ({ rows }: PowerBudgetInsightProps) => {
               ))}
             </div>
           )}
-          <Link to="/power-supplies" className="power-budget__link">
+          <Link
+            to={`/power-supplies?minCurrent=${totalDraw}`}
+            className="power-budget__link"
+          >
             Find additional power supplies {'\u2192'}
           </Link>
         </>

@@ -24,7 +24,7 @@ Track progress through the tasks defined in this plan. Tasks are grouped by depe
 ### Wave 1 (no dependencies — can start in parallel)
 - [x] **Task 1** — Jacks in catalog expanded rows
 - [x] **Task 2** — WorkbenchContext and localStorage persistence
-- [ ] **Task 11** — URL-based filter params for Power Supplies view
+- [x] **Task 11** — URL-based filter params for Power Supplies view
 
 ### Wave 2 (depends on Task 2)
 - [x] **Task 3** — Add-to-workbench button on catalog rows
@@ -42,7 +42,7 @@ Track progress through the tasks defined in this plan. Tasks are grouped by depe
 - [x] **Task 9** — Power budget insight — core
 
 ### Wave 6 (depends on Tasks 9, 11)
-- [ ] **Task 10** — Power budget insight — inline suggestions and catalog link
+- [x] **Task 10** — Power budget insight — inline suggestions and catalog link
 
 ---
 

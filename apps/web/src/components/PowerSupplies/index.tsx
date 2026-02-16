@@ -1,4 +1,5 @@
 import { ReactNode, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import DataTable, { ColumnDef, FilterConfig } from '../DataTable';
 import { formatMsrp, formatDimensions } from '../../utils/formatters';
 import { useApiData } from '../../hooks/useApiData';
@@ -195,6 +196,10 @@ const stats = (data: PowerSupply[]) => {
 
 const PowerSupplies = () => {
   const { data, loading, error } = useApiData(api.getPowerSupplies, transformPowerSupply);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const minCurrent = searchParams.get('minCurrent');
+  const minCurrentMa = minCurrent != null ? parseInt(minCurrent, 10) : null;
+  const hasCurrentFilter = minCurrentMa != null && !isNaN(minCurrentMa);
 
   const supplyTypes = useMemo(
     () => ['All', ...Array.from(new Set(data.map(d => d.supply_type).filter((t): t is string => t !== null))).sort()],
@@ -217,23 +222,40 @@ const PowerSupplies = () => {
       predicate: (ps, v) => ps.data_reliability === v },
   ], [supplyTypes, mountingTypes]);
 
+  const handleClearCurrentFilter = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('minCurrent');
+    setSearchParams(next);
+  };
+
   return (
-    <DataTable<PowerSupply>
-      title="Power Supply Database"
-      entityName="power supply"
-      entityNamePlural="power supplies"
-      stats={stats}
-      data={data}
-      columns={columns}
-      filters={filters}
-      searchFields={['manufacturer', 'model']}
-      searchPlaceholder="Search power supplies..."
-      renderExpandedRow={renderExpandedRow}
-      renderRowAction={ps => <WorkbenchToggle productId={ps.id} productType="power_supply" />}
-      defaultSortKey="manufacturer"
-      loading={loading}
-      error={error}
-    />
+    <>
+      {hasCurrentFilter && (
+        <div className="data-table__context-banner">
+          Showing power supplies for your {minCurrentMa.toLocaleString()}mA requirement
+          <button className="data-table__context-banner-clear" onClick={handleClearCurrentFilter}>
+            Clear
+          </button>
+        </div>
+      )}
+      <DataTable<PowerSupply>
+        title="Power Supply Database"
+        entityName="power supply"
+        entityNamePlural="power supplies"
+        stats={stats}
+        data={data}
+        columns={columns}
+        filters={filters}
+        searchFields={['manufacturer', 'model']}
+        searchPlaceholder="Search power supplies..."
+        renderExpandedRow={renderExpandedRow}
+        renderRowAction={ps => <WorkbenchToggle productId={ps.id} productType="power_supply" />}
+        defaultSortKey={hasCurrentFilter ? 'total_current_ma' : 'manufacturer'}
+        defaultSortDir={hasCurrentFilter ? -1 : 1}
+        loading={loading}
+        error={error}
+      />
+    </>
   );
 };
 

@@ -28,6 +28,7 @@ export interface DataTableProps<T extends { id: number }> {
   renderExpandedRow: (item: T) => ReactNode;
   renderRowAction?: (item: T) => ReactNode;
   defaultSortKey?: keyof T;
+  defaultSortDir?: 1 | -1;
   minTableWidth?: number;
   loading?: boolean;
   error?: string | null;
@@ -46,6 +47,7 @@ function DataTable<T extends { id: number }>({
   renderExpandedRow,
   renderRowAction,
   defaultSortKey,
+  defaultSortDir = 1,
   minTableWidth = 1100,
   loading = false,
   error = null,
@@ -53,7 +55,7 @@ function DataTable<T extends { id: number }>({
   const [search, setSearch] = useState('');
   const [filterValues, setFilterValues] = useState<string[]>(() => filters.map(() => 'All'));
   const [sortKey, setSortKey] = useState<keyof T | null>(defaultSortKey ?? null);
-  const [sortDir, setSortDir] = useState<1 | -1>(1);
+  const [sortDir, setSortDir] = useState<1 | -1>(defaultSortDir);
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const filtered = useMemo(() => {
