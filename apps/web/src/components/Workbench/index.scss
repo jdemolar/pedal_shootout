@@ -1,0 +1,133 @@
+.workbench {
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  background: #111;
+  color: #c8c8c8;
+  min-height: 100vh;
+  padding: 24px 20px 40px;
+
+  &__header {
+    margin-bottom: 24px;
+  }
+
+  &__title-row {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: #f0f0f0;
+    letter-spacing: -0.5px;
+    font-family: 'Helvetica Neue', sans-serif;
+  }
+
+  &__selector {
+    padding: 5px 8px;
+    border-radius: 5px;
+    border: 1px solid #2a2a2a;
+    background: #161616;
+    color: #a0a0a0;
+    font-size: 12px;
+    font-family: monospace;
+    outline: none;
+    cursor: pointer;
+
+    &:focus {
+      border-color: #444;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  &__btn {
+    padding: 5px 12px;
+    border-radius: 4px;
+    border: 1px solid #333;
+    background: #1a1a1a;
+    color: #999;
+    font-size: 11px;
+    font-family: monospace;
+    cursor: pointer;
+    transition: all 0.15s;
+
+    &:hover {
+      border-color: #555;
+      color: #ccc;
+      background: #222;
+    }
+
+    &--danger {
+      color: #cc6060;
+      border-color: #4a2a2a;
+
+      &:hover {
+        background: #2e1a1a;
+        border-color: #8b4444;
+        color: #e07070;
+      }
+    }
+  }
+
+  &__delete-confirm {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__delete-prompt {
+    color: #cc6060;
+    font-size: 11px;
+  }
+
+  &__rename {
+    display: inline-flex;
+  }
+
+  &__rename-input,
+  &__create-input {
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: 1px solid #444;
+    background: #161616;
+    color: #e0e0e0;
+    font-size: 14px;
+    font-family: monospace;
+    outline: none;
+
+    &:focus {
+      border-color: #666;
+    }
+  }
+
+  &__rename-input {
+    font-size: 20px;
+    font-weight: 700;
+    font-family: 'Helvetica Neue', sans-serif;
+  }
+
+  &__create {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  &__body {
+    // Container for table + sidebar (Tasks 6-8)
+  }
+
+  &__empty-message {
+    color: #555;
+    font-size: 13px;
+  }
+}

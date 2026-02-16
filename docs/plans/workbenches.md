@@ -22,14 +22,14 @@
 Track progress through the tasks defined in this plan. Tasks are grouped by dependency wave — each group can begin once the previous group's dependencies are met.
 
 ### Wave 1 (no dependencies — can start in parallel)
-- [ ] **Task 1** — Jacks in catalog expanded rows
-- [ ] **Task 2** — WorkbenchContext and localStorage persistence
+- [x] **Task 1** — Jacks in catalog expanded rows
+- [x] **Task 2** — WorkbenchContext and localStorage persistence
 - [ ] **Task 11** — URL-based filter params for Power Supplies view
 
 ### Wave 2 (depends on Task 2)
-- [ ] **Task 3** — Add-to-workbench button on catalog rows
-- [ ] **Task 4** — Nav workbench icon with badge
-- [ ] **Task 5** — Workbench management UI
+- [x] **Task 3** — Add-to-workbench button on catalog rows
+- [x] **Task 4** — Nav workbench icon with badge
+- [x] **Task 5** — Workbench management UI
 
 ### Wave 3 (depends on Tasks 2, 5)
 - [ ] **Task 6** — Workbench page — unified product table
