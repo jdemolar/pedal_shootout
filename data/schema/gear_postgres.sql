@@ -458,14 +458,14 @@ SELECT
     p.in_production,
     -- Reconstruct inputs/outputs from jacks (simplified)
     (SELECT STRING_AGG(connector_type, ', ')
-     FROM jacks WHERE product_id = p.id AND direction = 'Input' AND category LIKE 'Audio%') AS inputs,
+     FROM jacks WHERE product_id = p.id AND direction = 'input' AND category = 'audio') AS inputs,
     (SELECT STRING_AGG(connector_type, ', ')
-     FROM jacks WHERE product_id = p.id AND direction = 'Output' AND category LIKE 'Audio%') AS outputs,
+     FROM jacks WHERE product_id = p.id AND direction = 'output' AND category = 'audio') AS outputs,
     -- Power info from jacks
-    (SELECT connector_type FROM jacks WHERE product_id = p.id AND category = 'Power Input' LIMIT 1) AS power_plug_size,
-    (SELECT polarity FROM jacks WHERE product_id = p.id AND category = 'Power Input' LIMIT 1) AS power_polarity,
-    (SELECT voltage FROM jacks WHERE product_id = p.id AND category = 'Power Input' LIMIT 1) AS power_voltage,
-    (SELECT current_ma FROM jacks WHERE product_id = p.id AND category = 'Power Input' LIMIT 1) AS power_current_ma,
+    (SELECT connector_type FROM jacks WHERE product_id = p.id AND category = 'power' AND direction = 'input' LIMIT 1) AS power_plug_size,
+    (SELECT polarity FROM jacks WHERE product_id = p.id AND category = 'power' AND direction = 'input' LIMIT 1) AS power_polarity,
+    (SELECT voltage FROM jacks WHERE product_id = p.id AND category = 'power' AND direction = 'input' LIMIT 1) AS power_voltage,
+    (SELECT current_ma FROM jacks WHERE product_id = p.id AND category = 'power' AND direction = 'input' LIMIT 1) AS power_current_ma,
     -- Dimensions as formatted string
     CASE
         WHEN p.width_mm IS NOT NULL AND p.depth_mm IS NOT NULL AND p.height_mm IS NOT NULL
@@ -478,7 +478,7 @@ SELECT
     p.instruction_manual,
     pd.bypass_type,
     pd.midi_capable,
-    (SELECT COUNT(*) FROM jacks WHERE product_id = p.id AND category = 'Expression') AS expression_input,
+    (SELECT COUNT(*) FROM jacks WHERE product_id = p.id AND category = 'expression') AS expression_input,
     CASE WHEN pd.mono_stereo = 'Mono' THEN FALSE ELSE TRUE END AS stereo_capable
 FROM products p
 JOIN manufacturers m ON p.manufacturer_id = m.id
