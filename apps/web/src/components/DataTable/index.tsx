@@ -26,7 +26,9 @@ export interface DataTableProps<T extends { id: number }> {
   searchFields: (keyof T)[];
   searchPlaceholder?: string;
   renderExpandedRow: (item: T) => ReactNode;
+  renderRowAction?: (item: T) => ReactNode;
   defaultSortKey?: keyof T;
+  defaultSortDir?: 1 | -1;
   minTableWidth?: number;
   loading?: boolean;
   error?: string | null;
@@ -43,7 +45,9 @@ function DataTable<T extends { id: number }>({
   searchFields,
   searchPlaceholder,
   renderExpandedRow,
+  renderRowAction,
   defaultSortKey,
+  defaultSortDir = 1,
   minTableWidth = 1100,
   loading = false,
   error = null,
@@ -51,7 +55,7 @@ function DataTable<T extends { id: number }>({
   const [search, setSearch] = useState('');
   const [filterValues, setFilterValues] = useState<string[]>(() => filters.map(() => 'All'));
   const [sortKey, setSortKey] = useState<keyof T | null>(defaultSortKey ?? null);
-  const [sortDir, setSortDir] = useState<1 | -1>(1);
+  const [sortDir, setSortDir] = useState<1 | -1>(defaultSortDir);
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const filtered = useMemo(() => {
@@ -207,6 +211,9 @@ function DataTable<T extends { id: number }>({
                   )}
                 </th>
               ))}
+              {renderRowAction != null && (
+                <th className="data-table__th data-table__th--action" style={{ width: 40 }} />
+              )}
             </tr>
           </thead>
           <tbody>
@@ -228,10 +235,15 @@ function DataTable<T extends { id: number }>({
                         {col.render(item)}
                       </td>
                     ))}
+                    {renderRowAction != null && (
+                      <td className="data-table__td data-table__td--action">
+                        {renderRowAction(item)}
+                      </td>
+                    )}
                   </tr>
                   {isExpanded && (
                     <tr className="data-table__expanded-row">
-                      <td colSpan={columns.length} className="data-table__expanded-cell">
+                      <td colSpan={columns.length + (renderRowAction != null ? 1 : 0)} className="data-table__expanded-cell">
                         <div className="data-table__expanded-content">
                           {renderExpandedRow(item)}
                         </div>

@@ -1,0 +1,66 @@
+.jacks-list {
+  grid-column: 1 / -1;
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid #222;
+
+  &__header {
+    color: #3d3d3d;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+  }
+
+  &__groups {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 24px;
+  }
+
+  &__group {
+    min-width: 160px;
+  }
+
+  &__category {
+    color: #555;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+
+  &__jack {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 4px 0;
+
+    & + & {
+      border-top: 1px solid #1e1e1e;
+    }
+  }
+
+  &__jack-name {
+    color: #d0d0d0;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  &__jack-summary {
+    color: #b0b0b0;
+    font-size: 10.5px;
+  }
+
+  &__jack-details {
+    color: #f0a855;
+    font-size: 10px;
+  }
+
+  &__jack-function {
+    color: #666;
+    font-size: 10px;
+    font-style: italic;
+  }
+}
