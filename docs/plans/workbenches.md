@@ -32,10 +32,10 @@ Track progress through the tasks defined in this plan. Tasks are grouped by depe
 - [x] **Task 5** — Workbench management UI
 
 ### Wave 3 (depends on Tasks 2, 5)
-- [ ] **Task 6** — Workbench page — unified product table
+- [x] **Task 6** — Workbench page — unified product table
 
 ### Wave 4 (depends on Task 6)
-- [ ] **Task 7** — Workbench page — slide-out detail panel
+- [x] **Task 7** — Workbench page — slide-out detail panel
 - [ ] **Task 8** — Insights sidebar — simple summaries
 
 ### Wave 5 (depends on Task 8)
