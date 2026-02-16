@@ -12,6 +12,7 @@ import MidiControllers from '../MidiControllers';
 import Pedalboards from '../Pedalboards';
 import PowerSupplies from '../PowerSupplies';
 import Utilities from '../Utilities';
+import Workbench from '../Workbench';
 import { WorkbenchProvider } from '../../context/WorkbenchContext';
 
 const App = () => {
@@ -41,6 +42,7 @@ const App = () => {
 						{navElements.map((navElement) => {
 							return <Route key={navElement.link} path={'/' + navElement.link} element={navElement.component}/>
 						})}
+						<Route path='/workbench' element={<Workbench />} />
 						<Route path='*' element={<NotFound />} />
 					</Routes>
 				</div>

@@ -4,29 +4,81 @@
 	display: flex;
 	flex-direction: row;
 	align-items: stretch;
-	justify-content: flex-start;
-	gap: 20px;
+	justify-content: space-between;
 	padding: 0 20px;
 
-	div {
+	&__links {
 		display: flex;
 		flex-direction: row;
-		text-align: center;
+		align-items: stretch;
+		gap: 20px;
+
+		div {
+			display: flex;
+			flex-direction: row;
+			text-align: center;
+			align-items: center;
+			cursor: pointer;
+			font-size: 1.3em;
+			font-weight: bolder;
+			color: #707070;
+
+			&:hover {
+				color: #000;
+			}
+
+			&::before, &::after {
+				content: '|';
+				margin: 0 10px;
+				text-decoration: none !important;
+				font-weight: bolder;
+			}
+		}
+	}
+
+	&__workbench {
+		display: flex;
 		align-items: center;
-		cursor: pointer;
-		font-size: 1.3em;
-		font-weight: bolder;
-		color: #707070;
+	}
+
+	&__workbench-link {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		padding: 6px 14px;
+		border-radius: 6px;
+		background: #555;
+		color: #fff;
+		text-decoration: none;
+		font-size: 0.9em;
+		font-weight: 600;
+		transition: background 0.15s;
 
 		&:hover {
-			color: #000;
+			background: #444;
 		}
+	}
 
-		&::before, &::after {
-			content: '|';
-			margin: 0 10px;
-			text-decoration: none !important;
-			font-weight: bolder;
-		}
+	&__workbench-icon {
+		font-size: 1.1em;
+	}
+
+	&__workbench-label {
+		// hidden on narrow screens if needed in the future
+	}
+
+	&__workbench-badge {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 20px;
+		height: 20px;
+		padding: 0 5px;
+		border-radius: 10px;
+		background: #f0a855;
+		color: #111;
+		font-size: 11px;
+		font-weight: 700;
+		line-height: 1;
 	}
 }
