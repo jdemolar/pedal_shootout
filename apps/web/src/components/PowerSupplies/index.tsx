@@ -3,7 +3,8 @@ import DataTable, { ColumnDef, FilterConfig } from '../DataTable';
 import { formatMsrp, formatDimensions } from '../../utils/formatters';
 import { useApiData } from '../../hooks/useApiData';
 import { api } from '../../services/api';
-import { transformPowerSupply } from '../../utils/transformers';
+import { transformPowerSupply, Jack } from '../../utils/transformers';
+import JacksList from '../JacksList';
 
 interface PowerSupply {
   id: number;
@@ -35,6 +36,7 @@ interface PowerSupply {
   expansion_port_type: string | null;
   is_battery_powered: boolean;
   battery_capacity_wh: number | null;
+  jacks: Jack[];
 }
 
 const columns: ColumnDef<PowerSupply>[] = [
@@ -180,6 +182,7 @@ const renderExpandedRow = (ps: PowerSupply): ReactNode => (
         </div>
       </div>
     )}
+    <JacksList jacks={ps.jacks} />
   </>
 );
 

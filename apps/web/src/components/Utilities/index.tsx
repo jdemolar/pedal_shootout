@@ -3,7 +3,8 @@ import DataTable, { ColumnDef, FilterConfig } from '../DataTable';
 import { formatMsrp, formatDimensions } from '../../utils/formatters';
 import { useApiData } from '../../hooks/useApiData';
 import { api } from '../../services/api';
-import { transformUtility } from '../../utils/transformers';
+import { transformUtility, Jack } from '../../utils/transformers';
+import JacksList from '../JacksList';
 
 interface Utility {
   id: number;
@@ -24,6 +25,7 @@ interface Utility {
   signal_type: string | null;
   bypass_type: string | null;
   has_ground_lift: boolean;
+  jacks: Jack[];
 }
 
 const columns: ColumnDef<Utility>[] = [
@@ -107,6 +109,7 @@ const renderExpandedRow = (u: Utility): ReactNode => (
         </div>
       </div>
     )}
+    <JacksList jacks={u.jacks} />
   </>
 );
 

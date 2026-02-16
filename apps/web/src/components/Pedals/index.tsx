@@ -3,7 +3,8 @@ import DataTable, { ColumnDef, FilterConfig } from '../DataTable';
 import { formatMsrp, formatDimensions, formatPower } from '../../utils/formatters';
 import { useApiData } from '../../hooks/useApiData';
 import { api } from '../../services/api';
-import { transformPedal } from '../../utils/transformers';
+import { transformPedal, Jack } from '../../utils/transformers';
+import JacksList from '../JacksList';
 
 interface Pedal {
   id: number;
@@ -32,6 +33,7 @@ interface Pedal {
   has_software_editor: boolean;
   power_voltage: string | null;
   power_current_ma: number | null;
+  jacks: Jack[];
 }
 
 const columns: ColumnDef<Pedal>[] = [
@@ -149,6 +151,7 @@ const renderExpandedRow = (p: Pedal): ReactNode => (
         </div>
       </div>
     )}
+    <JacksList jacks={p.jacks} />
   </>
 );
 

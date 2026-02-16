@@ -8,6 +8,48 @@ import {
   JackApiResponse,
 } from '../types/api';
 
+export interface Jack {
+  id: number;
+  category: string | null;
+  direction: string | null;
+  jack_name: string | null;
+  position: string | null;
+  connector_type: string | null;
+  impedance_ohms: number | null;
+  voltage: string | null;
+  current_ma: number | null;
+  polarity: string | null;
+  function_desc: string | null;
+  is_isolated: boolean | null;
+  is_buffered: boolean | null;
+  has_ground_lift: boolean | null;
+  has_phase_invert: boolean | null;
+}
+
+function transformJack(dto: JackApiResponse): Jack {
+  return {
+    id: dto.id,
+    category: dto.category,
+    direction: dto.direction,
+    jack_name: dto.jackName,
+    position: dto.position,
+    connector_type: dto.connectorType,
+    impedance_ohms: dto.impedanceOhms,
+    voltage: dto.voltage,
+    current_ma: dto.currentMa,
+    polarity: dto.polarity,
+    function_desc: dto.function,
+    is_isolated: dto.isIsolated,
+    is_buffered: dto.isBuffered,
+    has_ground_lift: dto.hasGroundLift,
+    has_phase_invert: dto.hasPhaseInvert,
+  };
+}
+
+export function transformJacks(dtos: JackApiResponse[]): Jack[] {
+  return dtos.map(transformJack);
+}
+
 function extractPowerVoltage(jacks: JackApiResponse[]): string | null {
   const powerJack = jacks.find(j => j.category === 'power' && j.direction === 'input');
   return powerJack?.voltage ?? null;
@@ -46,6 +88,7 @@ export function transformPedal(dto: PedalApiResponse) {
     has_software_editor: dto.pedalDetails?.hasSoftwareEditor ?? false,
     power_voltage: extractPowerVoltage(dto.jacks),
     power_current_ma: extractPowerCurrentMa(dto.jacks),
+    jacks: transformJacks(dto.jacks),
   };
 }
 
@@ -94,6 +137,7 @@ export function transformMidiController(dto: MidiControllerApiResponse) {
     software_platforms: dto.softwarePlatforms,
     power_voltage: extractPowerVoltage(dto.jacks),
     power_current_ma: extractPowerCurrentMa(dto.jacks),
+    jacks: transformJacks(dto.jacks),
   };
 }
 
@@ -119,6 +163,7 @@ export function transformPedalboard(dto: PedalboardApiResponse) {
     has_integrated_power: dto.hasIntegratedPower,
     has_integrated_patch_bay: dto.hasIntegratedPatchBay,
     case_included: dto.caseIncluded,
+    jacks: transformJacks(dto.jacks),
   };
 }
 
@@ -152,6 +197,7 @@ export function transformPowerSupply(dto: PowerSupplyApiResponse) {
     expansion_port_type: dto.expansionPortType,
     is_battery_powered: dto.isBatteryPowered,
     battery_capacity_wh: dto.batteryCapacityWh,
+    jacks: transformJacks(dto.jacks),
   };
 }
 
@@ -174,5 +220,6 @@ export function transformUtility(dto: UtilityApiResponse) {
     signal_type: dto.signalType,
     bypass_type: dto.bypassType,
     has_ground_lift: dto.hasGroundLift,
+    jacks: transformJacks(dto.jacks),
   };
 }

@@ -3,7 +3,8 @@ import DataTable, { ColumnDef, FilterConfig } from '../DataTable';
 import { formatMsrp, formatDimensions, formatPower } from '../../utils/formatters';
 import { useApiData } from '../../hooks/useApiData';
 import { api } from '../../services/api';
-import { transformMidiController } from '../../utils/transformers';
+import { transformMidiController, Jack } from '../../utils/transformers';
+import JacksList from '../JacksList';
 
 interface MidiController {
   id: number;
@@ -35,6 +36,7 @@ interface MidiController {
   software_platforms: string | null;
   power_voltage: string | null;
   power_current_ma: number | null;
+  jacks: Jack[];
 }
 
 const columns: ColumnDef<MidiController>[] = [
@@ -167,6 +169,7 @@ const renderExpandedRow = (c: MidiController): ReactNode => (
         </div>
       </div>
     )}
+    <JacksList jacks={c.jacks} />
   </>
 );
 
