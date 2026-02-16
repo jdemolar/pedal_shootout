@@ -1,11 +1,7 @@
 import './app.scss';
 import Nav from '../Nav';
-import FeatureTable from '../FeatureTable';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import PedalSpecForm from '../PedalSpecForm';
 import NotFound from '../NotFound';
-// TODO: Migrate PedalDatabase component from raw_data to apps/web/src/components
-// import PedalDatabase from '../../../raw_data/pedal_database_view';
 import Manufacturers from '../Manufacturers';
 import Pedals from '../Pedals';
 import MidiControllers from '../MidiControllers';
@@ -18,9 +14,6 @@ import { WorkbenchProvider } from '../../context/WorkbenchContext';
 const App = () => {
 
 	const navElements = [
-		{label: 'Features Table',		link: 'feature-table',		component: <FeatureTable />},
-		{label: 'Submit Pedal Data',	link: 'pedal-form',			component: <PedalSpecForm />},
-		// {label: 'Pedal Database',	link: 'pedal-database',		component: <PedalDatabase />},  // TODO: Migrate from raw_data
 		{label: 'Manufacturers',		link: 'manufacturers',		component: <Manufacturers />},
 		{label: 'Pedals',				link: 'pedals',				component: <Pedals />},
 		{label: 'MIDI Controllers',		link: 'midi-controllers',	component: <MidiControllers />},

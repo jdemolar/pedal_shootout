@@ -1,6 +1,10 @@
 import ReactDOM from 'react-dom/client';
 import App from '../components/App';
 
+jest.mock('../hooks/useApiData', () => ({
+	useApiData: () => ({ data: [], loading: false, error: null }),
+}));
+
 const rootMock = {
 	render: jest.fn(),
 };
