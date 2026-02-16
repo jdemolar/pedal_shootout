@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useWorkbench } from '../../context/WorkbenchContext';
 import WorkbenchTableView, { useWorkbenchProducts, WorkbenchRow } from './WorkbenchTable';
+import DetailPanel from './DetailPanel';
 import './index.scss';
 
 const Workbench = () => {
@@ -20,6 +21,7 @@ const Workbench = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [createValue, setCreateValue] = useState('');
+  const [selectedRow, setSelectedRow] = useState<WorkbenchRow | null>(null);
 
   const handleStartRename = () => {
     setRenameValue(activeWorkbench.name);
@@ -62,8 +64,8 @@ const Workbench = () => {
     setShowDeleteConfirm(false);
   };
 
-  const handleRowClick = (_row: WorkbenchRow) => {
-    // Detail panel selection will be added in Task 7
+  const handleRowClick = (row: WorkbenchRow) => {
+    setSelectedRow(prev => prev?.id === row.id ? null : row);
   };
 
   return (
@@ -151,6 +153,13 @@ const Workbench = () => {
             onRowClick={handleRowClick}
           />
         </div>
+
+        {selectedRow && (
+          <DetailPanel
+            row={selectedRow}
+            onClose={() => setSelectedRow(null)}
+          />
+        )}
       </div>
     </div>
   );

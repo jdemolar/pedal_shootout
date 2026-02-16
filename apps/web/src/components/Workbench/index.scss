@@ -123,11 +123,15 @@
   }
 
   &__body {
-    // Container for table + sidebar (Tasks 6-8)
+    display: flex;
+    gap: 0;
+    position: relative;
   }
 
   &__content {
     overflow-x: auto;
+    flex: 1;
+    min-width: 0;
   }
 
   &__table-wrapper {
@@ -293,4 +297,137 @@
 // Null value placeholder
 .null-value {
   color: #444;
+}
+
+// Slide-out detail panel
+.detail-panel {
+  width: 360px;
+  min-width: 360px;
+  background: #161616;
+  border-left: 1px solid #2a2a2a;
+  overflow-y: auto;
+  max-height: calc(100vh - 160px);
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 16px 16px 12px;
+    border-bottom: 1px solid #2a2a2a;
+    position: sticky;
+    top: 0;
+    background: #161616;
+    z-index: 1;
+  }
+
+  &__header-text {
+    min-width: 0;
+    flex: 1;
+  }
+
+  &__title {
+    margin: 8px 0 2px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #f0f0f0;
+    font-family: 'Helvetica Neue', sans-serif;
+    letter-spacing: -0.3px;
+  }
+
+  &__subtitle {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 400;
+    color: #999;
+    font-family: 'Helvetica Neue', sans-serif;
+  }
+
+  &__close {
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 22px;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+    border-radius: 3px;
+    flex-shrink: 0;
+
+    &:hover {
+      color: #ccc;
+      background: #222;
+    }
+  }
+
+  &__body {
+    padding: 0;
+  }
+
+  &__section {
+    padding: 12px 16px;
+    border-bottom: 1px solid #1e1e1e;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  &__section-title {
+    margin: 0 0 10px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #777;
+  }
+
+  &__field {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 4px 0;
+    font-size: 12px;
+    gap: 12px;
+  }
+
+  &__label {
+    color: #777;
+    flex-shrink: 0;
+  }
+
+  &__value--highlight {
+    color: #d4a55a;
+    font-weight: 600;
+  }
+
+  &__link {
+    color: #6a9fcc;
+    text-decoration: none;
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 200px;
+    display: inline-block;
+
+    &:hover {
+      color: #8ab8dd;
+      text-decoration: underline;
+    }
+  }
+
+  // Boolean field styles within the panel
+  .bool-yes {
+    color: #6aaa6a;
+  }
+
+  .bool-no {
+    color: #555;
+  }
+
+  // JacksList needs to fit within the panel width
+  .jacks-list {
+    padding: 0;
+  }
 }
