@@ -108,9 +108,6 @@ cd apps/api
 
 **Key Components:**
 - `App` - Main router (React Router DOM)
-- `FeatureTable` - Primary comparison view, fetches data from Realm on mount
-- `FeatureRow` - Renders pedal specs with complex data handling (tooltips, lists)
-- `PedalSpecForm` - Form for submitting new pedal specifications
 
 **Shared Components and Utilities:**
 - `DataTable<T>` (`components/DataTable/index.tsx`) — Generic table with sorting, filtering, search, and expandable rows. All data views use this.
