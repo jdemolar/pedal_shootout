@@ -479,3 +479,125 @@
     }
   }
 }
+
+// Power budget insight
+.power-budget {
+  padding: 12px 0;
+  border-top: 1px solid #2a2a2a;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  &__icon {
+    font-size: 14px;
+  }
+
+  &__title {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #777;
+  }
+
+  &__status {
+    font-size: 10px;
+    font-weight: 600;
+    margin-left: auto;
+
+    &--none {
+      color: #666;
+    }
+
+    &--warn {
+      color: #d4a55a;
+    }
+
+    &--ok {
+      color: #6aaa6a;
+    }
+  }
+
+  &__draw {
+    font-size: 12px;
+    color: #c8c8c8;
+    margin-bottom: 4px;
+    line-height: 1.4;
+  }
+
+  &__unknown {
+    font-size: 11px;
+    color: #d4a55a;
+    margin-bottom: 4px;
+  }
+
+  &__detail {
+    font-size: 11px;
+    color: #888;
+    margin-bottom: 8px;
+  }
+
+  &__prompt {
+    margin-top: 8px;
+
+    p {
+      margin: 0 0 6px;
+      font-size: 12px;
+      color: #888;
+    }
+  }
+
+  &__link {
+    display: inline-block;
+    font-size: 11px;
+    color: #6a9fcc;
+    text-decoration: none;
+    margin-top: 4px;
+
+    &:hover {
+      color: #8ab8dd;
+      text-decoration: underline;
+    }
+  }
+
+  &__deficit {
+    font-size: 12px;
+    color: #c8c8c8;
+    margin-bottom: 6px;
+    line-height: 1.4;
+  }
+
+  &__deficit-amount {
+    color: #cc6060;
+    font-weight: 600;
+  }
+
+  &__capacity {
+    font-size: 12px;
+    color: #c8c8c8;
+    margin-bottom: 6px;
+    line-height: 1.4;
+  }
+
+  &__headroom {
+    color: #6aaa6a;
+    font-weight: 600;
+  }
+
+  &__breakdown {
+    margin-top: 6px;
+    padding-left: 8px;
+    border-left: 2px solid #2a2a2a;
+  }
+
+  &__breakdown-item {
+    font-size: 11px;
+    color: #888;
+    padding: 2px 0;
+  }
+}

@@ -39,7 +39,7 @@ Track progress through the tasks defined in this plan. Tasks are grouped by depe
 - [x] **Task 8** — Insights sidebar — simple summaries
 
 ### Wave 5 (depends on Task 8)
-- [ ] **Task 9** — Power budget insight — core
+- [x] **Task 9** — Power budget insight — core
 
 ### Wave 6 (depends on Tasks 9, 11)
 - [ ] **Task 10** — Power budget insight — inline suggestions and catalog link

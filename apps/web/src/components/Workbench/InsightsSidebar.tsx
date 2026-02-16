@@ -1,6 +1,7 @@
 import { WorkbenchRow } from './WorkbenchTable';
 import { ProductType } from '../../context/WorkbenchContext';
 import { formatMsrp } from '../../utils/formatters';
+import PowerBudgetInsight from './PowerBudgetInsight';
 
 interface InsightsSidebarProps {
   rows: WorkbenchRow[];
@@ -128,6 +129,7 @@ const InsightsSidebar = ({ rows }: InsightsSidebarProps) => {
       <TotalCost rows={rows} />
       <TotalWeight rows={rows} />
       <MidiPedals rows={rows} />
+      <PowerBudgetInsight rows={rows} />
     </div>
   );
 };
