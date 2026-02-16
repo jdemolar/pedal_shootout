@@ -1,0 +1,36 @@
+.workbench-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 1px solid #333;
+  background: #1a1a1a;
+  color: #666;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  padding: 0;
+  line-height: 1;
+  font-family: monospace;
+
+  &:hover {
+    border-color: #555;
+    color: #aaa;
+    background: #222;
+  }
+
+  &--active {
+    border-color: #4a7c59;
+    color: #6abf7b;
+    background: #1a2e1f;
+
+    &:hover {
+      border-color: #8b4444;
+      color: #cc6060;
+      background: #2e1a1a;
+    }
+  }
+}

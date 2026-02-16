@@ -171,6 +171,11 @@
     padding: 7px 10px;
     border-bottom: 1px solid #1e1e1e;
     font-size: 11px;
+
+    &--action {
+      text-align: center;
+      padding: 4px 6px;
+    }
   }
 
   &__expanded-row {

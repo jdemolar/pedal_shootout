@@ -5,6 +5,7 @@ import { useApiData } from '../../hooks/useApiData';
 import { api } from '../../services/api';
 import { transformPowerSupply, Jack } from '../../utils/transformers';
 import JacksList from '../JacksList';
+import WorkbenchToggle from '../WorkbenchToggle';
 
 interface PowerSupply {
   id: number;
@@ -228,6 +229,7 @@ const PowerSupplies = () => {
       searchFields={['manufacturer', 'model']}
       searchPlaceholder="Search power supplies..."
       renderExpandedRow={renderExpandedRow}
+      renderRowAction={ps => <WorkbenchToggle productId={ps.id} productType="power_supply" />}
       defaultSortKey="manufacturer"
       loading={loading}
       error={error}

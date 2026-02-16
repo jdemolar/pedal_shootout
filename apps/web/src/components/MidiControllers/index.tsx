@@ -5,6 +5,7 @@ import { useApiData } from '../../hooks/useApiData';
 import { api } from '../../services/api';
 import { transformMidiController, Jack } from '../../utils/transformers';
 import JacksList from '../JacksList';
+import WorkbenchToggle from '../WorkbenchToggle';
 
 interface MidiController {
   id: number;
@@ -194,6 +195,7 @@ const MidiControllers = () => {
       searchFields={['manufacturer', 'model']}
       searchPlaceholder="Search controllers..."
       renderExpandedRow={renderExpandedRow}
+      renderRowAction={c => <WorkbenchToggle productId={c.id} productType="midi_controller" />}
       defaultSortKey="manufacturer"
       loading={loading}
       error={error}

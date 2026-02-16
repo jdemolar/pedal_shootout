@@ -26,6 +26,7 @@ export interface DataTableProps<T extends { id: number }> {
   searchFields: (keyof T)[];
   searchPlaceholder?: string;
   renderExpandedRow: (item: T) => ReactNode;
+  renderRowAction?: (item: T) => ReactNode;
   defaultSortKey?: keyof T;
   minTableWidth?: number;
   loading?: boolean;
@@ -43,6 +44,7 @@ function DataTable<T extends { id: number }>({
   searchFields,
   searchPlaceholder,
   renderExpandedRow,
+  renderRowAction,
   defaultSortKey,
   minTableWidth = 1100,
   loading = false,
@@ -207,6 +209,9 @@ function DataTable<T extends { id: number }>({
                   )}
                 </th>
               ))}
+              {renderRowAction != null && (
+                <th className="data-table__th data-table__th--action" style={{ width: 40 }} />
+              )}
             </tr>
           </thead>
           <tbody>
@@ -228,10 +233,15 @@ function DataTable<T extends { id: number }>({
                         {col.render(item)}
                       </td>
                     ))}
+                    {renderRowAction != null && (
+                      <td className="data-table__td data-table__td--action">
+                        {renderRowAction(item)}
+                      </td>
+                    )}
                   </tr>
                   {isExpanded && (
                     <tr className="data-table__expanded-row">
-                      <td colSpan={columns.length} className="data-table__expanded-cell">
+                      <td colSpan={columns.length + (renderRowAction != null ? 1 : 0)} className="data-table__expanded-cell">
                         <div className="data-table__expanded-content">
                           {renderExpandedRow(item)}
                         </div>
