@@ -431,3 +431,51 @@
     padding: 0;
   }
 }
+
+// Insights sidebar
+.insights {
+  width: 220px;
+  min-width: 220px;
+  border-left: 1px solid #2a2a2a;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+
+  &__card {
+    padding: 10px 0;
+    border-bottom: 1px solid #1e1e1e;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  &__card-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #777;
+    margin-bottom: 4px;
+  }
+
+  &__card-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #e0e0e0;
+    font-family: 'Helvetica Neue', sans-serif;
+    letter-spacing: -0.3px;
+  }
+
+  &__card-detail {
+    font-size: 11px;
+    color: #666;
+    margin-top: 3px;
+
+    &--warn {
+      color: #d4a55a;
+    }
+  }
+}

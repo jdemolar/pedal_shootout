@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useWorkbench } from '../../context/WorkbenchContext';
 import WorkbenchTableView, { useWorkbenchProducts, WorkbenchRow } from './WorkbenchTable';
 import DetailPanel from './DetailPanel';
+import InsightsSidebar from './InsightsSidebar';
 import './index.scss';
 
 const Workbench = () => {
@@ -153,6 +154,10 @@ const Workbench = () => {
             onRowClick={handleRowClick}
           />
         </div>
+
+        {!loading && rows.length > 0 && (
+          <InsightsSidebar rows={rows} />
+        )}
 
         {selectedRow && (
           <DetailPanel

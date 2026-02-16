@@ -36,7 +36,7 @@ Track progress through the tasks defined in this plan. Tasks are grouped by depe
 
 ### Wave 4 (depends on Task 6)
 - [x] **Task 7** — Workbench page — slide-out detail panel
-- [ ] **Task 8** — Insights sidebar — simple summaries
+- [x] **Task 8** — Insights sidebar — simple summaries
 
 ### Wave 5 (depends on Task 8)
 - [ ] **Task 9** — Power budget insight — core
