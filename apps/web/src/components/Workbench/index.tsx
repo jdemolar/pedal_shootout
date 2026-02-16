@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useWorkbench } from '../../context/WorkbenchContext';
+import WorkbenchTableView, { useWorkbenchProducts, WorkbenchRow } from './WorkbenchTable';
 import './index.scss';
 
 const Workbench = () => {
@@ -11,6 +12,8 @@ const Workbench = () => {
     deleteWorkbench,
     setActiveWorkbench,
   } = useWorkbench();
+
+  const { rows, loading, error } = useWorkbenchProducts();
 
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
@@ -57,6 +60,10 @@ const Workbench = () => {
   const handleDelete = () => {
     deleteWorkbench(activeWorkbench.id);
     setShowDeleteConfirm(false);
+  };
+
+  const handleRowClick = (_row: WorkbenchRow) => {
+    // Detail panel selection will be added in Task 7
   };
 
   return (
@@ -136,12 +143,14 @@ const Workbench = () => {
       </div>
 
       <div className="workbench__body">
-        <p className="workbench__empty-message">
-          {activeWorkbench.items.length === 0
-            ? 'Your workbench is empty. Add products from the catalog views.'
-            : `${activeWorkbench.items.length} item${activeWorkbench.items.length === 1 ? '' : 's'} in workbench.`
-          }
-        </p>
+        <div className="workbench__content">
+          <WorkbenchTableView
+            rows={rows}
+            loading={loading}
+            error={error}
+            onRowClick={handleRowClick}
+          />
+        </div>
       </div>
     </div>
   );

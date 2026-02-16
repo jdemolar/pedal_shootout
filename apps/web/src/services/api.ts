@@ -19,9 +19,14 @@ async function get<T>(path: string): Promise<T> {
 
 export const api = {
   getPedals: () => get<PedalApiResponse[]>('/api/pedals'),
+  getPedal: (id: number) => get<PedalApiResponse>(`/api/pedals/${id}`),
   getManufacturers: () => get<ManufacturerApiResponse[]>('/api/manufacturers'),
   getMidiControllers: () => get<MidiControllerApiResponse[]>('/api/midi-controllers'),
+  getMidiController: (id: number) => get<MidiControllerApiResponse>(`/api/midi-controllers/${id}`),
   getPedalboards: () => get<PedalboardApiResponse[]>('/api/pedalboards'),
+  getPedalboard: (id: number) => get<PedalboardApiResponse>(`/api/pedalboards/${id}`),
   getPowerSupplies: () => get<PowerSupplyApiResponse[]>('/api/power-supplies'),
+  getPowerSupply: (id: number) => get<PowerSupplyApiResponse>(`/api/power-supplies/${id}`),
   getUtilities: () => get<UtilityApiResponse[]>('/api/utilities'),
+  getUtility: (id: number) => get<UtilityApiResponse>(`/api/utilities/${id}`),
 };
