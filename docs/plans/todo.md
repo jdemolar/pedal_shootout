@@ -23,6 +23,8 @@
 - [ ] **Signal path validator** - Flag mono/stereo mismatches, impedance issues
 - [ ] **MIDI routing helper** - Match controller outputs to pedal MIDI needs
 
+3b. Enable toggle for units of measurement -- mm to inches
+
 4. Add images to views so that user can see the product within the details view (in expanded row panels)
 
 5. Create a way for users to put multiple products into a "cart" for the purpose of product comparison and compatibility analysis, generating a shopping list, and moving to pedal arrangement
