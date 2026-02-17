@@ -243,11 +243,20 @@ paths:
         Returns all power supplies with full details and jacks. Filtering is performed
         client-side by the frontend.
 
-        The frontend Power Supplies view (`/power-supplies`) accepts a `minCurrent` URL
-        search param (e.g., `/power-supplies?minCurrent=2780`) to pre-filter the display
-        by minimum total current capacity in milliamps. This is a frontend-only param used
-        for cross-view deep linking (e.g., from the workbench power budget insight) and is
-        not passed to this API endpoint. See ADR #6 for details.
+        The frontend Power Supplies view (`/power-supplies`) accepts several URL search
+        params for cross-view deep linking (e.g., from the workbench Power Budget insight).
+        These are **frontend-only params** — they are not passed to this API endpoint.
+
+        | Param | Type | Example | Meaning |
+        |-------|------|---------|---------|
+        | `minCurrent` | integer | `2780` | Minimum total current capacity (mA) |
+        | `minOutputs` | integer | `8` | Minimum number of power outputs |
+        | `minOutputCurrent` | integer | `300` | At least one output jack must provide this many mA |
+        | `voltages` | comma-separated | `9V,18V` | Supply must offer all listed voltages |
+
+        When any of these params are present, the view filters the dataset client-side,
+        displays a context banner summarizing the active filters, and sorts by total
+        current capacity descending. A "Clear" button removes all URL-param filters at once.
       responses:
         '200':
           description: List of power supplies with full details and jacks
@@ -974,7 +983,16 @@ components:
     # ──────────────────────────────────────────
     PowerSupply:
       type: object
-      description: Full power supply DTO with product info, power supply details, and jacks.
+      description: |
+        Full power supply DTO with product info, power supply details, and jacks.
+
+        Key fields used by the frontend Power Budget insight for compatibility warnings:
+        - `totalOutputCount` / `isolatedOutputCount` — output count vs. pedal count, isolation warnings
+        - `supplyType` — isolation classification (Isolated, Non-Isolated, Hybrid)
+        - `availableVoltages` — voltage compatibility checking
+        - `mountingType` — informational display
+        - `jacks[].voltage`, `jacks[].currentMa`, `jacks[].polarity`, `jacks[].connectorType` —
+          per-output matching for polarity/connector mismatch warnings and daisy-chain grouping
       properties:
         id:
           type: integer
