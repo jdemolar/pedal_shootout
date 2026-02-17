@@ -239,6 +239,15 @@ paths:
       tags: [Power Supplies]
       summary: List all power supplies
       operationId: getAllPowerSupplies
+      description: |
+        Returns all power supplies with full details and jacks. Filtering is performed
+        client-side by the frontend.
+
+        The frontend Power Supplies view (`/power-supplies`) accepts a `minCurrent` URL
+        search param (e.g., `/power-supplies?minCurrent=2780`) to pre-filter the display
+        by minimum total current capacity in milliamps. This is a frontend-only param used
+        for cross-view deep linking (e.g., from the workbench power budget insight) and is
+        not passed to this API endpoint. See ADR #6 for details.
       responses:
         '200':
           description: List of power supplies with full details and jacks
