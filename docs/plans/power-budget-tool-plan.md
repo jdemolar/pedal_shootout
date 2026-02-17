@@ -134,5 +134,6 @@ Pedals with unknown power requirements are excluded from grouping and flagged se
 1. **Build check**: `cd apps/web && npm run build` — no compile errors
 2. **Tests**: `cd apps/web && npm test` — existing tests pass (update PowerBudgetInsight tests if any exist)
 3. **Manual test — URL params**: Navigate to `/power-supplies?minCurrent=2000&minOutputs=6&minOutputCurrent=300&voltages=9V,18V` and verify filtering works and banner displays correctly
-4. **Manual test — insight warnings**: Add a mix of pedals (some 9V, one 18V, one center-positive) and a power supply to the workbench. Verify warnings appear for voltage, polarity, connector mismatches, and isolation
-5. **Manual test — link generation**: With pedals in the workbench but no supply, click "See all compatible power supplies" and verify the URL contains all relevant params
+4. **Manual test — insight warnings**: Add a mix of pedals (some 9V, one 18V, one center-positive) and a power supply to the workbench. Verify warnings appear for output count, voltage, polarity, connector mismatches, isolation, and mounting
+5. **Manual test — daisy-chain suggestion**: Add more pedals than the supply has outputs. Verify the grouping suggestion appears with compatible pedals identified and the noise disclaimer is shown
+6. **Manual test — link generation**: With pedals in the workbench but no supply, click "See all compatible power supplies" and verify the URL contains `minCurrent`, `minOutputs`, `minOutputCurrent`, and `voltages` params
