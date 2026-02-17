@@ -14,16 +14,18 @@
 2. Add use-case views:
 
 - [ ] /board-planner    → Combines pedalboards + pedals + power supplies + plugs
-- [ ] /power-budget     → Pedals with power requirements vs supply capacity
+- [x] /power-budget     → Pedals with power requirements vs supply capacity
 - [ ] /midi-planner     → Controllers + MIDI-capable pedals
 
 3. Build the "smart" features:
 
-- [ ] **Power budget calculator** - Sum pedal power *current* ma values vs supply capacity
+- [x] **Power budget calculator** - Sum pedal power *current* ma values vs supply capacity
 - [ ] **Signal path validator** - Flag mono/stereo mismatches, impedance issues
 - [ ] **MIDI routing helper** - Match controller outputs to pedal MIDI needs
 
 3b. Enable toggle for units of measurement -- mm to inches
+
+3c. Make top nav sticky.
 
 4. Add images to views so that user can see the product within the details view (in expanded row panels)
 
