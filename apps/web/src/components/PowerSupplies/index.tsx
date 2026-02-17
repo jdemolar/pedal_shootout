@@ -41,6 +41,27 @@ interface PowerSupply {
   jacks: Jack[];
 }
 
+/** Parse a numeric URL param, returning null if absent or not a valid number */
+function parseIntParam(value: string | null): number | null {
+  if (value == null) return null;
+  const n = parseInt(value, 10);
+  return isNaN(n) ? null : n;
+}
+
+/** Check whether a supply offers a given voltage (checks available_voltages string and output jacks) */
+function supplyHasVoltage(ps: PowerSupply, voltage: string): boolean {
+  // Check the available_voltages summary field (e.g., "9V, 12V, 18V")
+  if (ps.available_voltages != null) {
+    // Split on comma/space and compare trimmed values
+    const listed = ps.available_voltages.split(/[,;]\s*/).map(v => v.trim());
+    if (listed.some(v => v === voltage)) return true;
+  }
+  // Also check individual output jacks
+  return ps.jacks.some(
+    j => j.category === 'power' && j.direction === 'output' && j.voltage === voltage
+  );
+}
+
 const columns: ColumnDef<PowerSupply>[] = [
   { label: 'Manufacturer', width: 180, sortKey: 'manufacturer',
     render: ps => <span style={{ color: '#f0f0f0', fontSize: '12.5px', fontWeight: 600, fontFamily: "'Helvetica Neue', sans-serif" }}>{ps.manufacturer}</span> },
@@ -197,18 +218,56 @@ const stats = (data: PowerSupply[]) => {
 const PowerSupplies = () => {
   const { data, loading, error } = useApiData(api.getPowerSupplies, transformPowerSupply);
   const [searchParams, setSearchParams] = useSearchParams();
-  const minCurrent = searchParams.get('minCurrent');
-  const minCurrentMa = minCurrent != null ? parseInt(minCurrent, 10) : null;
-  const hasCurrentFilter = minCurrentMa != null && !isNaN(minCurrentMa);
+
+  // Parse all URL param filters
+  const minCurrentMa = parseIntParam(searchParams.get('minCurrent'));
+  const minOutputs = parseIntParam(searchParams.get('minOutputs'));
+  const minOutputCurrent = parseIntParam(searchParams.get('minOutputCurrent'));
+  const voltagesParam = searchParams.get('voltages');
+  const requiredVoltages = voltagesParam
+    ? voltagesParam.split(',').map(v => v.trim()).filter(v => v.length > 0)
+    : [];
+
+  const hasAnyUrlFilter = minCurrentMa != null || minOutputs != null
+    || minOutputCurrent != null || requiredVoltages.length > 0;
+
+  // Apply URL param filters to the dataset
+  const filteredData = useMemo(() => {
+    if (!hasAnyUrlFilter) return data;
+
+    return data.filter(ps => {
+      // minCurrent: total capacity must meet threshold
+      if (minCurrentMa != null && (ps.total_current_ma == null || ps.total_current_ma < minCurrentMa)) {
+        return false;
+      }
+      // minOutputs: must have at least this many outputs
+      if (minOutputs != null && ps.total_output_count < minOutputs) {
+        return false;
+      }
+      // minOutputCurrent: at least one output jack must provide this many mA
+      if (minOutputCurrent != null) {
+        const outputJacks = ps.jacks.filter(j => j.category === 'power' && j.direction === 'output');
+        const hasCapableOutput = outputJacks.some(j => j.current_ma != null && j.current_ma >= minOutputCurrent);
+        if (!hasCapableOutput) return false;
+      }
+      // voltages: supply must offer ALL required voltages
+      if (requiredVoltages.length > 0) {
+        for (const voltage of requiredVoltages) {
+          if (!supplyHasVoltage(ps, voltage)) return false;
+        }
+      }
+      return true;
+    });
+  }, [data, hasAnyUrlFilter, minCurrentMa, minOutputs, minOutputCurrent, requiredVoltages]);
 
   const supplyTypes = useMemo(
-    () => ['All', ...Array.from(new Set(data.map(d => d.supply_type).filter((t): t is string => t !== null))).sort()],
-    [data]
+    () => ['All', ...Array.from(new Set(filteredData.map(d => d.supply_type).filter((t): t is string => t !== null))).sort()],
+    [filteredData]
   );
 
   const mountingTypes = useMemo(
-    () => ['All', ...Array.from(new Set(data.map(d => d.mounting_type).filter((t): t is string => t !== null))).sort()],
-    [data]
+    () => ['All', ...Array.from(new Set(filteredData.map(d => d.mounting_type).filter((t): t is string => t !== null))).sort()],
+    [filteredData]
   );
 
   const filters: FilterConfig<PowerSupply>[] = useMemo(() => [
@@ -222,18 +281,28 @@ const PowerSupplies = () => {
       predicate: (ps, v) => ps.data_reliability === v },
   ], [supplyTypes, mountingTypes]);
 
-  const handleClearCurrentFilter = () => {
+  const handleClearUrlFilters = () => {
     const next = new URLSearchParams(searchParams);
     next.delete('minCurrent');
+    next.delete('minOutputs');
+    next.delete('minOutputCurrent');
+    next.delete('voltages');
     setSearchParams(next);
   };
 
+  // Build banner text describing all active URL filters
+  const bannerParts: string[] = [];
+  if (minCurrentMa != null) bannerParts.push(`${minCurrentMa.toLocaleString()}mA+ capacity`);
+  if (minOutputs != null) bannerParts.push(`${minOutputs}+ outputs`);
+  if (minOutputCurrent != null) bannerParts.push(`${minOutputCurrent}mA+ per output`);
+  if (requiredVoltages.length > 0) bannerParts.push(requiredVoltages.join(' + '));
+
   return (
     <>
-      {hasCurrentFilter && (
+      {hasAnyUrlFilter && (
         <div className="data-table__context-banner">
-          Showing power supplies for your {minCurrentMa.toLocaleString()}mA requirement
-          <button className="data-table__context-banner-clear" onClick={handleClearCurrentFilter}>
+          Showing power supplies with {bannerParts.join(', ')}
+          <button className="data-table__context-banner-clear" onClick={handleClearUrlFilters}>
             Clear
           </button>
         </div>
@@ -243,15 +312,15 @@ const PowerSupplies = () => {
         entityName="power supply"
         entityNamePlural="power supplies"
         stats={stats}
-        data={data}
+        data={filteredData}
         columns={columns}
         filters={filters}
         searchFields={['manufacturer', 'model']}
         searchPlaceholder="Search power supplies..."
         renderExpandedRow={renderExpandedRow}
         renderRowAction={ps => <WorkbenchToggle productId={ps.id} productType="power_supply" />}
-        defaultSortKey={hasCurrentFilter ? 'total_current_ma' : 'manufacturer'}
-        defaultSortDir={hasCurrentFilter ? -1 : 1}
+        defaultSortKey={hasAnyUrlFilter ? 'total_current_ma' : 'manufacturer'}
+        defaultSortDir={hasAnyUrlFilter ? -1 : 1}
         loading={loading}
         error={error}
       />
