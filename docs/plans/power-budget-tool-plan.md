@@ -4,7 +4,7 @@
 
 The workbench Power Budget insight currently checks a single dimension: whether the total current draw of the user's pedals exceeds the total current capacity of their power supply. In practice, a user assembling a pedalboard needs to know much more — whether the supply has enough *outputs*, whether any single output can handle their highest-draw pedal, and whether the supply offers the right *voltages*. Beyond electrical compatibility, users should be warned about polarity mismatches, connector type differences, isolation concerns, and mounting considerations.
 
-This plan adds three new URL-param-based filters to the Power Supplies catalog view (output count, per-output current, voltage) and enriches the Power Budget insight with informational warnings for isolation, polarity, connector type, and mounting.
+This plan adds three new URL-param-based filters to the Power Supplies catalog view (output count, per-output current, voltage) and enriches the Power Budget insight with informational warnings for output count (with daisy-chain suggestions), isolation, polarity, connector type, and mounting.
 
 ---
 
@@ -69,6 +69,8 @@ interface PowerSupply {
   model: string;
   total_current_ma: number | null;
   total_output_count: number | null;      // NEW
+  isolated_output_count: number | null;   // NEW
+  supply_type: string | null;             // NEW
   available_voltages: string | null;      // NEW
   mounting_type: string | null;           // NEW
   output_jacks: Jack[];                   // NEW — power output jacks only
@@ -88,22 +90,38 @@ The "See all compatible power supplies" link currently sends only `?minCurrent=<
 
 These appear as supplementary notes below the existing budget status, only when relevant. They do **not** filter the catalog — they're informational.
 
-**1. Isolation Warning**
-- **When:** A supply is present and has non-isolated outputs (`supply_type !== 'Isolated'` or `isolated_output_count < total_output_count`)
+**1. Output Count Warning** *(only when a supply is present)*
+- **Fewer outputs than pedals:** Warning noting the mismatch, with a **daisy-chain suggestion** showing which pedals could share an output (same voltage, same polarity, same connector type, combined draw fits within a single output's capacity). Presented as a suggestion, not an assumption — different users have different comfort levels with custom cables. Includes a disclaimer: "This is only a suggestion — noise issues may still occur from sharing power outputs or using non-isolated power."
+- **More outputs than pedals:** Informational note (e.g., "3 unused outputs available for future expansion").
+- **Exact match:** No note needed.
+
+**2. Isolation Warning** *(only when a supply is present)*
+- **When:** The supply has non-isolated outputs (`supply_type !== 'Isolated'` or `isolated_output_count < total_output_count`).
 - **Message:** "Your [supply model] has [X] non-isolated outputs. Non-isolated outputs can introduce noise — particularly with digital pedals, though analog pedals may also be affected."
 - **Always shown** when the supply has non-isolated outputs, regardless of pedal types in the workbench.
 
-**2. Polarity Mismatch Warning** *(only when a supply is present)*
+**3. Polarity Mismatch Warning** *(only when a supply is present)*
 - **When:** Any consumer's power input `polarity` differs from the majority polarity of the supply's output jacks.
 - **Message:** "[Pedal Model] requires [polarity] — you may need a polarity-reversal adapter cable."
 
-**3. Connector Type Mismatch Warning** *(only when a supply is present)*
+**4. Connector Type Mismatch Warning** *(only when a supply is present)*
 - **When:** Any consumer's power input `connector_type` differs from the supply's output jack `connector_type`.
 - **Message:** "[Pedal Model] uses a [connector_type] connector — you may need an adapter cable."
 
-**4. Mounting Info** *(only when a supply is present)*
+**5. Mounting Info** *(only when a supply is present)*
 - **When:** A supply has a `mounting_type` value.
 - **Message:** "Mounting: [mounting_type]" — simple informational line, no warning styling.
+
+### Daisy-Chain Auto-Grouping Logic
+
+When the supply has fewer outputs than pedals, the insight identifies groups of pedals that **could** share a single output:
+
+1. Collect all consumers with known power requirements (voltage, polarity, connector_type, current_ma).
+2. Group by (voltage, polarity, connector_type) — pedals in the same group are electrically compatible for chaining.
+3. Within each group, check whether the combined current draw fits within the highest-capacity output jack that matches that voltage.
+4. Present the grouping as a suggestion: "These pedals could share an output via daisy-chain cable: [Pedal A] + [Pedal B] (combined 120mA on 9V)."
+
+Pedals with unknown power requirements are excluded from grouping and flagged separately.
 
 ### Files to Modify
 
