@@ -231,6 +231,8 @@ Stores the URL of the product's instruction manual (typically a PDF). Populate t
 3. **Professional demo videos** with on-screen specifications
 4. **pedalplayground.com** — particularly useful for **dimensions**
    - Open-source, community-contributed pedal database
+5. **stinkfoot.se/power-supplies** — particularly useful for **power supply output specs**
+   - Community-contributed power supply database; treat as Medium reliability
 
 #### Low Reliability Sources
 1. **User forums** (unless official manufacturer representative)
@@ -251,6 +253,7 @@ When data is not immediately available on the manufacturer's website:
 - **Premier Guitar** - Professional reviews often include detailed specs
 - **JHS Pedals official PDF manuals** - Highly detailed and accurate
 - **pedalplayground.com** - Best available source for pedal dimensions; community-measured and version-controlled on GitHub
+- **stinkfoot.se/power-supplies** - Medium reliability; community-contributed power supply output specs database
 
 *This list will be updated as more reliable sources are discovered*
 
@@ -260,6 +263,7 @@ When data is not immediately available on the manufacturer's website:
 - **Thomann** product pages are also reliably fetchable.
 - **Perfect Circuit** and **zZounds** often return 403 errors or block automated requests.
 - **Reverb.com** listing pages are fetchable but specs may be incomplete.
+- **stinkfoot.se/power-supplies** is fetchable and useful for power supply output details.
 - When a manufacturer site doesn't yield specs, search for the product on Sweetwater or Thomann first, then fall back to other retailers or review sites.
 
 ## Data Reliability Column
@@ -364,3 +368,39 @@ VALUES (<id>, 'power', 'input', '2.1mm barrel', '9V', <current_ma>, 'center-nega
 
 **Common category values:** `'audio'`, `'power'`, `'midi'`, `'expression'`, `'usb'`, `'aux'`
 **Common direction values:** `'input'`, `'output'`, `'bidirectional'`
+
+### Power Supply Jack Requirements
+
+Power supplies need jacks entered for **every** physical port on the unit. This data drives the power budgeting tool.
+
+**For each power output jack (pedal-facing):**
+- `category = 'power'`, `direction = 'output'`
+- `connector_type` — almost always `'2.1mm barrel'` for standard pedal outputs
+- `voltage` — the fixed voltage (e.g., `'9V'`) or selectable range (e.g., `'9V/12V/18V'`)
+- `current_ma` — maximum deliverable mA on that output (e.g., `500`)
+- `polarity` — almost always `'center-negative'` for pedal outputs
+- `is_isolated` — `true` for isolated outputs, `false` for non-isolated/daisy-chained
+
+**For the AC mains input (Zuma-style supplies with direct wall connection):**
+- `category = 'power'`, `direction = 'input'`, `jack_name = 'AC Power In'`
+- `connector_type = 'IEC C14'` (standard kettle lead)
+- `voltage = '100-240V AC'`
+- `current_ma` — leave NULL (varies with load)
+
+**For DC link ports (Ojai-style supplies powered by 24V from Zuma or adapter):**
+- Input: `direction = 'input'`, `connector_type = 'EIAJ-05'`, `voltage = '24V'`, `polarity = 'center-positive'`, `current_ma = 1000`
+- Thru/passthrough to next unit: `direction = 'output'`, `connector_type = 'EIAJ-05'`, `voltage = '24V'`, `polarity = 'center-positive'`
+
+**What to look for when researching a power supply:**
+1. Number of outputs and their voltage/mA ratings (may have mixed fixed + selectable outputs)
+2. Whether outputs are isolated or non-isolated (check spec sheet, not just marketing copy)
+3. Input power source: AC mains (IEC/NEMA) vs. DC adapter (note voltage, connector type, polarity)
+4. Any expansion or link ports (24V, USB, etc.)
+5. `total_current_ma` = sum of all pedal output mA ratings at their base/9V setting
+6. `available_voltages` = human-readable summary string (e.g., `'9V DC (5 × 500mA)'`)
+7. `isolated_output_count` = count of truly isolated outputs (not daisy-chained)
+
+**Reliable sources for power supply output specs:**
+- Manufacturer spec sheets / user manuals (High)
+- stinkfoot.se/power-supplies — measured per-output current draw data (Medium)
+- Sweetwater product pages — usually quote manufacturer specs (Medium)
