@@ -1,6 +1,6 @@
 # TODO
 
- 1. Add type-specific views:
+## 1. Add type-specific views:
 
 - [x] Manufacturers
 - [x] Products
@@ -11,38 +11,64 @@
 - [x] Utilities
 - [ ] Plugs
 
-2. Add use-case views:
+## 2. Add use-case views:
 
 - [ ] /board-planner    → Combines pedalboards + pedals + power supplies + plugs
 - [x] /power-budget     → Pedals with power requirements vs supply capacity
 - [ ] /midi-planner     → Controllers + MIDI-capable pedals
 
-3. Build the "smart" features:
+## 3. Build the "smart" features:
 
-- [x] **Power budget calculator** - Sum pedal power *current* ma values vs supply capacity
+- [x] **Power budget calculator** - Sum pedal power *current* mA values vs supply capacity
 - [ ] **Signal path validator** - Flag mono/stereo mismatches, impedance issues
 - [ ] **MIDI routing helper** - Match controller outputs to pedal MIDI needs
+- [ ] **Unit toggle** - Enable toggle for units of measurement (mm ↔ inches)
+- [ ] **Sticky nav** - Make top nav sticky
 
-3b. Enable toggle for units of measurement -- mm to inches
+## 4. Spring Boot API:
 
-3c. Make top nav sticky.
+- [x] Spring Boot API (25 GET endpoints — 19 Layer 1 + 6 Layer 2)
+- [x] OpenAPI spec (`docs/openapi.yaml`)
+- [ ] POST/PUT/DELETE endpoints (not started — GET-only until explicitly requested)
 
-4. Add images to views so that user can see the product within the details view (in expanded row panels)
+## 5. Data collection & quality:
 
-5. Create a way for users to put multiple products into a "cart" for the purpose of product comparison and compatibility analysis, generating a shopping list, and moving to pedal arrangement
+- [x] Data collection checklists in CLAUDE.md (field-by-field tables per product type)
+- [x] SQL insert templates (`data/templates/` — one per product type)
+- [x] Data provenance plan (`docs/plans/data_provenance.md`)
+- [x] Power supplies data collection guidelines in CLAUDE.md
+- [ ] Populate power supply data (ongoing)
+- [ ] Populate pedalboard data (not started)
+- [ ] Populate MIDI controller data (not started)
+- [ ] Populate utility data (not started)
+- [ ] Populate plug data (not started)
 
-6. Create pedalboard layout planning (similar to pedalplayground.com)
+## 6. Product images:
 
-- System for displaying images on a canvas where scale of all products is relative to each other
+- [ ] Add images to views so users can see the product within the details view (in expanded row panels)
 
-7. Add product instructions (especially MIDI controllers)
+## 7. Product comparison & shopping:
 
-- Add instruction manuals for popular midi controllers to provide a guide on pedalboard programming. Although there may be multiple ways of accomplishing various goals with a controller, having a guide can at least recommend solutions when given a specific problem.
-- This will be where real value could come into effect. Having AI equipped with instruction manuals could enable users to have a plain-language interface for programming their midi controllers for their desired workflow with their specific pedals.
+- [ ] Create a way for users to put multiple products into a "cart" for product comparison and compatibility analysis, generating a shopping list, and moving to pedal arrangement
 
-8. Move app into cloud infrastructure
+## 8. Pedalboard layout planning:
 
-Data Maintenance Notes (ongoing)
+- [ ] Create pedalboard layout planning (similar to pedalplayground.com)
+- [ ] System for displaying images on a canvas where scale of all products is relative to each other
+
+## 9. Product instructions (especially MIDI controllers):
+
+- [ ] Add instruction manuals for popular MIDI controllers to provide a guide on pedalboard programming. Although there may be multiple ways of accomplishing various goals with a controller, having a guide can at least recommend solutions when given a specific problem.
+- [ ] AI-powered plain-language interface for programming MIDI controllers for desired workflow with specific pedals
+
+## 10. Cloud infrastructure:
+
+- [ ] Move app into cloud infrastructure
+
+---
+
+## Data Maintenance Notes (ongoing)
+
 - Regularly verify and update reliability ratings as new sources emerge
 - When crowd-sourcing begins, all user-submitted data starts as "Low" until verified
 - Cross-reference specifications across multiple sources when possible

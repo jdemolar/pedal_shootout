@@ -29,6 +29,7 @@ pedal_shootout/
 ├── data/
 │   ├── schema/                 # SQL schema definitions (source of truth)
 │   │   └── gear_postgres.sql   # PostgreSQL database schema
+│   ├── templates/              # SQL insert templates (one per product type)
 │   ├── migrations/             # Versioned migration scripts
 │   ├── seeds/                  # Reference/sample data
 │   └── local/                  # Local dev artifacts (gitignored)
@@ -404,3 +405,218 @@ Power supplies need jacks entered for **every** physical port on the unit. This 
 - Manufacturer spec sheets / user manuals (High)
 - stinkfoot.se/power-supplies — measured per-output current draw data (Medium)
 - Sweetwater product pages — usually quote manufacturer specs (Medium)
+
+---
+
+## Data Entry Workflow
+
+SQL insert templates live in `data/templates/`. Use the appropriate template for each product type.
+
+### Before Inserting Data
+
+1. Read the relevant SQL template from `data/templates/` (`insert_pedal.sql`, `insert_power_supply.sql`, `insert_pedalboard.sql`, `insert_midi_controller.sql`, `insert_utility.sql`).
+2. Research all fields using the Data Sources hierarchy above.
+3. Fill in all template placeholders with researched values.
+4. **Before presenting the INSERT SQL**, explicitly list every field that could not be determined from available sources, using this format:
+
+```
+Fields not found for [Product Name]:
+- weight_grams: not listed on manufacturer site or Sweetwater
+- latency_ms: not specified (digital pedal)
+- instruction_manual: no manual URL found
+```
+
+This ensures the user sees the gaps and can decide whether to proceed or research further.
+
+### Complete Product Entry Requires ALL of These Tables
+
+A product entry is not complete until all applicable tables are populated:
+
+1. **`manufacturers`** — Check if the manufacturer already exists. If not, add it first (see "Adding a Product with an Unrecognized Manufacturer" above).
+2. **`products`** — The base product record (common fields shared by all product types).
+3. **Detail table** — The appropriate type-specific table (`pedal_details`, `power_supply_details`, etc.).
+4. **`jacks`** — All physical connectors. Every active product needs at least a power input jack. Audio I/O, MIDI, expression, USB jacks as applicable.
+5. **`product_compatibility`** *(if applicable)* — If research reveals known compatibility relationships (e.g., a power supply that mounts under a specific pedalboard, or a known incompatibility), add entries here.
+
+### After Inserting
+
+Verify jack count matches expectations from the checklist below. For example, a stereo delay pedal with MIDI should have at minimum: 1 power input + 2 audio inputs + 2 audio outputs + 1 MIDI input = 6 jacks.
+
+---
+
+## Data Collection Checklist by Product Type
+
+Use these checklists during data entry to ensure no fields are missed. Fields marked **(required)** are NOT NULL in the schema and will cause INSERT failures if omitted.
+
+### All Product Types — `products` Table
+
+| Field | Required? | Notes |
+|---|---|---|
+| `manufacturer_id` | **(required)** | FK to manufacturers.id |
+| `product_type_id` | **(required)** | 1=pedal, 2=power_supply, 3=pedalboard, 4=midi_controller, 5=utility |
+| `model` | **(required)** | Product model name |
+| `color_options` | nullable | Comma-separated list |
+| `in_production` | default TRUE | TRUE = current, FALSE = discontinued |
+| `width_mm` | nullable | Side-to-side (DOUBLE PRECISION) |
+| `depth_mm` | nullable | Front-to-back (DOUBLE PRECISION) |
+| `height_mm` | nullable | Total height incl. knobs (DOUBLE PRECISION) |
+| `weight_grams` | nullable | INTEGER in grams |
+| `msrp_cents` | nullable | INTEGER in cents ($99 = 9900). NULL for unknown, never 0 |
+| `product_page` | nullable | Verified manufacturer URL only |
+| `instruction_manual` | nullable | URL to manual PDF |
+| `description` | nullable | User-facing summary |
+| `tags` | nullable | Comma-separated tags |
+| `data_reliability` | nullable | 'High', 'Medium', 'Low' |
+| `notes` | nullable | Internal data curation notes (not exposed via API) |
+
+### Pedal — `pedal_details` Table
+
+All fields nullable or have defaults. No additional NOT NULL fields beyond `product_id`.
+
+| Field | Default | Notes |
+|---|---|---|
+| `effect_type` | NULL | CHECK constraint — see allowed values |
+| `circuit_type` | NULL | e.g., 'Bluesbreaker', 'Tube Screamer' |
+| `circuit_routing_options` | NULL | For multi-circuit: 'A→B, B→A, Parallel' |
+| `signal_type` | NULL | 'Analog', 'Digital', 'Hybrid' |
+| `bypass_type` | NULL | 'True Bypass', 'Buffered Bypass', 'Relay Bypass', 'DSP Bypass', 'Both' |
+| `mono_stereo` | NULL | 'Mono', 'Stereo In/Out', 'Mono In/Stereo Out' |
+| `audio_mix` | NULL | 'Wet/Dry', 'Parallel', 'Series', 'Kill Dry' |
+| `has_analog_dry_through` | FALSE | Dry signal bypasses DSP |
+| `has_spillover` | FALSE | Effect tails continue when bypassed |
+| `sample_rate_khz` | NULL | NULL for analog pedals |
+| `bit_depth` | NULL | NULL for analog pedals |
+| `latency_ms` | NULL | NULL for analog pedals |
+| `preset_count` | 0 | 0 = no preset capability |
+| `has_tap_tempo` | FALSE | |
+| `midi_capable` | FALSE | |
+| `midi_receive_capabilities` | NULL | e.g., 'PC, CC, Clock' |
+| `midi_send_capabilities` | NULL | e.g., 'PC, CC' |
+| `has_software_editor` | FALSE | |
+| `software_platforms` | NULL | e.g., 'macOS, Windows, iOS' |
+| `is_firmware_updatable` | FALSE | |
+| `has_usb_audio` | FALSE | |
+| `battery_capable` | FALSE | |
+| `fx_loop_count` | 0 | |
+| `has_reorderable_loops` | FALSE | |
+
+**Expected jacks (minimum):** power input, audio input, audio output
+**Expected jacks (if applicable):** second audio in/out (stereo), MIDI in/out/thru, expression, USB, FX loop send/return
+
+### Power Supply — `power_supply_details` Table
+
+| Field | Required? | Notes |
+|---|---|---|
+| `supply_type` | nullable | 'Isolated', 'Non-Isolated', 'Hybrid' |
+| `topology` | nullable | 'Switch Mode', 'Toroidal', 'Linear', 'Unknown' |
+| `input_voltage_range` | nullable | e.g., '100-240V AC' |
+| `input_frequency` | nullable | e.g., '50/60Hz' |
+| `total_output_count` | **(required)** | Total number of power outputs |
+| `total_current_ma` | nullable | Sum of all output mA ratings |
+| `isolated_output_count` | default 0 | Count of isolated outputs |
+| `available_voltages` | nullable | e.g., '9V DC (5 × 500mA)' |
+| `has_variable_voltage` | FALSE | |
+| `voltage_range` | nullable | e.g., '9-18V' |
+| `mounting_type` | nullable | 'Under Board', 'On Board', 'External', 'Rack' |
+| `bracket_included` | FALSE | |
+| `is_expandable` | FALSE | |
+| `expansion_port_type` | nullable | e.g., 'EIAJ-05' |
+| `is_battery_powered` | FALSE | |
+| `battery_capacity_wh` | nullable | Watt-hours |
+
+**Expected jacks (minimum):** AC/DC input, all power output jacks (one per output)
+**Expected jacks (if applicable):** expansion/link ports, USB
+
+### Pedalboard — `pedalboard_details` Table
+
+All fields nullable or have defaults. No additional NOT NULL fields beyond `product_id`.
+
+| Field | Default | Notes |
+|---|---|---|
+| `usable_width_mm` | NULL | INTERNAL mounting width (differs from products.width_mm) |
+| `usable_depth_mm` | NULL | INTERNAL mounting depth |
+| `surface_type` | NULL | 'Loop Velcro', 'Hook Velcro', 'Bare Rails', 'Perforated', 'Solid Flat', 'Other' |
+| `rail_spacing_mm` | NULL | Gap between rails |
+| `material` | NULL | 'Aluminum', 'Steel', 'Wood', 'Plastic', 'Carbon Fiber' |
+| `tilt_angle_degrees` | NULL | |
+| `under_clearance_mm` | NULL | Space below for power supply |
+| `has_second_tier` | FALSE | |
+| `tier2_usable_width_mm` | NULL | |
+| `tier2_usable_depth_mm` | NULL | |
+| `tier2_under_clearance_mm` | NULL | |
+| `tier2_height_mm` | NULL | |
+| `has_integrated_power` | FALSE | |
+| `integrated_power_product_id` | NULL | FK to products.id |
+| `has_integrated_patch_bay` | FALSE | |
+| `case_included` | FALSE | |
+| `case_type` | NULL | 'Soft Case', 'Hard Case', 'Flight Case', 'Gig Bag', 'None' |
+| `max_load_kg` | NULL | |
+
+**Expected jacks:** typically none (unless integrated patch bay)
+
+### MIDI Controller — `midi_controller_details` Table
+
+| Field | Required? | Notes |
+|---|---|---|
+| `footswitch_count` | **(required)** | Number of footswitches |
+| `footswitch_type` | nullable | 'Momentary', 'Latching', 'Dual-Action', 'Mixed' |
+| `has_led_indicators` | TRUE | |
+| `led_color_options` | nullable | e.g., 'RGB' |
+| `bank_count` | nullable | |
+| `presets_per_bank` | nullable | |
+| `total_preset_slots` | nullable | |
+| `has_display` | FALSE | |
+| `display_type` | nullable | 'LCD', 'OLED', 'LED Segment', 'E-Ink' |
+| `display_size` | nullable | e.g., '128x64' |
+| `expression_input_count` | 0 | |
+| `midi_channels` | 16 | |
+| `supports_midi_clock` | FALSE | |
+| `supports_sysex` | FALSE | |
+| `software_editor_available` | FALSE | |
+| `software_platforms` | nullable | |
+| `on_device_programming` | FALSE | |
+| `is_firmware_updatable` | FALSE | |
+| `config_format` | nullable | 'JSON', 'XML', 'YAML', 'SysEx', 'Binary' |
+| `config_format_documented` | FALSE | |
+| `has_tuner` | FALSE | |
+| `has_tap_tempo` | FALSE | |
+| `has_setlist_mode` | FALSE | |
+| `has_per_switch_displays` | FALSE | |
+| `aux_switch_input_count` | 0 | |
+| `has_usb_host` | FALSE | |
+| `has_bluetooth_midi` | FALSE | |
+| `audio_loop_count` | 0 | |
+| `has_reorderable_loops` | FALSE | |
+| `loop_bypass_type` | nullable | 'True Bypass', 'Buffered', 'Relay', 'Mixed' |
+| `has_parallel_routing` | FALSE | |
+| `has_gapless_switching` | FALSE | |
+| `has_spillover` | FALSE | |
+
+**Expected jacks (minimum):** MIDI out, power input
+**Expected jacks (if applicable):** MIDI in/thru, expression inputs, USB, aux switch inputs, audio loop send/returns
+
+### Utility — `utility_details` Table
+
+| Field | Required? | Notes |
+|---|---|---|
+| `utility_type` | **(required)** | CHECK constraint — 22 allowed values |
+| `is_active` | FALSE | Requires power? |
+| `signal_type` | nullable | 'Analog', 'Digital', 'Both' |
+| `bypass_type` | nullable | |
+| `has_ground_lift` | nullable | DI-specific |
+| `has_pad` | nullable | DI-specific |
+| `pad_db` | nullable | DI-specific (e.g., -20) |
+| `tuning_display_type` | nullable | Tuner-specific: 'Strobe', 'Needle', 'LED', 'LCD' |
+| `tuning_accuracy_cents` | nullable | Tuner-specific |
+| `polyphonic_tuning` | FALSE | Tuner-specific |
+| `sweep_type` | nullable | Volume/Expression: 'Linear', 'Audio Taper', 'Logarithmic' |
+| `has_tuner_out` | FALSE | Volume pedal-specific |
+| `has_minimum_volume` | FALSE | Volume pedal-specific |
+| `has_polarity_switch` | FALSE | Expression pedal-specific |
+| `power_handling_watts` | nullable | Load box-specific |
+| `has_reactive_load` | FALSE | Load box-specific |
+| `has_attenuation` | FALSE | Load box-specific |
+| `attenuation_range_db` | nullable | Load box-specific |
+| `has_cab_sim` | FALSE | Load box-specific |
+
+**Expected jacks:** varies by utility_type — at minimum audio I/O; power input if active; passive devices omit power jack
