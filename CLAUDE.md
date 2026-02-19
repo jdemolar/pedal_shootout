@@ -211,6 +211,28 @@ Stores the URL of the product's instruction manual (typically a PDF). Populate t
 
 ## Data Collection Guidelines
 
+### No Fabrication or Inference Rule
+
+**Never insert data that was not found in an actual source.** This applies to all fields, including:
+- Dimensions, weight, current capacity, voltage, connector types
+- Jack specifications (voltage, current_ma, polarity, connector_type)
+- URLs (product_page, instruction_manual)
+- Derived or calculated values (e.g., total_current_ma computed from per-outlet specs)
+
+If a value cannot be found in a credible source, leave it as `NULL`. Do **not**:
+- Guess or infer values based on similar products
+- Calculate totals (e.g., summing outlet mA) unless the calculation is explicitly verified by a source
+- Use values from one product variant to fill in another
+- Assume a connector type without a source confirming it
+
+**Always read the source document** (manual PDF, product page, retailer page) before entering jack data. Do not populate `jacks` rows based on assumed connector standards or product category conventions.
+
+Before presenting data for review, explicitly flag any field that was left NULL because a source could not be found. Use this format:
+```
+Fields not found for [Product Name]:
+- field_name: reason it could not be determined
+```
+
 ### Variant Combination Rules
 - Variants should only be combined if **all other columns** (except Model and Color Options) are identical
 - If any column has different values between variants:
