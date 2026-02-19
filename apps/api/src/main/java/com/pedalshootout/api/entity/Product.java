@@ -1,6 +1,7 @@
 package com.pedalshootout.api.entity;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
 /**
@@ -77,6 +78,9 @@ public class Product {
 
     private String notes;
 
+    @Column(name = "last_researched_at")
+    private LocalDate lastResearchedAt;
+
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
 
@@ -104,6 +108,7 @@ public class Product {
     public String getTags() { return tags; }
     public String getDataReliability() { return dataReliability; }
     public String getNotes() { return notes; }
+    public LocalDate getLastResearchedAt() { return lastResearchedAt; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
 }
