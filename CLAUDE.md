@@ -156,6 +156,9 @@ The gear database uses **Class Table Inheritance**: a shared `products` table co
 - `utility_details` — DI boxes, tuners, volume pedals, etc.
 - `plug_details` — Connector dimensions for layout planning
 
+**Data Provenance:**
+- `product_sources` — Per-field source tracking: where each data point came from, what value was recorded, and reliability rating
+
 **Full schema:** See `data/schema/gear_postgres.sql`
 **Design rationale:** See `docs/plans/data_design.md`
 
@@ -343,6 +346,7 @@ Each detail table has a `product_id` PK (always required). Below are the additio
 | `utility_details` | `utility_type` |
 | `plug_details` | `plug_type`, `connector_type` |
 | `jacks` | `product_id`, `category`, `direction`, `connector_type` |
+| `product_sources` | `product_id`, `table_name`, `field_name`, `source_type`, `reliability`, `accessed_at` |
 
 ## Standard Field Value Conventions
 
@@ -441,6 +445,36 @@ A product entry is not complete until all applicable tables are populated:
 ### After Inserting
 
 Verify jack count matches expectations from the checklist below. For example, a stereo delay pedal with MIDI should have at minimum: 1 power input + 2 audio inputs + 2 audio outputs + 1 MIDI input = 6 jacks.
+
+### Recording Data Provenance (`product_sources`)
+
+When researching a product, insert `product_sources` rows for each field populated from an external source. This creates a traceable record of where every data point came from.
+
+**Required fields per row:** `product_id`, `table_name`, `field_name`, `source_type`, `reliability`, `accessed_at`
+
+**Conventions:**
+- `field_name` — Use the exact column name from the table specified in `table_name` (e.g., `weight_grams`, `bypass_type`, `current_ma`)
+- `value_recorded` — Store the value exactly as the source reports it, before any unit conversion (e.g., `"300mA"` or `"4.7 x 2.5 x 1.5 in"`)
+- `table_name` — Must be one of: `products`, `pedal_details`, `power_supply_details`, `pedalboard_details`, `midi_controller_details`, `utility_details`, `plug_details`, `jacks`
+- `jack_id` — Required when `table_name = 'jacks'`, must be NULL otherwise
+- `accessed_at` — Defaults to today; set explicitly if using cached/older research
+
+**`source_type` values:**
+| Value | When to use |
+|---|---|
+| `manufacturer_website` | Product page on manufacturer's site |
+| `manufacturer_manual` | Official PDF manual or documentation |
+| `manufacturer_direct` | Direct communication or physical measurement |
+| `major_retailer` | Sweetwater, Thomann, Guitar Center, etc. |
+| `community_database` | pedalplayground.com, stinkfoot.se, etc. |
+| `review_site` | Premier Guitar, Reverb, etc. |
+| `user_submission` | Future: crowdsourced data from users |
+| `other` | Anything not covered above |
+
+**After completing a research pass**, set `products.last_researched_at` to the current date:
+```sql
+UPDATE products SET last_researched_at = CURRENT_DATE WHERE id = <product_id>;
+```
 
 ---
 
