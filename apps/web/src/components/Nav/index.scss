@@ -8,6 +8,7 @@
 	justify-content: space-between;
 	padding: 0 20px;
 	font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+	flex-shrink: 0;
 
 	&__links {
 		display: flex;

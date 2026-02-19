@@ -23,7 +23,7 @@
 - [ ] **Signal path validator** - Flag mono/stereo mismatches, impedance issues
 - [ ] **MIDI routing helper** - Match controller outputs to pedal MIDI needs
 - [ ] **Unit toggle** - Enable toggle for units of measurement (mm ↔ inches)
-- [ ] **Sticky nav** - Make top nav sticky
+- [x] **Sticky nav, filters, and table headers** - Viewport-locked flex layout keeps nav, filters, and column headers fixed while only table body rows scroll
 
 ## 4. Spring Boot API:
 

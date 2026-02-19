@@ -63,198 +63,202 @@ exports[`renders app component 1`] = `
       </div>
     </nav>
     <div
-      class="data-table"
+      class="app__content"
     >
       <div
-        class="data-table__header"
+        class="data-table"
       >
         <div
-          class="data-table__title-group"
+          class="data-table__header"
         >
-          <h1
-            class="data-table__title"
+          <div
+            class="data-table__title-group"
           >
-            Manufacturer Database
-          </h1>
+            <h1
+              class="data-table__title"
+            >
+              Manufacturer Database
+            </h1>
+            <span
+              class="data-table__stats"
+            >
+              0 manufacturers · 0 active · 0 products catalogued
+            </span>
+          </div>
+        </div>
+        <div
+          class="data-table__filters"
+        >
+          <div
+            class="data-table__search-wrapper"
+          >
+            <span
+              class="data-table__search-icon"
+            >
+              ⌕
+            </span>
+            <input
+              class="data-table__search"
+              placeholder="Search manufacturer..."
+              type="text"
+              value=""
+            />
+          </div>
+          <select
+            class="data-table__select"
+          >
+            <option
+              value="All"
+            >
+              Country: All
+            </option>
+          </select>
+          <select
+            class="data-table__select"
+          >
+            <option
+              value="All"
+            >
+              Status: All
+            </option>
+            <option
+              value="Active"
+            >
+              Active
+            </option>
+            <option
+              value="Defunct"
+            >
+              Defunct
+            </option>
+            <option
+              value="Discontinued"
+            >
+              Discontinued
+            </option>
+            <option
+              value="Unknown"
+            >
+              Unknown
+            </option>
+          </select>
           <span
-            class="data-table__stats"
+            class="data-table__filter-count"
           >
-            0 manufacturers · 0 active · 0 products catalogued
+            0
+             
+            manufacturers
+             shown
           </span>
         </div>
-      </div>
-      <div
-        class="data-table__filters"
-      >
         <div
-          class="data-table__search-wrapper"
+          class="data-table__table-wrapper"
         >
-          <span
-            class="data-table__search-icon"
+          <table
+            class="data-table__table"
+            style="min-width: 1050px;"
           >
-            ⌕
-          </span>
-          <input
-            class="data-table__search"
-            placeholder="Search manufacturer..."
-            type="text"
-            value=""
-          />
-        </div>
-        <select
-          class="data-table__select"
-        >
-          <option
-            value="All"
+            <thead>
+              <tr>
+                <th
+                  class="data-table__th"
+                  style="width: 40px; text-align: center; cursor: pointer;"
+                >
+                  #
+                  <span
+                    class="data-table__sort-icon "
+                  >
+                    ⇅
+                  </span>
+                </th>
+                <th
+                  class="data-table__th"
+                  style="width: 200px; text-align: left; cursor: pointer;"
+                >
+                  Manufacturer
+                  <span
+                    class="data-table__sort-icon active"
+                  >
+                    ▲
+                  </span>
+                </th>
+                <th
+                  class="data-table__th"
+                  style="width: 120px; text-align: left; cursor: pointer;"
+                >
+                  Country
+                  <span
+                    class="data-table__sort-icon "
+                  >
+                    ⇅
+                  </span>
+                </th>
+                <th
+                  class="data-table__th"
+                  style="width: 80px; text-align: center; cursor: pointer;"
+                >
+                  Founded
+                  <span
+                    class="data-table__sort-icon "
+                  >
+                    ⇅
+                  </span>
+                </th>
+                <th
+                  class="data-table__th"
+                  style="width: 100px; text-align: center; cursor: pointer;"
+                >
+                  Status
+                  <span
+                    class="data-table__sort-icon "
+                  >
+                    ⇅
+                  </span>
+                </th>
+                <th
+                  class="data-table__th"
+                  style="width: 280px; text-align: left; cursor: pointer;"
+                >
+                  Specialty
+                  <span
+                    class="data-table__sort-icon "
+                  >
+                    ⇅
+                  </span>
+                </th>
+                <th
+                  class="data-table__th"
+                  style="width: 64px; text-align: center; cursor: pointer;"
+                >
+                  Products
+                  <span
+                    class="data-table__sort-icon "
+                  >
+                    ⇅
+                  </span>
+                </th>
+                <th
+                  class="data-table__th"
+                  style="width: 160px; text-align: left; cursor: pointer;"
+                >
+                  Website
+                  <span
+                    class="data-table__sort-icon "
+                  >
+                    ⇅
+                  </span>
+                </th>
+              </tr>
+            </thead>
+            <tbody />
+          </table>
+          <div
+            class="data-table__empty"
           >
-            Country: All
-          </option>
-        </select>
-        <select
-          class="data-table__select"
-        >
-          <option
-            value="All"
-          >
-            Status: All
-          </option>
-          <option
-            value="Active"
-          >
-            Active
-          </option>
-          <option
-            value="Defunct"
-          >
-            Defunct
-          </option>
-          <option
-            value="Discontinued"
-          >
-            Discontinued
-          </option>
-          <option
-            value="Unknown"
-          >
-            Unknown
-          </option>
-        </select>
-        <span
-          class="data-table__filter-count"
-        >
-          0
-           
-          manufacturers
-           shown
-        </span>
-      </div>
-      <div
-        class="data-table__table-wrapper"
-      >
-        <table
-          class="data-table__table"
-          style="min-width: 1050px;"
-        >
-          <thead>
-            <tr>
-              <th
-                class="data-table__th"
-                style="width: 40px; text-align: center; cursor: pointer;"
-              >
-                #
-                <span
-                  class="data-table__sort-icon "
-                >
-                  ⇅
-                </span>
-              </th>
-              <th
-                class="data-table__th"
-                style="width: 200px; text-align: left; cursor: pointer;"
-              >
-                Manufacturer
-                <span
-                  class="data-table__sort-icon active"
-                >
-                  ▲
-                </span>
-              </th>
-              <th
-                class="data-table__th"
-                style="width: 120px; text-align: left; cursor: pointer;"
-              >
-                Country
-                <span
-                  class="data-table__sort-icon "
-                >
-                  ⇅
-                </span>
-              </th>
-              <th
-                class="data-table__th"
-                style="width: 80px; text-align: center; cursor: pointer;"
-              >
-                Founded
-                <span
-                  class="data-table__sort-icon "
-                >
-                  ⇅
-                </span>
-              </th>
-              <th
-                class="data-table__th"
-                style="width: 100px; text-align: center; cursor: pointer;"
-              >
-                Status
-                <span
-                  class="data-table__sort-icon "
-                >
-                  ⇅
-                </span>
-              </th>
-              <th
-                class="data-table__th"
-                style="width: 280px; text-align: left; cursor: pointer;"
-              >
-                Specialty
-                <span
-                  class="data-table__sort-icon "
-                >
-                  ⇅
-                </span>
-              </th>
-              <th
-                class="data-table__th"
-                style="width: 64px; text-align: center; cursor: pointer;"
-              >
-                Products
-                <span
-                  class="data-table__sort-icon "
-                >
-                  ⇅
-                </span>
-              </th>
-              <th
-                class="data-table__th"
-                style="width: 160px; text-align: left; cursor: pointer;"
-              >
-                Website
-                <span
-                  class="data-table__sort-icon "
-                >
-                  ⇅
-                </span>
-              </th>
-            </tr>
-          </thead>
-          <tbody />
-        </table>
-        <div
-          class="data-table__empty"
-        >
-          No 
-          manufacturers
-           match your filters.
+            No 
+            manufacturers
+             match your filters.
+          </div>
         </div>
       </div>
     </div>
