@@ -30,14 +30,16 @@ const App = () => {
 						key='navElements'
 						elements={navElements}
 					/>
-					<Routes>
-						<Route path='/' element={<Navigate to={navElements[0].link} replace />} />
-						{navElements.map((navElement) => {
-							return <Route key={navElement.link} path={'/' + navElement.link} element={navElement.component}/>
-						})}
-						<Route path='/workbench' element={<Workbench />} />
-						<Route path='*' element={<NotFound />} />
-					</Routes>
+					<div className="app__content">
+						<Routes>
+							<Route path='/' element={<Navigate to={navElements[0].link} replace />} />
+							{navElements.map((navElement) => {
+								return <Route key={navElement.link} path={'/' + navElement.link} element={navElement.component}/>
+							})}
+							<Route path='/workbench' element={<Workbench />} />
+							<Route path='*' element={<NotFound />} />
+						</Routes>
+					</div>
 				</div>
 			</WorkbenchProvider>
 		</Router>

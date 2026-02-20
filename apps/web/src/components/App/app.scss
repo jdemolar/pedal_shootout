@@ -2,5 +2,16 @@
 /* See: https://github.com/facebook/create-react-app/blob/main/packages/cra-template-typescript/template/src/App.css */
 
 .app {
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
+	overflow: hidden;
+}
+
+.app__content {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
 	overflow: hidden;
 }

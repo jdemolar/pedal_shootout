@@ -2,8 +2,12 @@
   font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
   background: #111;
   color: #c8c8c8;
-  min-height: 100vh;
-  padding: 24px 20px 40px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+  padding: 0 20px;
 
   &__header {
     display: flex;
@@ -12,6 +16,8 @@
     margin-bottom: 18px;
     flex-wrap: wrap;
     gap: 8px;
+    flex-shrink: 0;
+    padding-top: 20px;
   }
 
   &__title-group {
@@ -42,6 +48,7 @@
     flex-wrap: wrap;
     margin-bottom: 16px;
     align-items: center;
+    flex-shrink: 0;
   }
 
   &__search-wrapper {
@@ -105,10 +112,12 @@
   }
 
   &__table-wrapper {
-    overflow-x: auto;
+    overflow: auto;
     border-radius: 6px;
     border: 1px solid #222;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+    flex: 1;
+    min-height: 0;
   }
 
   &__table {
@@ -244,6 +253,7 @@
     color: #8ab8dd;
     font-size: 12px;
     font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    flex-shrink: 0;
   }
 
   &__context-banner-clear {
