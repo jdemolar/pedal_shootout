@@ -24,6 +24,11 @@
 - [ ] **MIDI routing helper** - Match controller outputs to pedal MIDI needs
 - [ ] **Unit toggle** - Enable toggle for units of measurement (mm ↔ inches)
 - [x] **Sticky nav, filters, and table headers** - Viewport-locked flex layout keeps nav, filters, and column headers fixed while only table body rows scroll
+- [ ] **Power budget calculator improvements:**
+	- Revisit the value and accuracy of URL param filters, especially voltage
+	- Show URL param filters in UI
+	- Check why polarity warning is showing when it shouldn't
+	- Figure out how to suggest mapping of pedals to power ports on power supply/supplies
 
 ## 4. Spring Boot API:
 
