@@ -6,6 +6,9 @@ module.exports = {
 		'\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$':
 			'<rootDir>/src/__mocks__/fileMock.ts',
 		'\\.(css|less|scss|sass)$': '<rootDir>/src/__mocks__/styleMock.ts',
+		'^konva$': '<rootDir>/src/__mocks__/konvaMock.ts',
+		'^konva/(.*)$': '<rootDir>/src/__mocks__/konvaMock.ts',
+		'^react-konva$': '<rootDir>/src/__mocks__/reactKonvaMock.ts',
 	},
 	setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
 	collectCoverageFrom: ['**/*.{ts,tsx}', '!**/*.d.ts', '!**/node_modules/**', '!**/vendor/**'],

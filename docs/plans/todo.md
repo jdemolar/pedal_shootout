@@ -74,6 +74,12 @@
 ## 11. Fixes and Improvements
 
 - [ ] Enable users to select multiple instances of the same pedal
+- [ ] Layout views improvements
+	- [ ] Make objects rotateable
+	- [ ] Make objects fit product dimensions
+	- [ ] Add a delete button to selected connection lines
+- [ ] Move to Docker for better development processes
+	- [ ] Update node and all packages to newer versions if Docker circumvents macOS limitations
 
 ---
 

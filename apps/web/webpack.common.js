@@ -47,6 +47,14 @@ module.exports = {
 	},
 	resolve: {
 		extensions: ['.tsx', '.ts', '.js', '.jsx', '.json'],
+		modules: [
+			path.resolve(__dirname, 'node_modules'),
+			path.resolve(__dirname, '../../node_modules'),
+			'node_modules',
+		],
+		alias: {
+			'konva': path.resolve(__dirname, '../../node_modules/konva'),
+		},
 	},
 	output: {
 		filename: 'bundle.js',

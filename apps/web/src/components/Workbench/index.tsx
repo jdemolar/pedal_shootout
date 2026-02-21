@@ -3,6 +3,9 @@ import { useWorkbench } from '../../context/WorkbenchContext';
 import WorkbenchTableView, { useWorkbenchProducts, WorkbenchRow } from './WorkbenchTable';
 import DetailPanel from './DetailPanel';
 import InsightsSidebar from './InsightsSidebar';
+import ViewNav, { ViewMode } from './ViewNav';
+import LayoutView from './LayoutView';
+import PowerView from './PowerView';
 import './index.scss';
 
 const Workbench = () => {
@@ -17,6 +20,7 @@ const Workbench = () => {
 
   const { rows, loading, error } = useWorkbenchProducts();
 
+  const [activeView, setActiveView] = useState<ViewMode>('list');
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -67,6 +71,52 @@ const Workbench = () => {
 
   const handleRowClick = (row: WorkbenchRow) => {
     setSelectedRow(prev => prev?.id === row.id ? null : row);
+  };
+
+  const renderActiveView = () => {
+    switch (activeView) {
+      case 'list':
+        return (
+          <>
+            <div className="workbench__content">
+              <WorkbenchTableView
+                rows={rows}
+                loading={loading}
+                error={error}
+                onRowClick={handleRowClick}
+              />
+            </div>
+
+            {!loading && rows.length > 0 && (
+              <InsightsSidebar rows={rows} />
+            )}
+
+            {selectedRow && (
+              <DetailPanel
+                row={selectedRow}
+                onClose={() => setSelectedRow(null)}
+              />
+            )}
+          </>
+        );
+
+      case 'layout':
+        return (
+          <div className="workbench__content workbench__content--canvas">
+            <LayoutView rows={rows} />
+          </div>
+        );
+
+      case 'power':
+        return (
+          <div className="workbench__content workbench__content--canvas">
+            <PowerView rows={rows} />
+          </div>
+        );
+
+      default:
+        return null;
+    }
   };
 
   return (
@@ -145,26 +195,10 @@ const Workbench = () => {
         )}
       </div>
 
+      <ViewNav activeView={activeView} onViewChange={setActiveView} />
+
       <div className="workbench__body">
-        <div className="workbench__content">
-          <WorkbenchTableView
-            rows={rows}
-            loading={loading}
-            error={error}
-            onRowClick={handleRowClick}
-          />
-        </div>
-
-        {!loading && rows.length > 0 && (
-          <InsightsSidebar rows={rows} />
-        )}
-
-        {selectedRow && (
-          <DetailPanel
-            row={selectedRow}
-            onClose={() => setSelectedRow(null)}
-          />
-        )}
+        {renderActiveView()}
       </div>
     </div>
   );
