@@ -38,3 +38,68 @@ Example: A `9V/12V/18V` output rated at 500mA → 500mA at 9V, 375mA at 12V, 250
 **Data conventions:**
 - `current_ma` in the `jacks` table always represents the maximum current at the base (lowest) voltage
 - This convention should be documented in CLAUDE.md under "Standard Field Value Conventions"
+
+## Details that still need to be worked out
+
+### 1. UI layout and interaction design
+
+#### Questions
+- What does the view actually look like? The plan says "drag connections" but doesn't describe the visual layout — are power supplies on the left and pedals on the right? Cards? Columns? A canvas?
+- How are connections drawn — SVG lines, CSS connectors, a canvas layer?
+- How does the user initiate a connection — drag from a port dot? Click source then click target? Both?
+- How does the user remove or change a connection?
+- Mobile/responsive behavior?
+
+### 2. View mode toggle
+
+#### Questions
+- The plan mentions a view mode toggle (List / Power / Audio / MIDI) but doesn't specify where it goes in the current Workbench header or how it interacts with the existing layout (sidebar, detail panel,
+etc.)
+- Does the sidebar stay visible in connection views, or does the connection view replace the whole body?
+
+### 3. State persistence
+
+#### Questions
+- Where are connections stored? The WorkbenchContext currently stores items in localStorage but has no concept of connections between items. Need a data structure for connections (e.g., { sourceJackId,
+targetJackId, cableType? })
+- Are connections per-workbench?
+- Do connections survive page reload (localStorage) or eventually need API persistence?
+
+### 4. Daisy-chain / current-doubling UX
+
+#### Questions
+- How does a user express "daisy-chain these 3 pedals to one output"? Drag all three to the same port? A separate grouping UI?
+- How does current-doubling work visually? Drag two outputs to one pedal? A "combine outputs" button?
+- How are Y-cables represented?
+
+### 5. Relationship to existing PowerBudgetInsight
+
+#### Questions
+- The existing PowerBudgetInsight component already has a assignPedalsToOutputs() algorithm and port assignment display. Does the power mapping view replace it, extend it, or is it a visual version of the
+same thing?
+- Should there be an "auto-assign" button that uses the existing algorithm to seed the visual mapping?
+- Does the sidebar insight update in real-time as connections are made in the visual view?
+
+### 6. Handling products not yet in the workbench
+
+#### Questions
+- Can the user only map items already in the workbench, or can they drag in new products from the catalog?
+- What if there's no power supply in the workbench?
+
+### 7. Multiple power supplies
+
+#### Questions
+- How are multiple supplies displayed? Side by side? Stacked?
+- Can connections span across supplies?
+
+### 8. Adapter/cable representation
+
+#### Questions
+- Yellow warnings suggest "needs an adapter" — is this just informational, or can the user explicitly add an adapter/cable to a connection?
+
+### 9. Implementation phasing
+
+#### Questions
+- What's the MVP vs. nice-to-have? The plan covers four view modes (Power, Audio, MIDI, List) — are Audio and MIDI in scope for this task, or is this power-only?
+
+Would you like to discuss any of these areas to flesh out the plan, or should I propose recommended approaches for some of them?
