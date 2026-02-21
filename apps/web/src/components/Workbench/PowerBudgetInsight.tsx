@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { WorkbenchRow } from './WorkbenchTable';
 import { Jack } from '../../utils/transformers';
+import { normalizePolarity, normalizeConnector, voltagesCompatible } from '../../utils/powerUtils';
 
 interface PowerBudgetInsightProps {
   rows: WorkbenchRow[];
@@ -39,12 +41,13 @@ function formatMa(ma: number): string {
   return `${ma.toLocaleString()}mA`;
 }
 
-/** Find the majority polarity among supply output jacks */
+/** Find the majority polarity among supply output jacks (normalized) */
 function getMajorityPolarity(jacks: Jack[]): string | null {
   const counts: Record<string, number> = {};
   for (const j of jacks) {
     if (j.polarity) {
-      counts[j.polarity] = (counts[j.polarity] || 0) + 1;
+      const norm = normalizePolarity(j.polarity);
+      counts[norm] = (counts[norm] || 0) + 1;
     }
   }
   let best: string | null = null;
@@ -58,12 +61,13 @@ function getMajorityPolarity(jacks: Jack[]): string | null {
   return best;
 }
 
-/** Find the majority connector type among supply output jacks */
+/** Find the majority connector type among supply output jacks (normalized) */
 function getMajorityConnector(jacks: Jack[]): string | null {
   const counts: Record<string, number> = {};
   for (const j of jacks) {
     if (j.connector_type) {
-      counts[j.connector_type] = (counts[j.connector_type] || 0) + 1;
+      const norm = normalizeConnector(j.connector_type);
+      counts[norm] = (counts[norm] || 0) + 1;
     }
   }
   let best: string | null = null;
@@ -115,7 +119,7 @@ function computeDaisyChainGroups(
     const combinedMa = members.reduce((sum: number, c: PowerConsumer) => sum + (c.current_ma as number), 0);
 
     // Find the highest-capacity output jack that matches this voltage
-    const matchingOutputs = outputJacks.filter(j => j.voltage === voltage);
+    const matchingOutputs = outputJacks.filter(j => j.voltage != null && voltagesCompatible(j.voltage, voltage));
     const maxOutputMa = matchingOutputs.length > 0
       ? Math.max(...matchingOutputs.map(j => j.current_ma ?? 0))
       : null;
@@ -127,6 +131,120 @@ function computeDaisyChainGroups(
   }
 
   return groups;
+}
+
+// --- Port assignment types and algorithm ---
+
+interface TaggedOutputJack extends Jack {
+  supplyName: string;
+  portIndex: number;
+}
+
+interface PortAssignment {
+  consumer: PowerConsumer;
+  jack: TaggedOutputJack;
+  notes: string[];
+}
+
+interface AssignmentResult {
+  assignments: PortAssignment[];
+  unassigned: PowerConsumer[];
+}
+
+/**
+ * Greedy assignment: sort consumers by highest current draw (most constrained first),
+ * then assign each to the best compatible output jack.
+ */
+function assignPedalsToOutputs(
+  consumers: PowerConsumer[],
+  supplies: PowerSupplyInfo[],
+): AssignmentResult {
+  // Build tagged output jacks with supply name and port index
+  const availableJacks: TaggedOutputJack[] = [];
+  for (const supply of supplies) {
+    supply.output_jacks.forEach((jack, idx) => {
+      availableJacks.push({
+        ...jack,
+        supplyName: `${supply.manufacturer} ${supply.model}`,
+        portIndex: idx + 1,
+      });
+    });
+  }
+
+  // Sort consumers by highest current draw first (unknowns last)
+  const sorted = [...consumers].sort((a, b) => (b.current_ma ?? 0) - (a.current_ma ?? 0));
+
+  const assigned = new Set<number>(); // jack IDs already used
+  const assignments: PortAssignment[] = [];
+  const unassigned: PowerConsumer[] = [];
+
+  for (const consumer of sorted) {
+    // Find compatible jacks
+    type Candidate = { jack: TaggedOutputJack; score: number; notes: string[] };
+    const candidates: Candidate[] = [];
+
+    for (const jack of availableJacks) {
+      if (assigned.has(jack.id)) continue;
+
+      // Hard constraint: voltage must be compatible (if both known)
+      if (consumer.voltage != null && jack.voltage != null) {
+        if (!voltagesCompatible(jack.voltage, consumer.voltage)) continue;
+      }
+
+      // Hard constraint: current capacity must be sufficient (if both known)
+      if (consumer.current_ma != null && jack.current_ma != null) {
+        if (jack.current_ma < consumer.current_ma) continue;
+      }
+
+      let score = 0;
+      const notes: string[] = [];
+
+      // Prefer isolated outputs
+      if (jack.is_isolated) score += 100;
+
+      // Prefer exact voltage match
+      if (consumer.voltage != null && jack.voltage != null) {
+        if (voltagesCompatible(jack.voltage, consumer.voltage)) score += 50;
+      }
+
+      // Polarity match
+      if (consumer.polarity != null && jack.polarity != null) {
+        if (normalizePolarity(consumer.polarity) === normalizePolarity(jack.polarity)) {
+          score += 30;
+        } else {
+          notes.push(`Needs polarity adapter (${consumer.polarity} pedal, ${jack.polarity} output)`);
+        }
+      }
+
+      // Connector match
+      if (consumer.connector_type != null && jack.connector_type != null) {
+        if (normalizeConnector(consumer.connector_type) === normalizeConnector(jack.connector_type)) {
+          score += 20;
+        } else {
+          notes.push(`Needs connector adapter (${consumer.connector_type} pedal, ${jack.connector_type} output)`);
+        }
+      }
+
+      // Prefer tighter headroom (less wasted capacity)
+      if (consumer.current_ma != null && jack.current_ma != null) {
+        const headroom = jack.current_ma - consumer.current_ma;
+        score += Math.max(0, 10 - Math.floor(headroom / 100));
+      }
+
+      candidates.push({ jack, score, notes });
+    }
+
+    if (candidates.length > 0) {
+      candidates.sort((a, b) => b.score - a.score);
+      const best = candidates[0];
+      assigned.add(best.jack.id);
+      assignments.push({ consumer, jack: best.jack, notes: best.notes });
+    } else {
+      unassigned.push(consumer);
+    }
+  }
+
+  return { assignments, unassigned };
 }
 
 /** Build the "See all compatible power supplies" link URL */
@@ -146,6 +264,8 @@ function buildSupplyLinkUrl(
 }
 
 const PowerBudgetInsight = ({ rows }: PowerBudgetInsightProps) => {
+  const [showAssignments, setShowAssignments] = useState(false);
+
   // Separate consumers from suppliers
   const consumers: PowerConsumer[] = [];
   const supplies: PowerSupplyInfo[] = [];
@@ -270,7 +390,7 @@ const PowerBudgetInsight = ({ rows }: PowerBudgetInsightProps) => {
     // 3. Polarity mismatch
     const majorityPolarity = getMajorityPolarity(allOutputJacks);
     if (majorityPolarity) {
-      const mismatched = consumers.filter(c => c.polarity != null && c.polarity !== majorityPolarity);
+      const mismatched = consumers.filter(c => c.polarity != null && normalizePolarity(c.polarity) !== majorityPolarity);
       for (const c of mismatched) {
         warnings.push(
           <div key={`polarity-${c.manufacturer}-${c.model}`} className="power-budget__warning power-budget__warning--warn">
@@ -283,7 +403,7 @@ const PowerBudgetInsight = ({ rows }: PowerBudgetInsightProps) => {
     // 4. Connector type mismatch
     const majorityConnector = getMajorityConnector(allOutputJacks);
     if (majorityConnector) {
-      const mismatched = consumers.filter(c => c.connector_type != null && c.connector_type !== majorityConnector);
+      const mismatched = consumers.filter(c => c.connector_type != null && normalizeConnector(c.connector_type) !== majorityConnector);
       for (const c of mismatched) {
         warnings.push(
           <div key={`connector-${c.manufacturer}-${c.model}`} className="power-budget__warning power-budget__warning--warn">
@@ -415,6 +535,66 @@ const PowerBudgetInsight = ({ rows }: PowerBudgetInsightProps) => {
           {warnings}
         </div>
       )}
+
+      {/* Port assignments */}
+      {hasSupply && consumers.length > 0 && (() => {
+        const result = assignPedalsToOutputs(consumers, supplies);
+        return (
+          <div className="power-budget__assignment">
+            <button
+              className="power-budget__assignment-toggle"
+              onClick={() => setShowAssignments(!showAssignments)}
+            >
+              {showAssignments ? 'Hide' : 'Show'} port assignments
+              <span className="power-budget__assignment-toggle-icon">
+                {showAssignments ? '\u25b4' : '\u25be'}
+              </span>
+            </button>
+            {showAssignments && (
+              <div className="power-budget__assignment-list">
+                {result.assignments.map((a, i) => (
+                  <div key={i} className="power-budget__assignment-row">
+                    <div className="power-budget__assignment-mapping">
+                      <span className="power-budget__assignment-pedal">
+                        {a.consumer.manufacturer} {a.consumer.model}
+                        {a.consumer.current_ma != null && ` (${formatMa(a.consumer.current_ma)})`}
+                      </span>
+                      <span className="power-budget__assignment-arrow">{'\u2192'}</span>
+                      <span className="power-budget__assignment-port">
+                        {a.jack.supplyName}: Output {a.jack.portIndex}
+                        {a.jack.voltage && ` (${a.jack.voltage}`}
+                        {a.jack.current_ma != null && `, ${formatMa(a.jack.current_ma)}`}
+                        {(a.jack.voltage || a.jack.current_ma != null) && ')'}
+                      </span>
+                    </div>
+                    {a.notes.length > 0 && (
+                      <div className="power-budget__assignment-notes">
+                        {a.notes.map((note, ni) => (
+                          <div key={ni} className="power-budget__assignment-note">{note}</div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {result.unassigned.length > 0 && (
+                  <div className="power-budget__assignment-unassigned">
+                    <div className="power-budget__assignment-unassigned-title">
+                      No compatible port found:
+                    </div>
+                    {result.unassigned.map((c, i) => (
+                      <div key={i} className="power-budget__assignment-unassigned-item">
+                        {c.manufacturer} {c.model}
+                        {c.current_ma != null && ` (${formatMa(c.current_ma)})`}
+                        {c.voltage && ` @ ${c.voltage}`}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 };

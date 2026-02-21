@@ -254,6 +254,42 @@
     font-size: 12px;
     font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
     flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+
+  &__filter-pills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  &__filter-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    background: #222d3a;
+    border: 1px solid #3a4a5a;
+    border-radius: 12px;
+    font-size: 11px;
+    color: #a0c8e8;
+  }
+
+  &__filter-pill-remove {
+    background: none;
+    border: none;
+    color: #6a8aaa;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 2px;
+    border-radius: 50%;
+
+    &:hover {
+      color: #cc6060;
+      background: #2e1a1a;
+    }
   }
 
   &__context-banner-clear {
@@ -265,6 +301,7 @@
     padding: 2px 8px;
     border-radius: 3px;
     cursor: pointer;
+    margin-left: auto;
 
     &:hover {
       background: #222;

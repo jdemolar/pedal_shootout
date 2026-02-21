@@ -5,6 +5,7 @@ import { formatMsrp, formatDimensions } from '../../utils/formatters';
 import { useApiData } from '../../hooks/useApiData';
 import { api } from '../../services/api';
 import { transformPowerSupply, Jack } from '../../utils/transformers';
+import { voltagesCompatible } from '../../utils/powerUtils';
 import JacksList from '../JacksList';
 import WorkbenchToggle from '../WorkbenchToggle';
 
@@ -48,17 +49,11 @@ function parseIntParam(value: string | null): number | null {
   return isNaN(n) ? null : n;
 }
 
-/** Check whether a supply offers a given voltage (checks available_voltages string and output jacks) */
+/** Check whether a supply offers a given voltage via its output jacks */
 function supplyHasVoltage(ps: PowerSupply, voltage: string): boolean {
-  // Check the available_voltages summary field (e.g., "9V, 12V, 18V")
-  if (ps.available_voltages != null) {
-    // Split on comma/space and compare trimmed values
-    const listed = ps.available_voltages.split(/[,;]\s*/).map(v => v.trim());
-    if (listed.some(v => v === voltage)) return true;
-  }
-  // Also check individual output jacks
   return ps.jacks.some(
-    j => j.category === 'power' && j.direction === 'output' && j.voltage === voltage
+    j => j.category === 'power' && j.direction === 'output' && j.voltage != null
+      && voltagesCompatible(j.voltage, voltage)
   );
 }
 
@@ -290,21 +285,43 @@ const PowerSupplies = () => {
     setSearchParams(next);
   };
 
-  // Build banner text describing all active URL filters
-  const bannerParts: string[] = [];
-  if (minCurrentMa != null) bannerParts.push(`${minCurrentMa.toLocaleString()}mA+ capacity`);
-  if (minOutputs != null) bannerParts.push(`${minOutputs}+ outputs`);
-  if (minOutputCurrent != null) bannerParts.push(`${minOutputCurrent}mA+ per output`);
-  if (requiredVoltages.length > 0) bannerParts.push(requiredVoltages.join(' + '));
+  const handleRemoveUrlFilter = (paramKey: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.delete(paramKey);
+    setSearchParams(next);
+  };
+
+  // Build removable filter pills
+  const filterPills: { label: string; paramKey: string }[] = [];
+  if (minCurrentMa != null) filterPills.push({ label: `${minCurrentMa.toLocaleString()}mA+ capacity`, paramKey: 'minCurrent' });
+  if (minOutputs != null) filterPills.push({ label: `${minOutputs}+ outputs`, paramKey: 'minOutputs' });
+  if (minOutputCurrent != null) filterPills.push({ label: `${minOutputCurrent}mA+ per output`, paramKey: 'minOutputCurrent' });
+  if (requiredVoltages.length > 0) filterPills.push({ label: requiredVoltages.join(' + '), paramKey: 'voltages' });
 
   return (
     <>
       {hasAnyUrlFilter && (
         <div className="data-table__context-banner">
-          Showing power supplies with {bannerParts.join(', ')}
-          <button className="data-table__context-banner-clear" onClick={handleClearUrlFilters}>
-            Clear
-          </button>
+          <span>Filtered by:</span>
+          <div className="data-table__filter-pills">
+            {filterPills.map(pill => (
+              <span key={pill.paramKey} className="data-table__filter-pill">
+                {pill.label}
+                <button
+                  className="data-table__filter-pill-remove"
+                  onClick={() => handleRemoveUrlFilter(pill.paramKey)}
+                  title={`Remove "${pill.label}" filter`}
+                >
+                  {'\u00d7'}
+                </button>
+              </span>
+            ))}
+          </div>
+          {filterPills.length > 1 && (
+            <button className="data-table__context-banner-clear" onClick={handleClearUrlFilters}>
+              Clear all
+            </button>
+          )}
         </div>
       )}
       <DataTable<PowerSupply>
