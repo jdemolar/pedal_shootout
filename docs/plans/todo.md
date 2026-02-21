@@ -29,6 +29,7 @@
 	- [x] Show URL param filters in UI
 	- [x] Check why polarity warning is showing when it shouldn't
 	- [x] Figure out how to suggest mapping of pedals to power ports on power supply/supplies
+	- [ ] Show appropriate setting for ports with selectable/variale voltage in "Show port assigments"
 
 ## 4. Spring Boot API:
 
