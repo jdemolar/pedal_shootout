@@ -70,6 +70,10 @@
 
 - [ ] Move app into cloud infrastructure
 
+## 11. Fixes and Improvements
+
+- [ ] Enable users to select multiple instances of the same pedal
+
 ---
 
 ## Data Maintenance Notes (ongoing)
