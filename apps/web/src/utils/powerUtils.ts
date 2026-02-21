@@ -53,3 +53,58 @@ export function voltagesCompatible(supplyVoltage: string, consumerVoltage: strin
   // Every token the consumer needs must be satisfiable by the supply
   return neededTokens.every(needed => voltageTokensCanSatisfy(supplyTokens, needed));
 }
+
+/** Validate a single connection between a supply output jack and a consumer input jack. */
+export interface ConnectionValidation {
+  status: 'valid' | 'warning' | 'error';
+  warnings: string[];
+}
+
+export function validateConnection(
+  outputJack: { voltage: string | null; current_ma: number | null; polarity: string | null; connector_type: string | null },
+  inputJack: { voltage: string | null; current_ma: number | null; polarity: string | null; connector_type: string | null },
+  /** Total current draw of all consumers connected to this output (including this one) */
+  totalCurrentOnOutput?: number,
+): ConnectionValidation {
+  const warnings: string[] = [];
+  let hasError = false;
+
+  // Voltage check
+  if (outputJack.voltage && inputJack.voltage) {
+    if (!voltagesCompatible(outputJack.voltage, inputJack.voltage)) {
+      warnings.push(`Voltage mismatch: supply ${outputJack.voltage} vs pedal ${inputJack.voltage}`);
+      hasError = true;
+    }
+  }
+
+  // Current check
+  if (totalCurrentOnOutput != null && outputJack.current_ma != null) {
+    if (totalCurrentOnOutput > outputJack.current_ma) {
+      warnings.push(`Current overload: ${totalCurrentOnOutput}mA needed, output provides ${outputJack.current_ma}mA`);
+      hasError = true;
+    }
+  }
+
+  if (hasError) {
+    return { status: 'error', warnings };
+  }
+
+  // Polarity check (warning, not error — user can get an adapter)
+  if (outputJack.polarity && inputJack.polarity) {
+    if (normalizePolarity(outputJack.polarity) !== normalizePolarity(inputJack.polarity)) {
+      warnings.push(`Polarity mismatch: supply ${outputJack.polarity}, pedal ${inputJack.polarity} — reversal cable needed`);
+    }
+  }
+
+  // Connector check (warning, not error — user can get an adapter)
+  if (outputJack.connector_type && inputJack.connector_type) {
+    if (normalizeConnector(outputJack.connector_type) !== normalizeConnector(inputJack.connector_type)) {
+      warnings.push(`Connector mismatch: supply ${outputJack.connector_type}, pedal ${inputJack.connector_type} — adapter needed`);
+    }
+  }
+
+  return {
+    status: warnings.length > 0 ? 'warning' : 'valid',
+    warnings,
+  };
+}

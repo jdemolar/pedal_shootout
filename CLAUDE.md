@@ -101,7 +101,8 @@ cd apps/api
 - Managed via nvm (installed at `~/.nvm`); project is pinned to Node 20 via `.nvmrc`
 - nvm is NOT auto-loaded in non-interactive shells (such as the shell Claude Code uses)
 - All `node`/`npm` commands must be prefixed with: `export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" &&`
-- Example: `export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" && npm run web --prefix /path/to/project`
+- If using zsh, the `.` (source) command can fail with ambiguous syntax errors. Use `\. "$NVM_DIR/nvm.sh"` (backslash-escaped dot) instead: `export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" &&`
+- Example: `export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && npm run web --prefix /path/to/project`
 
 ## Web App Architecture
 
