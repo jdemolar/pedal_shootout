@@ -386,7 +386,7 @@ Jacks represent physical connectors. Only insert jacks for ports that exist on t
 **Power input jack (most common — needed for any active device):**
 ```sql
 INSERT INTO jacks (product_id, category, direction, connector_type, voltage, current_ma, polarity)
-VALUES (<id>, 'power', 'input', '2.1mm barrel', '9V', <current_ma>, 'center-negative');
+VALUES (<id>, 'power', 'input', '2.1mm barrel', '9V', <current_ma>, 'Center Negative');
 ```
 
 **Passive devices** (passive DI boxes, passive reamp boxes, etc.) do not need power jacks.
@@ -405,7 +405,7 @@ Power supplies need jacks entered for **every** physical port on the unit. This 
 - `connector_type` — almost always `'2.1mm barrel'` for standard pedal outputs
 - `voltage` — the fixed voltage (e.g., `'9V'`) or selectable range (e.g., `'9V/12V/18V'`)
 - `current_ma` — maximum deliverable mA on that output (e.g., `500`)
-- `polarity` — almost always `'center-negative'` for pedal outputs
+- `polarity` — almost always `'Center Negative'` for pedal outputs
 - `is_isolated` — `true` for isolated outputs, `false` for non-isolated/daisy-chained
 
 **For the AC mains input (Zuma-style supplies with direct wall connection):**
@@ -415,8 +415,8 @@ Power supplies need jacks entered for **every** physical port on the unit. This 
 - `current_ma` — leave NULL (varies with load)
 
 **For DC link ports (Ojai-style supplies powered by 24V from Zuma or adapter):**
-- Input: `direction = 'input'`, `connector_type = 'EIAJ-05'`, `voltage = '24V'`, `polarity = 'center-positive'`, `current_ma = 1000`
-- Thru/passthrough to next unit: `direction = 'output'`, `connector_type = 'EIAJ-05'`, `voltage = '24V'`, `polarity = 'center-positive'`
+- Input: `direction = 'input'`, `connector_type = 'EIAJ-05'`, `voltage = '24V'`, `polarity = 'Center Positive'`, `current_ma = 1000`
+- Thru/passthrough to next unit: `direction = 'output'`, `connector_type = 'EIAJ-05'`, `voltage = '24V'`, `polarity = 'Center Positive'`
 
 **What to look for when researching a power supply:**
 1. Number of outputs and their voltage/mA ratings (may have mixed fixed + selectable outputs)
