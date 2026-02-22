@@ -73,7 +73,7 @@
 
 ## 11. Fixes and Improvements
 
-- [ ] Enable users to select multiple instances of the same pedal
+- [x] Enable users to select multiple instances of the same pedal
 - [ ] Layout views improvements
 	- [ ] Make objects rotateable
 	- [ ] Make objects fit product dimensions
