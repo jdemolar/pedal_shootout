@@ -78,7 +78,7 @@
 	- [ ] Make objects rotateable
 	- [ ] Make objects fit product dimensions
 	- [x] Add a delete button to selected connection lines
-- [ ] Move to Docker for better development processes
+- [x] Move to Docker for better development processes
 	- [ ] Update node and all packages to newer versions if Docker circumvents macOS limitations
 
 ---
