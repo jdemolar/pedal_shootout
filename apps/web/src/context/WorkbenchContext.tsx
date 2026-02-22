@@ -31,6 +31,11 @@ export interface PowerConnection {
   acknowledgedWarnings?: string[];
 }
 
+/** Per-view zoom/pan state. Keyed by view mode (e.g., 'layout', 'power'). */
+export interface ViewportStates {
+  [viewKey: string]: { scale: number; offsetX: number; offsetY: number };
+}
+
 export interface Workbench {
   id: string;
   name: string;
@@ -42,6 +47,7 @@ export interface Workbench {
   // Canvas view data:
   viewPositions?: ViewPositions;
   powerConnections?: PowerConnection[];
+  viewportStates?: ViewportStates;
 }
 
 interface WorkbenchStore {
@@ -68,6 +74,10 @@ interface WorkbenchContextType {
   // Canvas view positions
   updateViewPosition: (view: string, instanceId: string, x: number, y: number) => void;
   getViewPositions: (view: string) => Record<string, { x: number; y: number }>;
+
+  // Canvas viewport state (zoom/pan)
+  getViewportState: (view: string) => { scale: number; offsetX: number; offsetY: number };
+  updateViewportState: (view: string, state: { scale: number; offsetX: number; offsetY: number }) => void;
 
   // Power connections
   addPowerConnection: (conn: Omit<PowerConnection, 'id'>) => void;
@@ -280,6 +290,23 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
     [activeWorkbench],
   );
 
+  // --- Canvas viewport state (zoom/pan) ---
+
+  const getViewportState = useCallback(
+    (view: string): { scale: number; offsetX: number; offsetY: number } => {
+      return activeWorkbench.viewportStates?.[view] || { scale: 1, offsetX: 0, offsetY: 0 };
+    },
+    [activeWorkbench],
+  );
+
+  const updateViewportState = useCallback((view: string, state: { scale: number; offsetX: number; offsetY: number }) => {
+    updateStore(prev => updateActiveWorkbench(prev, wb => {
+      const states = { ...(wb.viewportStates || {}) };
+      states[view] = state;
+      return { ...wb, viewportStates: states, updatedAt: new Date().toISOString() };
+    }));
+  }, [updateStore]);
+
   // --- Power connections ---
 
   const addPowerConnection = useCallback((conn: Omit<PowerConnection, 'id'>) => {
@@ -338,13 +365,15 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
       clear,
       updateViewPosition,
       getViewPositions,
+      getViewportState,
+      updateViewportState,
       addPowerConnection,
       removePowerConnection,
       setPowerConnections,
       acknowledgeWarning,
       totalItemCount,
     }),
-    [store.workbenches, activeWorkbench, createWorkbench, renameWorkbench, deleteWorkbench, setActiveWorkbench, addItem, removeItem, removeAllInstances, countInWorkbench, clear, updateViewPosition, getViewPositions, addPowerConnection, removePowerConnection, setPowerConnections, acknowledgeWarning, totalItemCount],
+    [store.workbenches, activeWorkbench, createWorkbench, renameWorkbench, deleteWorkbench, setActiveWorkbench, addItem, removeItem, removeAllInstances, countInWorkbench, clear, updateViewPosition, getViewPositions, getViewportState, updateViewportState, addPowerConnection, removePowerConnection, setPowerConnections, acknowledgeWarning, totalItemCount],
   );
 
   return (

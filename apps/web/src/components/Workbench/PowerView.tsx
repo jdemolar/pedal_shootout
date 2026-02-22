@@ -9,10 +9,13 @@ import {
 } from '../../utils/powerAssignment';
 import { validateConnection, ConnectionValidation } from '../../utils/powerUtils';
 import { Jack } from '../../utils/transformers';
+import { useCanvasViewport } from '../../hooks/useCanvasViewport';
+import { calculateBoundingBox } from '../../utils/canvasUtils';
 import CanvasBase from './CanvasBase';
 import ProductCard, { CARD_WIDTH, CARD_HEIGHT } from './ProductCard';
 import PortDot from './PortDot';
 import ConnectionLine from './ConnectionLine';
+import ZoomControls from './ZoomControls';
 import Konva from 'konva';
 
 const VIEW_KEY = 'power';
@@ -61,6 +64,14 @@ const PowerView = ({ rows }: PowerViewProps) => {
   const savedPositions = getViewPositions(VIEW_KEY);
   const powerData = extractPowerData(rows);
   const connections = activeWorkbench.powerConnections ?? [];
+
+  // Zoom/pan
+  const viewport = useCanvasViewport(VIEW_KEY);
+  const [stageDims, setStageDims] = useState({ width: 800, height: 600 });
+
+  const handleDimensionsChange = useCallback((width: number, height: number) => {
+    setStageDims({ width, height });
+  }, []);
 
   // Interaction state
   const [pendingSource, setPendingSource] = useState<PendingConnection | null>(null);
@@ -121,6 +132,7 @@ const PowerView = ({ rows }: PowerViewProps) => {
   }, [savedPositions]);
 
   // Port absolute position lookup — keyed by composite key (instanceId:jackId)
+  // These are WORLD coordinates
   const portPositions = useMemo(() => {
     const map = new Map<string, { x: number; y: number }>();
 
@@ -147,7 +159,6 @@ const PowerView = ({ rows }: PowerViewProps) => {
   }, [supplyEntries, consumerEntries, getPosition]);
 
   // Compute total current on each output port (for daisy-chain validation)
-  // Keyed by composite key (instanceId:jackId)
   const currentByOutput = useMemo(() => {
     const map = new Map<string, number>();
     for (const conn of connections) {
@@ -173,7 +184,7 @@ const PowerView = ({ rows }: PowerViewProps) => {
           currentByOutput.get(key),
         ));
       } else {
-        map.set(conn.id, { status: 'valid', warnings: [] });
+        map.set(conn.id, { status: 'valid' as const, warnings: [] });
       }
     }
     return map;
@@ -185,7 +196,6 @@ const PowerView = ({ rows }: PowerViewProps) => {
 
   // --- Connection interaction ---
 
-  /** Creates a port click handler scoped to a specific instance */
   const makePortClickHandler = useCallback((instanceId: string) => (jackId: number) => {
     const jack = jackMap.get(jackId);
     if (!jack) return;
@@ -194,19 +204,15 @@ const PowerView = ({ rows }: PowerViewProps) => {
     const key = portKey(instanceId, jackId);
 
     if (!pendingSource) {
-      // First click — start pending connection
       setPendingSource({ jackId, instanceId, compositeKey: key, direction });
       setMousePos(null);
       setSelectedConnectionId(null);
       setWarningPopover(null);
     } else if (pendingSource.compositeKey === key) {
-      // Clicked same port — cancel
       setPendingSource(null);
       setMousePos(null);
     } else {
-      // Second click — attempt connection
       if (pendingSource.direction === direction) {
-        // Can't connect output→output or input→input
         setPendingSource(null);
         setMousePos(null);
         return;
@@ -228,18 +234,20 @@ const PowerView = ({ rows }: PowerViewProps) => {
     }
   }, [pendingSource, jackMap, addPowerConnection]);
 
-  // Track mouse position for preview line (only while a connection is pending)
+  // Track mouse position for preview line — convert screen coords to world coords
   const handleStageMouseMove = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
     if (!pendingSource) return;
     const stage = e.target.getStage();
     if (stage) {
       const pos = stage.getPointerPosition();
-      if (pos) setMousePos({ x: pos.x, y: pos.y });
+      if (pos) {
+        const world = viewport.screenToWorld(pos.x, pos.y);
+        setMousePos(world);
+      }
     }
-  }, [pendingSource]);
+  }, [pendingSource, viewport.screenToWorld]);
 
   const handleStageClick = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
-    // Click on empty canvas — deselect and cancel pending
     if (e.target === e.target.getStage()) {
       setPendingSource(null);
       setSelectedConnectionId(null);
@@ -252,7 +260,6 @@ const PowerView = ({ rows }: PowerViewProps) => {
     const conn = connections.find(c => c.id === connId);
 
     if (validation && validation.warnings.length > 0 && conn) {
-      // Show warning popover
       const sourcePos = portPositions.get(portKey(conn.sourceInstanceId, conn.sourceJackId));
       const targetPos = portPositions.get(portKey(conn.targetInstanceId, conn.targetJackId));
       if (sourcePos && targetPos) {
@@ -282,7 +289,6 @@ const PowerView = ({ rows }: PowerViewProps) => {
     }
   }, [selectedConnectionId, removePowerConnection]);
 
-  // Register keyboard listener
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -296,7 +302,6 @@ const PowerView = ({ rows }: PowerViewProps) => {
 
     const result = assignPedalsToOutputs(powerData.consumers, powerData.supplies);
     const newConnections: PowerConnection[] = result.assignments.map((a) => {
-      // Find the consumer's power input jack
       const consumerRow = rowMap.get(a.consumer.instanceId);
       const inputJack = consumerRow ? getPowerInputJack(consumerRow) : undefined;
 
@@ -314,6 +319,21 @@ const PowerView = ({ rows }: PowerViewProps) => {
     setWarningPopover(null);
   }, [connections, powerData, rowMap, setPowerConnections]);
 
+  // Fit-all handler
+  const handleFitAll = useCallback(() => {
+    const cards: Array<{ x: number; y: number; width: number; height: number }> = [];
+    for (const entry of supplyEntries) {
+      const pos = getPosition(entry.instanceId, entry.x, entry.y);
+      cards.push({ x: pos.x, y: pos.y, width: CARD_WIDTH, height: supplyCardHeight(entry.outputJacks.length) });
+    }
+    for (const entry of consumerEntries) {
+      const pos = getPosition(entry.instanceId, entry.x, entry.y);
+      cards.push({ x: pos.x, y: pos.y, width: CARD_WIDTH, height: CARD_HEIGHT });
+    }
+    const bbox = calculateBoundingBox(cards);
+    viewport.fitAll(bbox, stageDims.width, stageDims.height);
+  }, [supplyEntries, consumerEntries, getPosition, viewport, stageDims]);
+
   if (rows.length === 0) {
     return (
       <div className="workbench__canvas-placeholder">
@@ -330,14 +350,22 @@ const PowerView = ({ rows }: PowerViewProps) => {
     );
   }
 
-  // Pending source port position for preview line
+  // Pending source port position for preview line (world coords)
   const pendingSourcePos = pendingSource ? portPositions.get(pendingSource.compositeKey) : null;
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <CanvasBase
+        scale={viewport.scale}
+        offsetX={viewport.offsetX}
+        offsetY={viewport.offsetY}
+        onWheel={viewport.handleWheel}
+        onTouchMove={viewport.handleTouchMove}
+        onTouchEnd={viewport.handleTouchEnd}
+        onStageDragEnd={viewport.handleStageDragEnd}
         onStageClick={handleStageClick}
         onStageMouseMove={handleStageMouseMove}
+        onDimensionsChange={handleDimensionsChange}
       >
         {/* Connection lines */}
         {connections.map((conn) => {
@@ -364,7 +392,7 @@ const PowerView = ({ rows }: PowerViewProps) => {
           );
         })}
 
-        {/* Preview line while creating connection */}
+        {/* Preview line while creating connection (both in world coords now) */}
         {pendingSource && pendingSourcePos && mousePos && (
           <ConnectionLine
             sourceX={pendingSourcePos.x}
@@ -483,20 +511,30 @@ const PowerView = ({ rows }: PowerViewProps) => {
         )}
       </div>
 
-      {/* Floating delete button for selected connection */}
+      {/* Zoom controls */}
+      <ZoomControls
+        scale={viewport.scale}
+        onZoomIn={() => viewport.zoomIn(stageDims.width, stageDims.height)}
+        onZoomOut={() => viewport.zoomOut(stageDims.width, stageDims.height)}
+        onFitAll={handleFitAll}
+      />
+
+      {/* Floating delete button for selected connection — convert world to screen coords */}
       {selectedConnectionId && (() => {
         const conn = connections.find(c => c.id === selectedConnectionId);
         if (!conn) return null;
         const srcPos = portPositions.get(portKey(conn.sourceInstanceId, conn.sourceJackId));
         const tgtPos = portPositions.get(portKey(conn.targetInstanceId, conn.targetJackId));
         if (!srcPos || !tgtPos) return null;
+        const midWorld = { x: (srcPos.x + tgtPos.x) / 2, y: (srcPos.y + tgtPos.y) / 2 };
+        const midScreen = viewport.worldToScreen(midWorld.x, midWorld.y);
         return (
           <button
             className="workbench__power-delete-btn"
             style={{
               position: 'absolute',
-              left: (srcPos.x + tgtPos.x) / 2,
-              top: (srcPos.y + tgtPos.y) / 2,
+              left: midScreen.x,
+              top: midScreen.y,
             }}
             title="Delete connection"
             onClick={() => {
@@ -510,40 +548,43 @@ const PowerView = ({ rows }: PowerViewProps) => {
         );
       })()}
 
-      {/* Warning popover */}
-      {warningPopover && (
-        <div
-          className="workbench__power-popover"
-          style={{
-            position: 'absolute',
-            left: warningPopover.x,
-            top: warningPopover.y,
-          }}
-        >
-          <div className="workbench__power-popover-warnings">
-            {warningPopover.warnings.map((w, i) => (
-              <div key={i} className="workbench__power-popover-warning">{w}</div>
-            ))}
-          </div>
-          <button
-            className="workbench__power-popover-btn"
-            onClick={() => {
-              for (const w of warningPopover.warnings) {
-                acknowledgeWarning(warningPopover.connId, w);
-              }
-              setWarningPopover(null);
+      {/* Warning popover — convert world to screen coords */}
+      {warningPopover && (() => {
+        const screenPos = viewport.worldToScreen(warningPopover.x, warningPopover.y);
+        return (
+          <div
+            className="workbench__power-popover"
+            style={{
+              position: 'absolute',
+              left: screenPos.x,
+              top: screenPos.y,
             }}
           >
-            I have this adapter
-          </button>
-          <button
-            className="workbench__power-popover-btn workbench__power-popover-btn--close"
-            onClick={() => setWarningPopover(null)}
-          >
-            Close
-          </button>
-        </div>
-      )}
+            <div className="workbench__power-popover-warnings">
+              {warningPopover.warnings.map((w, i) => (
+                <div key={i} className="workbench__power-popover-warning">{w}</div>
+              ))}
+            </div>
+            <button
+              className="workbench__power-popover-btn"
+              onClick={() => {
+                for (const w of warningPopover.warnings) {
+                  acknowledgeWarning(warningPopover.connId, w);
+                }
+                setWarningPopover(null);
+              }}
+            >
+              I have this adapter
+            </button>
+            <button
+              className="workbench__power-popover-btn workbench__power-popover-btn--close"
+              onClick={() => setWarningPopover(null)}
+            >
+              Close
+            </button>
+          </div>
+        );
+      })()}
     </div>
   );
 };

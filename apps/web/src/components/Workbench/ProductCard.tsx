@@ -25,6 +25,8 @@ interface ProductCardProps {
   onClick?: () => void;
   selected?: boolean;
   children?: ReactNode;
+  /** Override card width (e.g., proportional sizing in Layout view) */
+  cardWidth?: number;
   /** Override card height (e.g., taller for supply cards with many ports) */
   cardHeight?: number;
 }
@@ -43,9 +45,11 @@ const ProductCard = ({
   onClick,
   selected = false,
   children,
+  cardWidth,
   cardHeight,
 }: ProductCardProps) => {
   const colors = TYPE_COLORS[productType] || TYPE_COLORS.pedal;
+  const width = cardWidth ?? CARD_WIDTH;
   const height = cardHeight ?? CARD_HEIGHT;
 
   return (
@@ -61,7 +65,7 @@ const ProductCard = ({
     >
       {/* Card background */}
       <Rect
-        width={CARD_WIDTH}
+        width={width}
         height={height}
         fill={colors.fill}
         stroke={selected ? '#e0e0e0' : colors.stroke}
@@ -75,7 +79,7 @@ const ProductCard = ({
       <Text
         x={8}
         y={8}
-        width={CARD_WIDTH - 16}
+        width={width - 16}
         text={manufacturer}
         fontSize={11}
         fontFamily="'Helvetica Neue', sans-serif"
@@ -88,7 +92,7 @@ const ProductCard = ({
       <Text
         x={8}
         y={24}
-        width={CARD_WIDTH - 16}
+        width={width - 16}
         text={model}
         fontSize={11}
         fontFamily="'SF Mono', 'Fira Code', monospace"
@@ -96,17 +100,19 @@ const ProductCard = ({
         ellipsis
         wrap="none"
       />
-      {/* Type label */}
-      <Text
-        x={8}
-        y={44}
-        width={CARD_WIDTH - 16}
-        text={productType.replace(/_/g, ' ')}
-        fontSize={9}
-        fontFamily="monospace"
-        fill="#555"
-        textTransform="uppercase"
-      />
+      {/* Type label — hide if card is too short */}
+      {height >= 55 && (
+        <Text
+          x={8}
+          y={44}
+          width={width - 16}
+          text={productType.replace(/_/g, ' ')}
+          fontSize={9}
+          fontFamily="monospace"
+          fill="#555"
+          textTransform="uppercase"
+        />
+      )}
       {children}
     </Group>
   );
