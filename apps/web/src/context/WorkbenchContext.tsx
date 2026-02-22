@@ -5,6 +5,7 @@ import { createContext, useContext, useState, useCallback, useMemo, ReactNode } 
 export type ProductType = 'pedal' | 'power_supply' | 'pedalboard' | 'midi_controller' | 'utility';
 
 export interface WorkbenchItem {
+  instanceId: string;
   productId: number;
   productType: ProductType;
   addedAt: string;
@@ -13,10 +14,10 @@ export interface WorkbenchItem {
   rotation?: number;
 }
 
-/** Per-view position for a product on the canvas. Keyed by productId (as string for JSON). */
+/** Per-view position for an item on the canvas. Keyed by instanceId. */
 export interface ViewPositions {
   [viewMode: string]: {
-    [productId: string]: { x: number; y: number };
+    [instanceId: string]: { x: number; y: number };
   };
 }
 
@@ -25,8 +26,8 @@ export interface PowerConnection {
   id: string;
   sourceJackId: number;
   targetJackId: number;
-  sourceProductId: number;
-  targetProductId: number;
+  sourceInstanceId: string;
+  targetInstanceId: string;
   acknowledgedWarnings?: string[];
 }
 
@@ -59,12 +60,13 @@ interface WorkbenchContextType {
 
   // Item operations (operate on active workbench)
   addItem: (productId: number, productType: ProductType) => void;
-  removeItem: (productId: number) => void;
-  isInWorkbench: (productId: number) => boolean;
+  removeItem: (instanceId: string) => void;
+  removeAllInstances: (productId: number) => void;
+  countInWorkbench: (productId: number) => number;
   clear: () => void;
 
   // Canvas view positions
-  updateViewPosition: (view: string, productId: number, x: number, y: number) => void;
+  updateViewPosition: (view: string, instanceId: string, x: number, y: number) => void;
   getViewPositions: (view: string) => Record<string, { x: number; y: number }>;
 
   // Power connections
@@ -110,6 +112,18 @@ function createDefaultStore(): WorkbenchStore {
   };
 }
 
+function migrateStore(store: WorkbenchStore): WorkbenchStore {
+  // Add instanceId to any items that don't have one (pre-multi-instance data)
+  for (const wb of store.workbenches) {
+    for (const item of wb.items) {
+      if (!item.instanceId) {
+        item.instanceId = generateId();
+      }
+    }
+  }
+  return store;
+}
+
 function loadStore(): WorkbenchStore {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -121,7 +135,7 @@ function loadStore(): WorkbenchStore {
         if (!activeExists) {
           parsed.activeWorkbenchId = parsed.workbenches[0].id;
         }
-        return parsed;
+        return migrateStore(parsed);
       }
     }
   } catch {
@@ -215,37 +229,31 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
   }, [updateStore]);
 
   const addItem = useCallback((productId: number, productType: ProductType) => {
-    updateStore(prev => ({
-      ...prev,
-      workbenches: prev.workbenches.map(wb => {
-        if (wb.id !== prev.activeWorkbenchId) return wb;
-        // Don't add duplicates
-        if (wb.items.some(item => item.productId === productId)) return wb;
-        return {
-          ...wb,
-          items: [...wb.items, { productId, productType, addedAt: new Date().toISOString() }],
-          updatedAt: new Date().toISOString(),
-        };
-      }),
-    }));
+    updateStore(prev => updateActiveWorkbench(prev, wb => ({
+      ...wb,
+      items: [...wb.items, { instanceId: generateId(), productId, productType, addedAt: new Date().toISOString() }],
+      updatedAt: new Date().toISOString(),
+    })));
   }, [updateStore]);
 
-  const removeItem = useCallback((productId: number) => {
-    updateStore(prev => ({
-      ...prev,
-      workbenches: prev.workbenches.map(wb => {
-        if (wb.id !== prev.activeWorkbenchId) return wb;
-        return {
-          ...wb,
-          items: wb.items.filter(item => item.productId !== productId),
-          updatedAt: new Date().toISOString(),
-        };
-      }),
-    }));
+  const removeItem = useCallback((instanceId: string) => {
+    updateStore(prev => updateActiveWorkbench(prev, wb => ({
+      ...wb,
+      items: wb.items.filter(item => item.instanceId !== instanceId),
+      updatedAt: new Date().toISOString(),
+    })));
   }, [updateStore]);
 
-  const isInWorkbench = useCallback(
-    (productId: number) => activeWorkbench.items.some(item => item.productId === productId),
+  const removeAllInstances = useCallback((productId: number) => {
+    updateStore(prev => updateActiveWorkbench(prev, wb => ({
+      ...wb,
+      items: wb.items.filter(item => item.productId !== productId),
+      updatedAt: new Date().toISOString(),
+    })));
+  }, [updateStore]);
+
+  const countInWorkbench = useCallback(
+    (productId: number) => activeWorkbench.items.filter(item => item.productId === productId).length,
     [activeWorkbench],
   );
 
@@ -257,10 +265,10 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
 
   // --- Canvas view positions ---
 
-  const updateViewPosition = useCallback((view: string, productId: number, x: number, y: number) => {
+  const updateViewPosition = useCallback((view: string, instanceId: string, x: number, y: number) => {
     updateStore(prev => updateActiveWorkbench(prev, wb => {
       const positions = { ...(wb.viewPositions || {}) };
-      positions[view] = { ...(positions[view] || {}), [String(productId)]: { x, y } };
+      positions[view] = { ...(positions[view] || {}), [instanceId]: { x, y } };
       return { ...wb, viewPositions: positions, updatedAt: new Date().toISOString() };
     }));
   }, [updateStore]);
@@ -325,7 +333,8 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
       setActiveWorkbench,
       addItem,
       removeItem,
-      isInWorkbench,
+      removeAllInstances,
+      countInWorkbench,
       clear,
       updateViewPosition,
       getViewPositions,
@@ -335,7 +344,7 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
       acknowledgeWarning,
       totalItemCount,
     }),
-    [store.workbenches, activeWorkbench, createWorkbench, renameWorkbench, deleteWorkbench, setActiveWorkbench, addItem, removeItem, isInWorkbench, clear, updateViewPosition, getViewPositions, addPowerConnection, removePowerConnection, setPowerConnections, acknowledgeWarning, totalItemCount],
+    [store.workbenches, activeWorkbench, createWorkbench, renameWorkbench, deleteWorkbench, setActiveWorkbench, addItem, removeItem, removeAllInstances, countInWorkbench, clear, updateViewPosition, getViewPositions, addPowerConnection, removePowerConnection, setPowerConnections, acknowledgeWarning, totalItemCount],
   );
 
   return (

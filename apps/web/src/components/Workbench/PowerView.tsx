@@ -34,10 +34,16 @@ function supplyCardHeight(outputCount: number): number {
   return CARD_HEIGHT + outputCount * PORT_HEIGHT_EXTRA;
 }
 
+/** Composite key for uniquely identifying a port on a specific instance */
+function portKey(instanceId: string, jackId: number): string {
+  return `${instanceId}:${jackId}`;
+}
+
 /** Local interaction state for connection creation */
 interface PendingConnection {
   jackId: number;
-  productId: number;
+  instanceId: string;
+  compositeKey: string;
   direction: 'output' | 'input';
 }
 
@@ -69,12 +75,12 @@ const PowerView = ({ rows }: PowerViewProps) => {
 
   // Build lookups
   const rowMap = useMemo(() => {
-    const map = new Map<number, WorkbenchRow>();
-    for (const row of rows) map.set(row.id, row);
+    const map = new Map<string, WorkbenchRow>();
+    for (const row of rows) map.set(row.instanceId, row);
     return map;
   }, [rows]);
 
-  // Jack lookup: jackId → Jack object
+  // Jack lookup: jackId → Jack object (jack data is the same regardless of instance)
   const jackMap = useMemo(() => {
     const map = new Map<number, Jack>();
     for (const row of rows) {
@@ -85,24 +91,13 @@ const PowerView = ({ rows }: PowerViewProps) => {
     return map;
   }, [rows]);
 
-  // Jack → product lookup
-  const jackToProduct = useMemo(() => {
-    const map = new Map<number, number>();
-    for (const row of rows) {
-      for (const jack of row.jacks) {
-        map.set(jack.id, row.id);
-      }
-    }
-    return map;
-  }, [rows]);
-
-  // Supply and consumer position data
+  // Supply and consumer position data — keyed by instanceId
   const supplyEntries = useMemo(() => {
     let y = VERTICAL_GAP;
     return powerData.supplies.map((supply) => {
-      const row = rowMap.get(supply.productId);
+      const row = rowMap.get(supply.instanceId);
       const outputJacks = row ? getPowerOutputJacks(row) : [];
-      const entry = { productId: supply.productId, x: SUPPLY_X, y, outputJacks };
+      const entry = { instanceId: supply.instanceId, productId: supply.productId, x: SUPPLY_X, y, outputJacks };
       y += supplyCardHeight(outputJacks.length) + VERTICAL_GAP;
       return entry;
     });
@@ -111,28 +106,28 @@ const PowerView = ({ rows }: PowerViewProps) => {
   const consumerEntries = useMemo(() => {
     let y = VERTICAL_GAP;
     return powerData.consumers.map((consumer) => {
-      const row = rowMap.get(consumer.productId);
+      const row = rowMap.get(consumer.instanceId);
       const inputJack = row ? getPowerInputJack(row) : undefined;
-      const entry = { productId: consumer.productId, x: CONSUMER_X, y, inputJack };
+      const entry = { instanceId: consumer.instanceId, productId: consumer.productId, x: CONSUMER_X, y, inputJack };
       y += CARD_HEIGHT + VERTICAL_GAP;
       return entry;
     });
   }, [powerData.consumers, rowMap]);
 
-  const getPosition = useCallback((productId: number, fallbackX: number, fallbackY: number) => {
-    const saved = savedPositions[String(productId)];
+  const getPosition = useCallback((instanceId: string, fallbackX: number, fallbackY: number) => {
+    const saved = savedPositions[instanceId];
     if (saved) return saved;
     return { x: fallbackX, y: fallbackY };
   }, [savedPositions]);
 
-  // Port absolute position lookup — maps jackId to canvas coordinates
+  // Port absolute position lookup — keyed by composite key (instanceId:jackId)
   const portPositions = useMemo(() => {
-    const map = new Map<number, { x: number; y: number }>();
+    const map = new Map<string, { x: number; y: number }>();
 
     for (const entry of supplyEntries) {
-      const pos = getPosition(entry.productId, entry.x, entry.y);
+      const pos = getPosition(entry.instanceId, entry.x, entry.y);
       entry.outputJacks.forEach((jack, i) => {
-        map.set(jack.id, {
+        map.set(portKey(entry.instanceId, jack.id), {
           x: pos.x + CARD_WIDTH - 2,
           y: pos.y + PORT_START_Y + i * PORT_SPACING,
         });
@@ -141,8 +136,8 @@ const PowerView = ({ rows }: PowerViewProps) => {
 
     for (const entry of consumerEntries) {
       if (!entry.inputJack) continue;
-      const pos = getPosition(entry.productId, entry.x, entry.y);
-      map.set(entry.inputJack.id, {
+      const pos = getPosition(entry.instanceId, entry.x, entry.y);
+      map.set(portKey(entry.instanceId, entry.inputJack.id), {
         x: pos.x + 2,
         y: pos.y + CARD_HEIGHT / 2,
       });
@@ -151,13 +146,15 @@ const PowerView = ({ rows }: PowerViewProps) => {
     return map;
   }, [supplyEntries, consumerEntries, getPosition]);
 
-  // Compute total current on each output jack (for daisy-chain validation)
+  // Compute total current on each output port (for daisy-chain validation)
+  // Keyed by composite key (instanceId:jackId)
   const currentByOutput = useMemo(() => {
-    const map = new Map<number, number>();
+    const map = new Map<string, number>();
     for (const conn of connections) {
       const inputJack = jackMap.get(conn.targetJackId);
       const currentMa = inputJack?.current_ma ?? 0;
-      map.set(conn.sourceJackId, (map.get(conn.sourceJackId) ?? 0) + currentMa);
+      const key = portKey(conn.sourceInstanceId, conn.sourceJackId);
+      map.set(key, (map.get(key) ?? 0) + currentMa);
     }
     return map;
   }, [connections, jackMap]);
@@ -169,10 +166,11 @@ const PowerView = ({ rows }: PowerViewProps) => {
       const outputJack = jackMap.get(conn.sourceJackId);
       const inputJack = jackMap.get(conn.targetJackId);
       if (outputJack && inputJack) {
+        const key = portKey(conn.sourceInstanceId, conn.sourceJackId);
         map.set(conn.id, validateConnection(
           outputJack,
           inputJack,
-          currentByOutput.get(conn.sourceJackId),
+          currentByOutput.get(key),
         ));
       } else {
         map.set(conn.id, { status: 'valid', warnings: [] });
@@ -181,28 +179,27 @@ const PowerView = ({ rows }: PowerViewProps) => {
     return map;
   }, [connections, jackMap, currentByOutput]);
 
-  const handleDragEnd = (productId: number, x: number, y: number) => {
-    updateViewPosition(VIEW_KEY, productId, x, y);
+  const handleDragEnd = (instanceId: string, x: number, y: number) => {
+    updateViewPosition(VIEW_KEY, instanceId, x, y);
   };
 
   // --- Connection interaction ---
 
-  const handlePortClick = useCallback((jackId: number) => {
-    const productId = jackToProduct.get(jackId);
-    if (productId == null) return;
-
+  /** Creates a port click handler scoped to a specific instance */
+  const makePortClickHandler = useCallback((instanceId: string) => (jackId: number) => {
     const jack = jackMap.get(jackId);
     if (!jack) return;
 
     const direction = jack.direction === 'output' ? 'output' as const : 'input' as const;
+    const key = portKey(instanceId, jackId);
 
     if (!pendingSource) {
       // First click — start pending connection
-      setPendingSource({ jackId, productId, direction });
+      setPendingSource({ jackId, instanceId, compositeKey: key, direction });
       setMousePos(null);
       setSelectedConnectionId(null);
       setWarningPopover(null);
-    } else if (pendingSource.jackId === jackId) {
+    } else if (pendingSource.compositeKey === key) {
       // Clicked same port — cancel
       setPendingSource(null);
       setMousePos(null);
@@ -217,19 +214,19 @@ const PowerView = ({ rows }: PowerViewProps) => {
 
       const sourceJackId = direction === 'input' ? pendingSource.jackId : jackId;
       const targetJackId = direction === 'input' ? jackId : pendingSource.jackId;
-      const sourceProductId = direction === 'input' ? pendingSource.productId : productId;
-      const targetProductId = direction === 'input' ? productId : pendingSource.productId;
+      const sourceInstanceId = direction === 'input' ? pendingSource.instanceId : instanceId;
+      const targetInstanceId = direction === 'input' ? instanceId : pendingSource.instanceId;
 
       addPowerConnection({
         sourceJackId,
         targetJackId,
-        sourceProductId,
-        targetProductId,
+        sourceInstanceId,
+        targetInstanceId,
       });
       setPendingSource(null);
       setMousePos(null);
     }
-  }, [pendingSource, jackMap, jackToProduct, addPowerConnection]);
+  }, [pendingSource, jackMap, addPowerConnection]);
 
   // Track mouse position for preview line (only while a connection is pending)
   const handleStageMouseMove = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -256,8 +253,8 @@ const PowerView = ({ rows }: PowerViewProps) => {
 
     if (validation && validation.warnings.length > 0 && conn) {
       // Show warning popover
-      const sourcePos = portPositions.get(conn.sourceJackId);
-      const targetPos = portPositions.get(conn.targetJackId);
+      const sourcePos = portPositions.get(portKey(conn.sourceInstanceId, conn.sourceJackId));
+      const targetPos = portPositions.get(portKey(conn.targetInstanceId, conn.targetJackId));
       if (sourcePos && targetPos) {
         setWarningPopover({
           connId,
@@ -300,15 +297,15 @@ const PowerView = ({ rows }: PowerViewProps) => {
     const result = assignPedalsToOutputs(powerData.consumers, powerData.supplies);
     const newConnections: PowerConnection[] = result.assignments.map((a) => {
       // Find the consumer's power input jack
-      const consumerRow = rowMap.get(a.consumer.productId);
+      const consumerRow = rowMap.get(a.consumer.instanceId);
       const inputJack = consumerRow ? getPowerInputJack(consumerRow) : undefined;
 
       return {
         id: crypto.randomUUID(),
         sourceJackId: a.jack.id,
         targetJackId: inputJack?.id ?? 0,
-        sourceProductId: a.jack.supplyProductId,
-        targetProductId: a.consumer.productId,
+        sourceInstanceId: a.jack.supplyInstanceId,
+        targetInstanceId: a.consumer.instanceId,
       };
     }).filter(c => c.targetJackId !== 0);
 
@@ -334,7 +331,7 @@ const PowerView = ({ rows }: PowerViewProps) => {
   }
 
   // Pending source port position for preview line
-  const pendingSourcePos = pendingSource ? portPositions.get(pendingSource.jackId) : null;
+  const pendingSourcePos = pendingSource ? portPositions.get(pendingSource.compositeKey) : null;
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -344,8 +341,8 @@ const PowerView = ({ rows }: PowerViewProps) => {
       >
         {/* Connection lines */}
         {connections.map((conn) => {
-          const sourcePos = portPositions.get(conn.sourceJackId);
-          const targetPos = portPositions.get(conn.targetJackId);
+          const sourcePos = portPositions.get(portKey(conn.sourceInstanceId, conn.sourceJackId));
+          const targetPos = portPositions.get(portKey(conn.targetInstanceId, conn.targetJackId));
           if (!sourcePos || !targetPos) return null;
 
           const validation = connectionValidations.get(conn.id) ?? { status: 'valid' as const, warnings: [] };
@@ -380,18 +377,19 @@ const PowerView = ({ rows }: PowerViewProps) => {
 
         {/* Supply cards with output port dots */}
         {supplyEntries.map((entry) => {
-          const supply = powerData.supplies.find(s => s.productId === entry.productId)!;
-          const pos = getPosition(entry.productId, entry.x, entry.y);
+          const supply = powerData.supplies.find(s => s.instanceId === entry.instanceId)!;
+          const pos = getPosition(entry.instanceId, entry.x, entry.y);
+          const onPortClick = makePortClickHandler(entry.instanceId);
 
           return (
             <ProductCard
-              key={entry.productId}
+              key={entry.instanceId}
               productType="power_supply"
               manufacturer={supply.manufacturer}
               model={supply.model}
               x={pos.x}
               y={pos.y}
-              onDragEnd={(x, y) => handleDragEnd(entry.productId, x, y)}
+              onDragEnd={(x, y) => handleDragEnd(entry.instanceId, x, y)}
               cardHeight={supplyCardHeight(entry.outputJacks.length)}
             >
               {entry.outputJacks.map((jack, i) => {
@@ -399,18 +397,19 @@ const PowerView = ({ rows }: PowerViewProps) => {
                   jack.voltage ?? '?V',
                   jack.current_ma != null ? `${jack.current_ma}mA` : '',
                 ].filter(Boolean).join(' ');
+                const key = portKey(entry.instanceId, jack.id);
 
                 return (
                   <PortDot
-                    key={jack.id}
+                    key={key}
                     x={CARD_WIDTH - 2}
                     y={PORT_START_Y + i * PORT_SPACING}
                     jackId={jack.id}
                     label={label}
                     direction="output"
                     isolated={jack.is_isolated !== false}
-                    color={pendingSource?.jackId === jack.id ? '#fff' : '#6aaa6a'}
-                    onClick={handlePortClick}
+                    color={pendingSource?.compositeKey === key ? '#fff' : '#6aaa6a'}
+                    onClick={onPortClick}
                   />
                 );
               })}
@@ -420,33 +419,37 @@ const PowerView = ({ rows }: PowerViewProps) => {
 
         {/* Consumer cards with power input port dot */}
         {consumerEntries.map((entry) => {
-          const consumer = powerData.consumers.find(c => c.productId === entry.productId)!;
-          const pos = getPosition(entry.productId, entry.x, entry.y);
+          const consumer = powerData.consumers.find(c => c.instanceId === entry.instanceId)!;
+          const pos = getPosition(entry.instanceId, entry.x, entry.y);
+          const onPortClick = makePortClickHandler(entry.instanceId);
 
           return (
             <ProductCard
-              key={entry.productId}
-              productType={rowMap.get(entry.productId)?.product_type ?? 'pedal'}
+              key={entry.instanceId}
+              productType={rowMap.get(entry.instanceId)?.product_type ?? 'pedal'}
               manufacturer={consumer.manufacturer}
               model={consumer.model}
               x={pos.x}
               y={pos.y}
-              onDragEnd={(x, y) => handleDragEnd(entry.productId, x, y)}
+              onDragEnd={(x, y) => handleDragEnd(entry.instanceId, x, y)}
             >
-              {entry.inputJack && (
-                <PortDot
-                  x={2}
-                  y={CARD_HEIGHT / 2}
-                  jackId={entry.inputJack.id}
-                  label={[
-                    consumer.voltage ?? '?V',
-                    consumer.current_ma != null ? `${consumer.current_ma}mA` : '',
-                  ].filter(Boolean).join(' ')}
-                  direction="input"
-                  color={pendingSource?.jackId === entry.inputJack.id ? '#fff' : '#6a6aaa'}
-                  onClick={handlePortClick}
-                />
-              )}
+              {entry.inputJack && (() => {
+                const key = portKey(entry.instanceId, entry.inputJack!.id);
+                return (
+                  <PortDot
+                    x={2}
+                    y={CARD_HEIGHT / 2}
+                    jackId={entry.inputJack!.id}
+                    label={[
+                      consumer.voltage ?? '?V',
+                      consumer.current_ma != null ? `${consumer.current_ma}mA` : '',
+                    ].filter(Boolean).join(' ')}
+                    direction="input"
+                    color={pendingSource?.compositeKey === key ? '#fff' : '#6a6aaa'}
+                    onClick={onPortClick}
+                  />
+                );
+              })()}
             </ProductCard>
           );
         })}
@@ -484,8 +487,8 @@ const PowerView = ({ rows }: PowerViewProps) => {
       {selectedConnectionId && (() => {
         const conn = connections.find(c => c.id === selectedConnectionId);
         if (!conn) return null;
-        const srcPos = portPositions.get(conn.sourceJackId);
-        const tgtPos = portPositions.get(conn.targetJackId);
+        const srcPos = portPositions.get(portKey(conn.sourceInstanceId, conn.sourceJackId));
+        const tgtPos = portPositions.get(portKey(conn.targetInstanceId, conn.targetJackId));
         if (!srcPos || !tgtPos) return null;
         return (
           <button

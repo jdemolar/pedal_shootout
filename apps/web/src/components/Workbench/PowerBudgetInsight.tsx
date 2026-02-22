@@ -98,7 +98,7 @@ const PowerBudgetInsight = ({ rows }: PowerBudgetInsightProps) => {
       const mismatched = consumers.filter(c => c.polarity != null && normalizePolarity(c.polarity) !== majorityPolarity);
       for (const c of mismatched) {
         warnings.push(
-          <div key={`polarity-${c.manufacturer}-${c.model}`} className="power-budget__warning power-budget__warning--warn">
+          <div key={`polarity-${c.instanceId}`} className="power-budget__warning power-budget__warning--warn">
             <strong>Polarity:</strong> {c.manufacturer} {c.model} requires {c.polarity} — you may need a polarity-reversal adapter cable.
           </div>
         );
@@ -111,7 +111,7 @@ const PowerBudgetInsight = ({ rows }: PowerBudgetInsightProps) => {
       const mismatched = consumers.filter(c => c.connector_type != null && normalizeConnector(c.connector_type) !== majorityConnector);
       for (const c of mismatched) {
         warnings.push(
-          <div key={`connector-${c.manufacturer}-${c.model}`} className="power-budget__warning power-budget__warning--warn">
+          <div key={`connector-${c.instanceId}`} className="power-budget__warning power-budget__warning--warn">
             <strong>Connector:</strong> {c.manufacturer} {c.model} uses a {c.connector_type} connector — you may need an adapter cable.
           </div>
         );

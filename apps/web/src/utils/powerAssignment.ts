@@ -29,6 +29,7 @@ export type {
 /** Rows must have this shape — matches WorkbenchRow from WorkbenchTable */
 interface PowerRow {
   id: number;
+  instanceId: string;
   product_type: string;
   manufacturer: string;
   model: string;
@@ -142,6 +143,7 @@ export function assignPedalsToOutputs(
         ...jack,
         supplyName: `${supply.manufacturer} ${supply.model}`,
         supplyProductId: supply.productId,
+        supplyInstanceId: supply.instanceId,
         portIndex: idx + 1,
       });
     });
@@ -242,6 +244,7 @@ export function extractPowerData(rows: PowerRow[]): PowerBudgetData {
     if (row.product_type === 'power_supply') {
       supplies.push({
         productId: row.id,
+        instanceId: row.instanceId,
         manufacturer: row.manufacturer,
         model: row.model,
         total_current_ma: (row.detail.total_current_ma as number) ?? null,
@@ -257,6 +260,7 @@ export function extractPowerData(rows: PowerRow[]): PowerBudgetData {
       if (powerJack || row.jacks.some(j => j.category === 'power' && j.direction === 'input')) {
         consumers.push({
           productId: row.id,
+          instanceId: row.instanceId,
           manufacturer: row.manufacturer,
           model: row.model,
           current_ma: powerJack?.current_ma ?? null,
