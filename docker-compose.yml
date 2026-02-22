@@ -1,0 +1,70 @@
+services:
+  # ---------- PostgreSQL 17 ----------
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: pedal_shootout
+      POSTGRES_USER: pedal_shootout_app
+      POSTGRES_PASSWORD: localdev
+    volumes:
+      # Init scripts run alphabetically on first start only (empty volume)
+      - ./data/schema/gear_postgres.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./data/seeds/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"   # Host 5433 avoids conflict with local Postgres on 5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pedal_shootout_app -d pedal_shootout"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+
+  # ---------- Spring Boot API ----------
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: pedal_shootout
+      DB_USER: pedal_shootout_app
+      DB_PASSWORD: localdev
+      # Schema is fully loaded by Docker init scripts, so Flyway should skip all migrations.
+      # Set baseline to latest migration version so nothing runs on a fresh Docker DB.
+      SPRING_FLYWAY_BASELINE_VERSION: 3
+    volumes:
+      # Mount source for live editing (restart container to pick up changes)
+      - ./apps/api/src:/app/src
+      # Cache Maven dependencies across rebuilds
+      - maven_cache:/root/.m2
+    ports:
+      - "8081:8081"
+
+  # ---------- React frontend (webpack-dev-server) ----------
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      CHOKIDAR_USEPOLLING: "true"   # Required for file watching on macOS Docker
+      BROWSER: none                  # Don't try to open a browser inside container
+    volumes:
+      # Mount entire monorepo (webpack resolves modules from root + app node_modules)
+      - .:/workspace
+      # Shadow host node_modules with Linux-native versions (built inside container)
+      - web_node_modules_root:/workspace/node_modules
+      - web_node_modules_app:/workspace/apps/web/node_modules
+    working_dir: /workspace/apps/web
+    ports:
+      - "8080:8080"
+
+volumes:
+  db_data:
+  maven_cache:
+  web_node_modules_root:
+  web_node_modules_app:
