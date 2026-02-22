@@ -78,6 +78,7 @@
 	- [ ] Make objects rotateable
 	- [ ] Make objects fit product dimensions
 	- [x] Add a delete button to selected connection lines
+    - [ ] Fix issue in power mapping layout where pedals are rendered outside of viewable area. Make pedals appear in viewport AND make canvas pannable.
 - [x] Move to Docker for better development processes
 	- [ ] Update node and all packages to newer versions if Docker circumvents macOS limitations
 
