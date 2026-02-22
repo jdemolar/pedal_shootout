@@ -28,14 +28,14 @@ const LayoutView = ({ rows }: LayoutViewProps) => {
   const { getViewPositions, updateViewPosition } = useWorkbench();
   const savedPositions = getViewPositions(VIEW_KEY);
 
-  const getPosition = (productId: number, index: number) => {
-    const saved = savedPositions[String(productId)];
+  const getPosition = (instanceId: string, index: number) => {
+    const saved = savedPositions[instanceId];
     if (saved) return saved;
     return defaultPosition(index);
   };
 
-  const handleDragEnd = (productId: number, x: number, y: number) => {
-    updateViewPosition(VIEW_KEY, productId, x, y);
+  const handleDragEnd = (instanceId: string, x: number, y: number) => {
+    updateViewPosition(VIEW_KEY, instanceId, x, y);
   };
 
   if (rows.length === 0) {
@@ -49,16 +49,16 @@ const LayoutView = ({ rows }: LayoutViewProps) => {
   return (
     <CanvasBase>
       {rows.map((row, index) => {
-        const pos = getPosition(row.id, index);
+        const pos = getPosition(row.instanceId, index);
         return (
           <ProductCard
-            key={row.id}
+            key={row.instanceId}
             productType={row.product_type}
             manufacturer={row.manufacturer}
             model={row.model}
             x={pos.x}
             y={pos.y}
-            onDragEnd={(x, y) => handleDragEnd(row.id, x, y)}
+            onDragEnd={(x, y) => handleDragEnd(row.instanceId, x, y)}
           />
         );
       })}

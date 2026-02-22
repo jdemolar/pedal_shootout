@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { WorkbenchItem, ProductType, useWorkbench } from '../../context/WorkbenchContext';
 import { api } from '../../services/api';
 import { formatMsrp, formatDimensions } from '../../utils/formatters';
@@ -13,6 +13,7 @@ import {
 
 export interface WorkbenchRow {
   id: number;
+  instanceId: string;
   product_type: ProductType;
   manufacturer: string;
   model: string;
@@ -25,6 +26,9 @@ export interface WorkbenchRow {
   jacks: Jack[];
   // Full transformed data for the detail panel
   detail: Record<string, unknown>;
+  // Quantity and instance tracking (populated by useWorkbenchProducts)
+  quantity: number;
+  instanceIds: string[];
 }
 
 const TYPE_LABELS: Record<ProductType, string> = {
@@ -35,31 +39,46 @@ const TYPE_LABELS: Record<ProductType, string> = {
   utility: 'Utility',
 };
 
-async function fetchProduct(item: WorkbenchItem): Promise<WorkbenchRow | null> {
+interface FetchedProduct {
+  id: number;
+  product_type: ProductType;
+  manufacturer: string;
+  model: string;
+  width_mm: number | null;
+  depth_mm: number | null;
+  height_mm: number | null;
+  weight_grams: number | null;
+  msrp_cents: number | null;
+  in_production: boolean;
+  jacks: Jack[];
+  detail: Record<string, unknown>;
+}
+
+async function fetchProductData(productId: number, productType: ProductType): Promise<FetchedProduct | null> {
   try {
-    switch (item.productType) {
+    switch (productType) {
       case 'pedal': {
-        const raw = await api.getPedal(item.productId);
+        const raw = await api.getPedal(productId);
         const t = transformPedal(raw);
         return { id: t.id, product_type: 'pedal', manufacturer: t.manufacturer, model: t.model, width_mm: t.width_mm, depth_mm: t.depth_mm, height_mm: t.height_mm, weight_grams: t.weight_grams, msrp_cents: t.msrp_cents, in_production: t.in_production, jacks: t.jacks, detail: t as unknown as Record<string, unknown> };
       }
       case 'power_supply': {
-        const raw = await api.getPowerSupply(item.productId);
+        const raw = await api.getPowerSupply(productId);
         const t = transformPowerSupply(raw);
         return { id: t.id, product_type: 'power_supply', manufacturer: t.manufacturer, model: t.model, width_mm: t.width_mm, depth_mm: t.depth_mm, height_mm: t.height_mm, weight_grams: t.weight_grams, msrp_cents: t.msrp_cents, in_production: t.in_production, jacks: t.jacks, detail: t as unknown as Record<string, unknown> };
       }
       case 'midi_controller': {
-        const raw = await api.getMidiController(item.productId);
+        const raw = await api.getMidiController(productId);
         const t = transformMidiController(raw);
         return { id: t.id, product_type: 'midi_controller', manufacturer: t.manufacturer, model: t.model, width_mm: t.width_mm, depth_mm: t.depth_mm, height_mm: t.height_mm, weight_grams: t.weight_grams, msrp_cents: t.msrp_cents, in_production: t.in_production, jacks: t.jacks, detail: t as unknown as Record<string, unknown> };
       }
       case 'pedalboard': {
-        const raw = await api.getPedalboard(item.productId);
+        const raw = await api.getPedalboard(productId);
         const t = transformPedalboard(raw);
         return { id: t.id, product_type: 'pedalboard', manufacturer: t.manufacturer, model: t.model, width_mm: t.width_mm, depth_mm: t.depth_mm, height_mm: t.height_mm, weight_grams: t.weight_grams, msrp_cents: t.msrp_cents, in_production: t.in_production, jacks: t.jacks, detail: t as unknown as Record<string, unknown> };
       }
       case 'utility': {
-        const raw = await api.getUtility(item.productId);
+        const raw = await api.getUtility(productId);
         const t = transformUtility(raw);
         return { id: t.id, product_type: 'utility', manufacturer: t.manufacturer, model: t.model, width_mm: t.width_mm, depth_mm: t.depth_mm, height_mm: t.height_mm, weight_grams: t.weight_grams, msrp_cents: t.msrp_cents, in_production: t.in_production, jacks: t.jacks, detail: t as unknown as Record<string, unknown> };
       }
@@ -77,7 +96,7 @@ interface WorkbenchTableProps {
 }
 
 const WorkbenchTableView = ({ onRowClick, rows, loading, error }: WorkbenchTableProps) => {
-  const { removeItem } = useWorkbench();
+  const { removeAllInstances } = useWorkbench();
 
   if (loading) {
     return <div className="workbench__loading">Loading workbench products...</div>;
@@ -98,6 +117,7 @@ const WorkbenchTableView = ({ onRowClick, rows, loading, error }: WorkbenchTable
           <tr>
             <th className="workbench__th" style={{ width: 160 }}>Manufacturer</th>
             <th className="workbench__th" style={{ width: 200 }}>Model</th>
+            <th className="workbench__th" style={{ width: 50, textAlign: 'center' }}>Qty</th>
             <th className="workbench__th" style={{ width: 120, textAlign: 'center' }}>Type</th>
             <th className="workbench__th" style={{ width: 160, textAlign: 'center' }}>Dimensions</th>
             <th className="workbench__th" style={{ width: 90, textAlign: 'right' }}>MSRP</th>
@@ -120,6 +140,11 @@ const WorkbenchTableView = ({ onRowClick, rows, loading, error }: WorkbenchTable
               </td>
               <td className="workbench__td">
                 <span style={{ color: '#d0d0d0' }}>{row.model}</span>
+              </td>
+              <td className="workbench__td" style={{ textAlign: 'center' }}>
+                <span style={{ color: row.quantity > 1 ? '#6abf7b' : '#888', fontFamily: 'monospace', fontSize: '12px' }}>
+                  {row.quantity > 1 ? `\u00d7 ${row.quantity}` : '\u00d7 1'}
+                </span>
               </td>
               <td className="workbench__td" style={{ textAlign: 'center' }}>
                 <span className={`type-badge type-badge--${row.product_type}`}>
@@ -152,9 +177,9 @@ const WorkbenchTableView = ({ onRowClick, rows, loading, error }: WorkbenchTable
               <td className="workbench__td" style={{ textAlign: 'center' }}>
                 <button
                   className="workbench__remove-btn"
-                  onClick={e => { e.stopPropagation(); removeItem(row.id); }}
-                  title="Remove from workbench"
-                  aria-label="Remove from workbench"
+                  onClick={e => { e.stopPropagation(); removeAllInstances(row.id); }}
+                  title="Remove all from workbench"
+                  aria-label="Remove all from workbench"
                 >
                   {'\u00d7'}
                 </button>
@@ -185,12 +210,52 @@ export function useWorkbenchProducts() {
     setError(null);
 
     try {
-      const results = await Promise.all(items.map(fetchProduct));
-      const successful = results.filter((r): r is WorkbenchRow => r !== null);
-      setRows(successful);
-      if (successful.length < items.length) {
-        const failed = items.length - successful.length;
-        setError(`${failed} product${failed === 1 ? '' : 's'} could not be loaded (may have been removed from the database).`);
+      // Deduplicate by productId — fetch each unique product once
+      const uniqueItems = new Map<number, WorkbenchItem>();
+      for (const item of items) {
+        if (!uniqueItems.has(item.productId)) {
+          uniqueItems.set(item.productId, item);
+        }
+      }
+
+      const fetchPromises = Array.from(uniqueItems.values()).map(
+        item => fetchProductData(item.productId, item.productType)
+      );
+      const fetched = await Promise.all(fetchPromises);
+
+      // Build a lookup of productId → fetched data
+      const productDataMap = new Map<number, FetchedProduct>();
+      for (const result of fetched) {
+        if (result) productDataMap.set(result.id, result);
+      }
+
+      // Compute quantity and instanceIds per productId
+      const instancesByProduct = new Map<number, string[]>();
+      for (const item of items) {
+        const list = instancesByProduct.get(item.productId) || [];
+        list.push(item.instanceId);
+        instancesByProduct.set(item.productId, list);
+      }
+
+      // Build per-instance rows
+      const allRows: WorkbenchRow[] = [];
+      for (const item of items) {
+        const data = productDataMap.get(item.productId);
+        if (!data) continue;
+        const instanceIds = instancesByProduct.get(item.productId) || [];
+        allRows.push({
+          ...data,
+          instanceId: item.instanceId,
+          quantity: instanceIds.length,
+          instanceIds,
+        });
+      }
+
+      setRows(allRows);
+
+      const failedCount = items.length - allRows.length;
+      if (failedCount > 0) {
+        setError(`${failedCount} product${failedCount === 1 ? '' : 's'} could not be loaded (may have been removed from the database).`);
       }
     } catch {
       setError('Failed to load workbench products.');
@@ -203,7 +268,18 @@ export function useWorkbenchProducts() {
     fetchAll(activeWorkbench.items);
   }, [activeWorkbench.items, fetchAll]);
 
-  return { rows, loading, error };
+  // Grouped rows: one per unique productId, for the list view
+  const groupedRows = useMemo(() => {
+    const seen = new Map<number, WorkbenchRow>();
+    for (const row of rows) {
+      if (!seen.has(row.id)) {
+        seen.set(row.id, row);
+      }
+    }
+    return Array.from(seen.values());
+  }, [rows]);
+
+  return { rows, groupedRows, loading, error };
 }
 
 export default WorkbenchTableView;

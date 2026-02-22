@@ -18,7 +18,7 @@ const Workbench = () => {
     setActiveWorkbench,
   } = useWorkbench();
 
-  const { rows, loading, error } = useWorkbenchProducts();
+  const { rows, groupedRows, loading, error } = useWorkbenchProducts();
 
   const [activeView, setActiveView] = useState<ViewMode>('list');
   const [isRenaming, setIsRenaming] = useState(false);
@@ -80,7 +80,7 @@ const Workbench = () => {
           <>
             <div className="workbench__content">
               <WorkbenchTableView
-                rows={rows}
+                rows={groupedRows}
                 loading={loading}
                 error={error}
                 onRowClick={handleRowClick}

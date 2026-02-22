@@ -7,6 +7,7 @@ import { Jack } from '../utils/transformers';
 
 export interface PowerConsumer {
   productId: number;
+  instanceId: string;
   manufacturer: string;
   model: string;
   current_ma: number | null;
@@ -17,6 +18,7 @@ export interface PowerConsumer {
 
 export interface PowerSupplyInfo {
   productId: number;
+  instanceId: string;
   manufacturer: string;
   model: string;
   total_current_ma: number | null;
@@ -31,6 +33,7 @@ export interface PowerSupplyInfo {
 export interface TaggedOutputJack extends Jack {
   supplyName: string;
   supplyProductId: number;
+  supplyInstanceId: string;
   portIndex: number;
 }
 
