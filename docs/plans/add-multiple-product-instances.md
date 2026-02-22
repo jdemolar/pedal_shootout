@@ -121,6 +121,90 @@ Existing workbench data in localStorage won't have `instanceId` on items. Add a 
 | `apps/web/src/components/Workbench/PowerView.tsx` | Key by `instanceId`, composite port keys |
 | `apps/web/src/components/Workbench/index.tsx` | Route `groupedRows` to list view, `rows` to canvas views |
 
+## Implementation Steps
+
+Steps are ordered by dependency — each step should compile (or at least not break more than it fixes) before moving to the next.
+
+### Step 1: Context foundation (sections 1–4, 12)
+**File:** `context/WorkbenchContext.tsx`
+
+1. Add `instanceId: string` to the `WorkbenchItem` interface
+2. Add localStorage migration in `loadStore()`: iterate all workbenches' items, assign `generateId()` to any item missing `instanceId`
+3. Update `addItem`: remove the duplicate check, add `instanceId: generateId()` to the new item
+4. Change `removeItem` signature from `(productId: number)` to `(instanceId: string)`, filter by `instanceId` instead of `productId`
+5. Add `removeAllInstances(productId: number)` — filters out all items where `item.productId === productId`
+6. Replace `isInWorkbench(productId)` with `countInWorkbench(productId)` — returns `items.filter(i => i.productId === productId).length`
+7. Update `updateViewPosition` param name from `productId` to `instanceId` (the stored key is already a string, so the storage format doesn't change — just what we pass in)
+8. Rename `PowerConnection.sourceProductId` / `targetProductId` to `sourceInstanceId` / `targetInstanceId`
+9. Update the `WorkbenchContextType` interface and the `value` memo to expose the new/renamed functions
+10. Compile check: `npm run web:build` will fail here because consumers still reference the old API — that's expected, confirms the interface changed
+
+### Step 2: WorkbenchToggle (+/- with count)  (section 6)
+**Files:** `components/WorkbenchToggle/index.tsx`, `components/WorkbenchToggle/index.scss`
+
+1. Update imports: replace `isInWorkbench` with `countInWorkbench` and `activeWorkbench` from the context
+2. Get count via `countInWorkbench(productId)`
+3. Replace the single `<button>` with a button group:
+   - "+" button: always visible, calls `addItem(productId, productType)`, `e.stopPropagation()`
+   - Count indicator: only rendered when `count > 0`, displays the number
+   - "−" button: only rendered when `count > 0`, finds the last-added instance of this product from `activeWorkbench.items` (filter by `productId`, sort by `addedAt` descending, take first), calls `removeItem(instance.instanceId)`, `e.stopPropagation()`
+4. Update SCSS: style the button group as an inline horizontal strip (flex row, no gap, shared border-radius on outer edges)
+
+### Step 3: WorkbenchRow + useWorkbenchProducts hook (sections 5, 10)
+**File:** `components/Workbench/WorkbenchTable.tsx`
+
+1. Add `instanceId: string`, `quantity: number`, `instanceIds: string[]` to the `WorkbenchRow` interface
+2. Update `fetchProduct` to accept the full `WorkbenchItem` (not just the item) and set `instanceId` on the returned row
+3. Rewrite `useWorkbenchProducts`:
+   - Deduplicate items by `productId` → fetch each unique product once
+   - Map results back to per-instance rows: for each `WorkbenchItem`, clone the fetched product data and assign that item's `instanceId`
+   - Compute `quantity` and `instanceIds` per `productId` (shared across all instances of the same product)
+   - Build `groupedRows`: one entry per unique `productId`, using the first instance's data with aggregate `quantity` and `instanceIds`
+   - Return `{ rows, groupedRows, loading, error }`
+4. Update the list view table:
+   - Add a Qty column between Type and Dimensions (or after Model)
+   - Display `row.quantity > 1 ? `× ${row.quantity}` : ''` (or always show the number)
+   - Change React `key` from `row.id` to `row.id` (still productId, since these are grouped)
+   - Change remove button to call `removeAllInstances(row.id)`
+
+### Step 4: Workbench index — wire up data routing (section 11)
+**File:** `components/Workbench/index.tsx`
+
+1. Destructure `{ rows, groupedRows, loading, error }` from `useWorkbenchProducts()`
+2. Pass `groupedRows` to `WorkbenchTableView`
+3. Pass `rows` (per-instance) to `InsightsSidebar`
+4. Pass `rows` to `LayoutView` and `PowerView`
+5. Update `handleRowClick`: the `selectedRow` toggle comparison should use `productId` (since grouped rows are keyed by product)
+
+### Step 5: LayoutView (section 7)
+**File:** `components/Workbench/LayoutView.tsx`
+
+1. Change `getPosition` to use `row.instanceId` instead of `row.id` for the saved position lookup
+2. Change `handleDragEnd` to call `updateViewPosition(VIEW_KEY, row.instanceId, x, y)`
+3. Change the React `key` on `ProductCard` from `row.id` to `row.instanceId`
+
+### Step 6: PowerView (section 8)
+**File:** `components/Workbench/PowerView.tsx`
+
+This is the most complex step due to shared jack IDs across instances.
+
+1. Add `instanceId` to the row map: key `rowMap` by `instanceId` instead of `row.id`
+2. Create virtual jack IDs: for each instance's jacks, produce a composite key `${instanceId}:${jackId}`. Use this composite key in:
+   - `jackMap` (composite key → Jack object)
+   - `jackToInstance` (composite key → instanceId)
+   - `portPositions` (composite key → `{ x, y }`)
+3. Update supply/consumer entry computation to use `instanceId` and composite jack keys
+4. Update `handlePortClick` to work with composite keys — parse `instanceId` and `jackId` from the composite
+5. Update `addPowerConnection` calls to use `sourceInstanceId` / `targetInstanceId`
+6. Update connection rendering to look up port positions by composite key
+7. Update auto-assign to produce connections with `sourceInstanceId` / `targetInstanceId`
+8. Change React `key` on all `ProductCard` components from `entry.productId` to `entry.instanceId`
+
+### Step 7: Build, test, verify
+1. `npm run web:build` — fix any remaining TypeScript errors
+2. `npm run web:test` — update snapshot if needed
+3. Manual browser testing per the verification checklist below
+
 ## Verification
 
 1. `npm run web:build` — confirm no TypeScript errors
