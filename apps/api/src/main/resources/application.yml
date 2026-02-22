@@ -3,9 +3,9 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/pedal_shootout
-    username: pedal_shootout_app
-    password: localdev
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:pedal_shootout}
+    username: ${DB_USER:pedal_shootout_app}
+    password: ${DB_PASSWORD:localdev}
 
   jpa:
     hibernate:

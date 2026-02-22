@@ -1,0 +1,9 @@
+# Root .dockerignore — used by apps/web/Dockerfile (context is monorepo root)
+node_modules/
+apps/web/node_modules/
+apps/web/build/
+apps/api/target/
+.git/
+.claude/
+.DS_Store
+data/local/
