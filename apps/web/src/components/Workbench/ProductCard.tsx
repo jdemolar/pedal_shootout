@@ -29,6 +29,8 @@ interface ProductCardProps {
   cardWidth?: number;
   /** Override card height (e.g., taller for supply cards with many ports) */
   cardHeight?: number;
+  /** Rotation in degrees (0, 90, 180, 270). Rotates around card center. */
+  rotation?: number;
 }
 
 /**
@@ -47,6 +49,7 @@ const ProductCard = ({
   children,
   cardWidth,
   cardHeight,
+  rotation = 0,
 }: ProductCardProps) => {
   const colors = TYPE_COLORS[productType] || TYPE_COLORS.pedal;
   const width = cardWidth ?? CARD_WIDTH;
@@ -63,57 +66,66 @@ const ProductCard = ({
       onClick={onClick}
       onTap={onClick}
     >
-      {/* Card background */}
-      <Rect
-        width={width}
-        height={height}
-        fill={colors.fill}
-        stroke={selected ? '#e0e0e0' : colors.stroke}
-        strokeWidth={selected ? 2 : 1}
-        cornerRadius={4}
-        shadowColor={selected ? '#e0e0e0' : undefined}
-        shadowBlur={selected ? 6 : 0}
-        shadowOpacity={selected ? 0.3 : 0}
-      />
-      {/* Manufacturer */}
-      <Text
-        x={8}
-        y={8}
-        width={width - 16}
-        text={manufacturer}
-        fontSize={11}
-        fontFamily="'Helvetica Neue', sans-serif"
-        fontStyle="bold"
-        fill="#f0f0f0"
-        ellipsis
-        wrap="none"
-      />
-      {/* Model */}
-      <Text
-        x={8}
-        y={24}
-        width={width - 16}
-        text={model}
-        fontSize={11}
-        fontFamily="'SF Mono', 'Fira Code', monospace"
-        fill={colors.text}
-        ellipsis
-        wrap="none"
-      />
-      {/* Type label — hide if card is too short */}
-      {height >= 55 && (
+      {/* Inner group for center-pivot rotation. Translates to center, rotates, then offsets back. */}
+      <Group
+        rotation={rotation}
+        offsetX={width / 2}
+        offsetY={height / 2}
+        x={width / 2}
+        y={height / 2}
+      >
+        {/* Card background */}
+        <Rect
+          width={width}
+          height={height}
+          fill={colors.fill}
+          stroke={selected ? '#e0e0e0' : colors.stroke}
+          strokeWidth={selected ? 2 : 1}
+          cornerRadius={4}
+          shadowColor={selected ? '#e0e0e0' : undefined}
+          shadowBlur={selected ? 6 : 0}
+          shadowOpacity={selected ? 0.3 : 0}
+        />
+        {/* Manufacturer */}
         <Text
           x={8}
-          y={44}
+          y={8}
           width={width - 16}
-          text={productType.replace(/_/g, ' ')}
-          fontSize={9}
-          fontFamily="monospace"
-          fill="#555"
-          textTransform="uppercase"
+          text={manufacturer}
+          fontSize={11}
+          fontFamily="'Helvetica Neue', sans-serif"
+          fontStyle="bold"
+          fill="#f0f0f0"
+          ellipsis
+          wrap="none"
         />
-      )}
-      {children}
+        {/* Model */}
+        <Text
+          x={8}
+          y={24}
+          width={width - 16}
+          text={model}
+          fontSize={11}
+          fontFamily="'SF Mono', 'Fira Code', monospace"
+          fill={colors.text}
+          ellipsis
+          wrap="none"
+        />
+        {/* Type label — hide if card is too short */}
+        {height >= 55 && (
+          <Text
+            x={8}
+            y={44}
+            width={width - 16}
+            text={productType.replace(/_/g, ' ')}
+            fontSize={9}
+            fontFamily="monospace"
+            fill="#555"
+            textTransform="uppercase"
+          />
+        )}
+        {children}
+      </Group>
     </Group>
   );
 };

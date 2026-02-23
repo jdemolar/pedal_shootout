@@ -14,10 +14,18 @@ export interface WorkbenchItem {
   rotation?: number;
 }
 
+/** Transform state for a card on the canvas. */
+export interface CardTransform {
+  x: number;
+  y: number;
+  rotation?: number;  // degrees (0, 90, 180, 270). Default 0.
+  zIndex?: number;    // layer order. Higher = on top. Default 0.
+}
+
 /** Per-view position for an item on the canvas. Keyed by instanceId. */
 export interface ViewPositions {
   [viewMode: string]: {
-    [instanceId: string]: { x: number; y: number };
+    [instanceId: string]: CardTransform;
   };
 }
 
@@ -73,7 +81,8 @@ interface WorkbenchContextType {
 
   // Canvas view positions
   updateViewPosition: (view: string, instanceId: string, x: number, y: number) => void;
-  getViewPositions: (view: string) => Record<string, { x: number; y: number }>;
+  updateCardTransform: (view: string, instanceId: string, patch: Partial<CardTransform>) => void;
+  getViewPositions: (view: string) => Record<string, CardTransform>;
 
   // Canvas viewport state (zoom/pan)
   getViewportState: (view: string) => { scale: number; offsetX: number; offsetY: number };
@@ -278,13 +287,23 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
   const updateViewPosition = useCallback((view: string, instanceId: string, x: number, y: number) => {
     updateStore(prev => updateActiveWorkbench(prev, wb => {
       const positions = { ...(wb.viewPositions || {}) };
-      positions[view] = { ...(positions[view] || {}), [instanceId]: { x, y } };
+      const existing = positions[view]?.[instanceId];
+      positions[view] = { ...(positions[view] || {}), [instanceId]: { ...existing, x, y } };
+      return { ...wb, viewPositions: positions, updatedAt: new Date().toISOString() };
+    }));
+  }, [updateStore]);
+
+  const updateCardTransform = useCallback((view: string, instanceId: string, patch: Partial<CardTransform>) => {
+    updateStore(prev => updateActiveWorkbench(prev, wb => {
+      const positions = { ...(wb.viewPositions || {}) };
+      const existing = positions[view]?.[instanceId] || { x: 0, y: 0 };
+      positions[view] = { ...(positions[view] || {}), [instanceId]: { ...existing, ...patch } };
       return { ...wb, viewPositions: positions, updatedAt: new Date().toISOString() };
     }));
   }, [updateStore]);
 
   const getViewPositions = useCallback(
-    (view: string): Record<string, { x: number; y: number }> => {
+    (view: string): Record<string, CardTransform> => {
       return activeWorkbench.viewPositions?.[view] || {};
     },
     [activeWorkbench],
@@ -364,6 +383,7 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
       countInWorkbench,
       clear,
       updateViewPosition,
+      updateCardTransform,
       getViewPositions,
       getViewportState,
       updateViewportState,
@@ -373,7 +393,7 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
       acknowledgeWarning,
       totalItemCount,
     }),
-    [store.workbenches, activeWorkbench, createWorkbench, renameWorkbench, deleteWorkbench, setActiveWorkbench, addItem, removeItem, removeAllInstances, countInWorkbench, clear, updateViewPosition, getViewPositions, getViewportState, updateViewportState, addPowerConnection, removePowerConnection, setPowerConnections, acknowledgeWarning, totalItemCount],
+    [store.workbenches, activeWorkbench, createWorkbench, renameWorkbench, deleteWorkbench, setActiveWorkbench, addItem, removeItem, removeAllInstances, countInWorkbench, clear, updateViewPosition, updateCardTransform, getViewPositions, getViewportState, updateViewportState, addPowerConnection, removePowerConnection, setPowerConnections, acknowledgeWarning, totalItemCount],
   );
 
   return (

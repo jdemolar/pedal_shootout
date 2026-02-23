@@ -17,9 +17,11 @@ export interface ViewportState {
 
 /**
  * Compute the axis-aligned bounding box around a set of positioned cards.
+ * Supports optional rotation (degrees) per card — when non-zero, the 4 corners
+ * are rotated around the card center and the AABB is expanded to contain them.
  */
 export function calculateBoundingBox(
-  cards: Array<{ x: number; y: number; width: number; height: number }>,
+  cards: Array<{ x: number; y: number; width: number; height: number; rotation?: number }>,
 ): BoundingBox {
   if (cards.length === 0) {
     return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
@@ -31,10 +33,38 @@ export function calculateBoundingBox(
   let maxY = -Infinity;
 
   for (const card of cards) {
-    minX = Math.min(minX, card.x);
-    minY = Math.min(minY, card.y);
-    maxX = Math.max(maxX, card.x + card.width);
-    maxY = Math.max(maxY, card.y + card.height);
+    const rot = card.rotation ?? 0;
+
+    if (rot === 0) {
+      // Fast path — no rotation
+      minX = Math.min(minX, card.x);
+      minY = Math.min(minY, card.y);
+      maxX = Math.max(maxX, card.x + card.width);
+      maxY = Math.max(maxY, card.y + card.height);
+    } else {
+      // Rotate 4 corners around center and find AABB
+      const cx = card.x + card.width / 2;
+      const cy = card.y + card.height / 2;
+      const rad = (rot * Math.PI) / 180;
+      const cos = Math.cos(rad);
+      const sin = Math.sin(rad);
+
+      const corners = [
+        { dx: -card.width / 2, dy: -card.height / 2 },
+        { dx:  card.width / 2, dy: -card.height / 2 },
+        { dx:  card.width / 2, dy:  card.height / 2 },
+        { dx: -card.width / 2, dy:  card.height / 2 },
+      ];
+
+      for (const c of corners) {
+        const rx = cx + cos * c.dx - sin * c.dy;
+        const ry = cy + sin * c.dx + cos * c.dy;
+        minX = Math.min(minX, rx);
+        minY = Math.min(minY, ry);
+        maxX = Math.max(maxX, rx);
+        maxY = Math.max(maxY, ry);
+      }
+    }
   }
 
   return { minX, minY, maxX, maxY };

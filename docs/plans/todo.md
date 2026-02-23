@@ -24,8 +24,8 @@
 
 - [ ] **Unit toggle** — Enable toggle for units of measurement (mm ↔ inches)
 - [ ] **Product images** — Add images to views so users can see the product within the details view (in expanded row panels)
-- [ ] Make objects rotateable (Layout view — in progress via `docs/plans/rotation-z-index.md`)
-- [ ] Enable objects to be sent forward or back on z-axis (Layout view — in progress via `docs/plans/rotation-z-index.md`)
+- [x] Make objects rotateable (Layout view — `docs/plans/completed/rotation-z-index.md`)
+- [x] Enable objects to be sent forward or back on z-axis (Layout view — `docs/plans/completed/rotation-z-index.md`)
 - [ ] Add rotation to PowerView and other planning views (see `docs/plans/options/powerview-rotation.md`)
 - [ ] Add z-index ordering to PowerView and other planning views
 
