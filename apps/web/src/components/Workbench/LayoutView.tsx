@@ -116,20 +116,23 @@ const LayoutView = ({ rows }: LayoutViewProps) => {
     // Ignore when typing in an input
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
+    // Ensure current position is persisted (may be from flow defaults, not yet saved)
+    const pos = getPosition(selectedId);
+
     if (e.key === 'r' || e.key === 'R') {
       e.preventDefault();
-      const current = savedPositions[selectedId]?.rotation ?? 0;
+      const current = pos.rotation ?? 0;
       const delta = e.shiftKey ? -90 : 90;
       const next = ((current + delta) % 360 + 360) % 360;
-      updateCardTransform(VIEW_KEY, selectedId, { rotation: next });
+      updateCardTransform(VIEW_KEY, selectedId, { x: pos.x, y: pos.y, rotation: next });
     } else if (e.key === ']') {
       e.preventDefault();
       const maxZ = rows.reduce((max, row) => Math.max(max, savedPositions[row.instanceId]?.zIndex ?? 0), 0);
-      updateCardTransform(VIEW_KEY, selectedId, { zIndex: maxZ + 1 });
+      updateCardTransform(VIEW_KEY, selectedId, { x: pos.x, y: pos.y, zIndex: maxZ + 1 });
     } else if (e.key === '[') {
       e.preventDefault();
       const minZ = rows.reduce((min, row) => Math.min(min, savedPositions[row.instanceId]?.zIndex ?? 0), 0);
-      updateCardTransform(VIEW_KEY, selectedId, { zIndex: minZ - 1 });
+      updateCardTransform(VIEW_KEY, selectedId, { x: pos.x, y: pos.y, zIndex: minZ - 1 });
     } else if (e.key === 'Escape') {
       setSelectedId(null);
     }
