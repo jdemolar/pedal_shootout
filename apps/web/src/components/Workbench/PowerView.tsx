@@ -561,21 +561,27 @@ const PowerView = ({ rows }: PowerViewProps) => {
             }}
           >
             <div className="workbench__power-popover-warnings">
-              {warningPopover.warnings.map((w, i) => (
-                <div key={i} className="workbench__power-popover-warning">{w}</div>
-              ))}
+              {warningPopover.warnings.map((w, i) => {
+                const conn = connections.find(c => c.id === warningPopover.connId);
+                const alreadyAcked = conn?.acknowledgedWarnings?.includes(w);
+                const isVoltageNotice = w.startsWith('This output is adjustable');
+                return (
+                  <div key={i} className="workbench__power-popover-warning">
+                    <span>{w}</span>
+                    {alreadyAcked ? (
+                      <span className="workbench__power-popover-acked">Acknowledged</span>
+                    ) : (
+                      <button
+                        className="workbench__power-popover-btn"
+                        onClick={() => acknowledgeWarning(warningPopover.connId, w)}
+                      >
+                        {isVoltageNotice ? 'Got it' : 'I have this adapter'}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-            <button
-              className="workbench__power-popover-btn"
-              onClick={() => {
-                for (const w of warningPopover.warnings) {
-                  acknowledgeWarning(warningPopover.connId, w);
-                }
-                setWarningPopover(null);
-              }}
-            >
-              I have this adapter
-            </button>
             <button
               className="workbench__power-popover-btn workbench__power-popover-btn--close"
               onClick={() => setWarningPopover(null)}

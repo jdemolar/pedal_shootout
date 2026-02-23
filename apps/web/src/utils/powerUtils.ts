@@ -103,6 +103,16 @@ export function validateConnection(
     }
   }
 
+  // Adjustable voltage notice — supply offers multiple voltages but pedal needs a specific one
+  if (outputJack.voltage && inputJack.voltage && !hasError) {
+    const supplyTokens = voltageTokensFromJack(outputJack.voltage);
+    const consumerTokens = voltageTokensFromJack(inputJack.voltage);
+    const supplyIsAdjustable = supplyTokens.length > 1 || supplyTokens.some(t => t.includes('-'));
+    if (supplyIsAdjustable && consumerTokens.length === 1) {
+      warnings.push(`This output is adjustable — set it to ${inputJack.voltage} for this pedal`);
+    }
+  }
+
   return {
     status: warnings.length > 0 ? 'warning' : 'valid',
     warnings,
