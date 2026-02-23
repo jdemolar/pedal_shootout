@@ -77,6 +77,7 @@
 - [x] Enable users to select multiple instances of the same pedal
 - [ ] Layout views improvements
 	- [ ] Make objects rotateable
+	- [ ] Enable objects to be sent forward or back on z-axis
 	- [x] Make objects fit product dimensions
 	- [x] Add a delete button to selected connection lines
     - [x] Fix issue in power mapping layout where pedals are rendered outside of viewable area. Make pedals appear in viewport AND make canvas pannable.
