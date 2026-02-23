@@ -2,7 +2,7 @@
 
 ## Context
 
-Product cards on the Layout canvas can be dragged but not rotated or reordered in depth. For pedalboard layout planning, users need to rotate pedals (e.g., turn a pedal sideways to fit) and control which card renders on top when cards overlap. These are todo items "Make objects rotateable" and "Enable objects to be sent forward or back on z-axis".
+Product cards on the Layout canvas can be dragged but not rotated or reordered in depth. For pedalboard layout planning, users need to rotate pedals (e.g., turn a pedal sideways to fit) and control which card renders on top when cards overlap. These are todo items "Make objects rotateable (Layout view)" and "Enable objects to be sent forward or back on z-axis (Layout view)".
 
 This plan covers **LayoutView only** as a v1. Extending rotation to PowerView requires refactoring how port positions are computed (see `docs/plans/options/powerview-rotation.md`). Z-index ordering for other views is straightforward and tracked separately in `todo.md`.
 
