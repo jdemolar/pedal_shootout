@@ -24,6 +24,7 @@
 - [ ] **MIDI routing helper** - Match controller outputs to pedal MIDI needs
 - [ ] **Unit toggle** - Enable toggle for units of measurement (mm ↔ inches)
 - [x] **Sticky nav, filters, and table headers** - Viewport-locked flex layout keeps nav, filters, and column headers fixed while only table body rows scroll
+- [ ] **Shopping list view** - Display workbench items as shopping list, with has, needs, price, totals, and links to purchase
 - [x] **Power budget calculator improvements:**
 	- [x] Revisit the value and accuracy of URL param filters, especially voltage
 	- [x] Show URL param filters in UI
