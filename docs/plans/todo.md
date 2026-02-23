@@ -28,6 +28,7 @@
 - [x] Enable objects to be sent forward or back on z-axis (Layout view — `docs/plans/completed/rotation-z-index.md`)
 - [ ] Add rotation to PowerView and other planning views (see `docs/plans/options/powerview-rotation.md`)
 - [ ] Add z-index ordering to PowerView and other planning views
+- [ ] Swap position and style of Manufacturer text and Model text in cards (e.g., "BigSky" at top in white and "Strymon" below in green) 
 
 ## 7. API
 
