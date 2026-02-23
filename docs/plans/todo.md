@@ -56,12 +56,12 @@
 
 ## 7. Product comparison & shopping:
 
-- [ ] Create a way for users to put multiple products into a "cart" for product comparison and compatibility analysis, generating a shopping list, and moving to pedal arrangement
+- [x] Create a way for users to put multiple products into a "cart" for product comparison and compatibility analysis, generating a shopping list, and moving to pedal arrangement
 
 ## 8. Pedalboard layout planning:
 
 - [ ] Create pedalboard layout planning (similar to pedalplayground.com)
-- [ ] System for displaying images on a canvas where scale of all products is relative to each other
+- [x] System for displaying images on a canvas where scale of all products is relative to each other
 
 ## 9. Product instructions (especially MIDI controllers):
 
