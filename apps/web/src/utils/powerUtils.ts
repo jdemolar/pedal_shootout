@@ -1,7 +1,8 @@
 /**
- * Shared normalization utilities for power-related comparisons.
- * Used by PowerBudgetInsight (workbench) and PowerSupplies (catalog filter).
+ * Shared normalization and validation utilities for power connections.
+ * Used by PowerView (workbench) and PowerSupplies (catalog filter).
  */
+import { ConnectionWarning, ConnectionValidation } from './connectionValidation';
 
 /** Lowercase + replace spaces with hyphens: "Center Negative" -> "center-negative" */
 export function normalizePolarity(p: string): string {
@@ -55,24 +56,23 @@ export function voltagesCompatible(supplyVoltage: string, consumerVoltage: strin
 }
 
 /** Validate a single connection between a supply output jack and a consumer input jack. */
-export interface ConnectionValidation {
-  status: 'valid' | 'warning' | 'error';
-  warnings: string[];
-}
-
 export function validateConnection(
   outputJack: { voltage: string | null; current_ma: number | null; polarity: string | null; connector_type: string | null },
   inputJack: { voltage: string | null; current_ma: number | null; polarity: string | null; connector_type: string | null },
   /** Total current draw of all consumers connected to this output (including this one) */
   totalCurrentOnOutput?: number,
 ): ConnectionValidation {
-  const warnings: string[] = [];
+  const warnings: ConnectionWarning[] = [];
   let hasError = false;
 
   // Voltage check
   if (outputJack.voltage && inputJack.voltage) {
     if (!voltagesCompatible(outputJack.voltage, inputJack.voltage)) {
-      warnings.push(`Voltage mismatch: supply ${outputJack.voltage} vs pedal ${inputJack.voltage}`);
+      warnings.push({
+        key: 'power:voltage-mismatch',
+        severity: 'error',
+        message: `Voltage mismatch: supply ${outputJack.voltage} vs pedal ${inputJack.voltage}`,
+      });
       hasError = true;
     }
   }
@@ -80,7 +80,11 @@ export function validateConnection(
   // Current check
   if (totalCurrentOnOutput != null && outputJack.current_ma != null) {
     if (totalCurrentOnOutput > outputJack.current_ma) {
-      warnings.push(`Current overload: ${totalCurrentOnOutput}mA needed, output provides ${outputJack.current_ma}mA`);
+      warnings.push({
+        key: 'power:current-overload',
+        severity: 'error',
+        message: `Current overload: ${totalCurrentOnOutput}mA needed, output provides ${outputJack.current_ma}mA`,
+      });
       hasError = true;
     }
   }
@@ -89,27 +93,49 @@ export function validateConnection(
     return { status: 'error', warnings };
   }
 
-  // Polarity check (warning, not error — user can get an adapter)
+  // Polarity check (warning, not error — user can get a reversal cable)
   if (outputJack.polarity && inputJack.polarity) {
     if (normalizePolarity(outputJack.polarity) !== normalizePolarity(inputJack.polarity)) {
-      warnings.push(`Polarity mismatch: supply ${outputJack.polarity}, pedal ${inputJack.polarity} — reversal cable needed`);
+      warnings.push({
+        key: 'power:polarity-mismatch',
+        severity: 'warning',
+        message: `Polarity mismatch: supply ${outputJack.polarity}, pedal ${inputJack.polarity} — reversal cable needed`,
+        adapterImplication: {
+          fromConnectorType: outputJack.connector_type ?? 'unknown',
+          toConnectorType: inputJack.connector_type ?? 'unknown',
+          description: `Polarity reversal cable (${outputJack.polarity} to ${inputJack.polarity})`,
+        },
+      });
     }
   }
 
   // Connector check (warning, not error — user can get an adapter)
   if (outputJack.connector_type && inputJack.connector_type) {
     if (normalizeConnector(outputJack.connector_type) !== normalizeConnector(inputJack.connector_type)) {
-      warnings.push(`Connector mismatch: supply ${outputJack.connector_type}, pedal ${inputJack.connector_type} — adapter needed`);
+      warnings.push({
+        key: 'power:connector-mismatch',
+        severity: 'warning',
+        message: `Connector mismatch: supply ${outputJack.connector_type}, pedal ${inputJack.connector_type} — adapter needed`,
+        adapterImplication: {
+          fromConnectorType: outputJack.connector_type,
+          toConnectorType: inputJack.connector_type,
+          description: `${outputJack.connector_type} to ${inputJack.connector_type} power adapter`,
+        },
+      });
     }
   }
 
   // Adjustable voltage notice — supply offers multiple voltages but pedal needs a specific one
-  if (outputJack.voltage && inputJack.voltage && !hasError) {
+  if (outputJack.voltage && inputJack.voltage) {
     const supplyTokens = voltageTokensFromJack(outputJack.voltage);
     const consumerTokens = voltageTokensFromJack(inputJack.voltage);
     const supplyIsAdjustable = supplyTokens.length > 1 || supplyTokens.some(t => t.includes('-'));
     if (supplyIsAdjustable && consumerTokens.length === 1) {
-      warnings.push(`This output is adjustable — set it to ${inputJack.voltage} for this pedal`);
+      warnings.push({
+        key: 'power:adjustable-voltage',
+        severity: 'info',
+        message: `This output is adjustable — set it to ${inputJack.voltage} for this pedal`,
+      });
     }
   }
 

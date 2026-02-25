@@ -7,7 +7,8 @@ import {
   getPowerOutputJacks,
   assignPedalsToOutputs,
 } from '../../utils/powerAssignment';
-import { validateConnection, ConnectionValidation } from '../../utils/powerUtils';
+import { validateConnection } from '../../utils/powerUtils';
+import { ConnectionValidation, ConnectionWarning } from '../../utils/connectionValidation';
 import { Jack } from '../../utils/transformers';
 import { useCanvasViewport } from '../../hooks/useCanvasViewport';
 import { calculateBoundingBox } from '../../utils/canvasUtils';
@@ -79,7 +80,7 @@ const PowerView = ({ rows }: PowerViewProps) => {
   const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
   const [warningPopover, setWarningPopover] = useState<{
     connId: string;
-    warnings: string[];
+    warnings: ConnectionWarning[];
     x: number;
     y: number;
   } | null>(null);
@@ -375,7 +376,7 @@ const PowerView = ({ rows }: PowerViewProps) => {
 
           const validation = connectionValidations.get(conn.id) ?? { status: 'valid' as const, warnings: [] };
           const isAcknowledged = (conn.acknowledgedWarnings?.length ?? 0) > 0 &&
-            validation.warnings.every(w => conn.acknowledgedWarnings?.includes(w));
+            validation.warnings.every(w => conn.acknowledgedWarnings?.includes(w.key));
 
           return (
             <ConnectionLine
@@ -561,19 +562,19 @@ const PowerView = ({ rows }: PowerViewProps) => {
             }}
           >
             <div className="workbench__power-popover-warnings">
-              {warningPopover.warnings.map((w, i) => {
+              {warningPopover.warnings.map((w) => {
                 const conn = connections.find(c => c.id === warningPopover.connId);
-                const alreadyAcked = conn?.acknowledgedWarnings?.includes(w);
-                const isVoltageNotice = w.startsWith('This output is adjustable');
+                const alreadyAcked = conn?.acknowledgedWarnings?.includes(w.key);
+                const isVoltageNotice = w.key === 'power:adjustable-voltage';
                 return (
-                  <div key={i} className="workbench__power-popover-warning">
-                    <span>{w}</span>
+                  <div key={w.key} className="workbench__power-popover-warning">
+                    <span>{w.message}</span>
                     {alreadyAcked ? (
                       <span className="workbench__power-popover-acked">Acknowledged</span>
                     ) : (
                       <button
                         className="workbench__power-popover-btn"
-                        onClick={() => acknowledgeWarning(warningPopover.connId, w)}
+                        onClick={() => acknowledgeWarning(warningPopover.connId, w.key)}
                       >
                         {isVoltageNotice ? 'Got it' : 'I have this adapter'}
                       </button>
