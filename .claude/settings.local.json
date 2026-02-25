@@ -51,7 +51,7 @@
     ],
     "deny": [
       "Bash(sudo *)",
-      "Bash(rm -rf"
+      "Bash(rm -rf)"
     ]
   }
 }
