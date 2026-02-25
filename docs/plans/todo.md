@@ -6,8 +6,8 @@
 
 ## 2. Connections & Cabling (design: `docs/plans/connections-and-cabling.md`)
 
-- [ ] **Structured validation types** — Shared `ConnectionWarning`/`ConnectionValidation` types; migrate `powerUtils.ts` to use them
-- [ ] **Audio connections view** — Signal chain canvas (right-to-left), virtual nodes, stereo pairs, cable routing waypoints
+- [x] **Structured validation types** — Shared `ConnectionWarning`/`ConnectionValidation` types; migrate `powerUtils.ts` to use them (plan: `docs/plans/completed/connections-phase-1-validation-types.md`)
+- [x] **Audio connections view** — Signal chain canvas (right-to-left), virtual nodes, stereo pairs, cable routing waypoints (plan: `docs/plans/completed/audio-connections-phase-2.md`)
 - [ ] **MIDI connections view** — Chain/hub topology, channel assignment, TRS-A/B detection
 - [ ] **Control connections view** — Expression, aux switch, CV connections with polarity validation
 - [ ] **Unified shopping list** — Cables/adapters as rows in List tab alongside products, length estimation from waypoints

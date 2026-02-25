@@ -24,6 +24,7 @@ export interface Jack {
   is_buffered: boolean | null;
   has_ground_lift: boolean | null;
   has_phase_invert: boolean | null;
+  group_id: string | null;
 }
 
 function transformJack(dto: JackApiResponse): Jack {
@@ -43,6 +44,7 @@ function transformJack(dto: JackApiResponse): Jack {
     is_buffered: dto.isBuffered,
     has_ground_lift: dto.hasGroundLift,
     has_phase_invert: dto.hasPhaseInvert,
+    group_id: dto.groupId,
   };
 }
 

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
+import { AudioConnection, VirtualNode, RouteWaypoint } from '../types/connections';
 
 // --- Types ---
 
@@ -55,6 +56,8 @@ export interface Workbench {
   // Canvas view data:
   viewPositions?: ViewPositions;
   powerConnections?: PowerConnection[];
+  audioConnections?: AudioConnection[];
+  virtualNodes?: VirtualNode[];
   viewportStates?: ViewportStates;
 }
 
@@ -93,6 +96,18 @@ interface WorkbenchContextType {
   removePowerConnection: (connId: string) => void;
   setPowerConnections: (conns: PowerConnection[]) => void;
   acknowledgeWarning: (connId: string, warningKey: string) => void;
+
+  // Audio connections
+  addAudioConnection: (conn: Omit<AudioConnection, 'id'>) => void;
+  removeAudioConnection: (connId: string) => void;
+  setAudioConnections: (conns: AudioConnection[]) => void;
+  acknowledgeAudioWarning: (connId: string, warningKey: string) => void;
+  updateAudioConnectionWaypoints: (connId: string, waypoints: RouteWaypoint[]) => void;
+
+  // Virtual nodes
+  addVirtualNode: (node: VirtualNode) => void;
+  removeVirtualNode: (instanceId: string) => void;
+  setVirtualNodes: (nodes: VirtualNode[]) => void;
 
   // Aggregate counts
   totalItemCount: number;
@@ -364,6 +379,80 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
     })));
   }, [updateStore]);
 
+  // --- Audio connections ---
+
+  const addAudioConnection = useCallback((conn: Omit<AudioConnection, 'id'>) => {
+    updateStore(prev => updateActiveWorkbench(prev, wb => ({
+      ...wb,
+      audioConnections: [...(wb.audioConnections || []), { ...conn, id: generateId() }],
+      updatedAt: new Date().toISOString(),
+    })));
+  }, [updateStore]);
+
+  const removeAudioConnection = useCallback((connId: string) => {
+    updateStore(prev => updateActiveWorkbench(prev, wb => ({
+      ...wb,
+      audioConnections: (wb.audioConnections || []).filter(c => c.id !== connId),
+      updatedAt: new Date().toISOString(),
+    })));
+  }, [updateStore]);
+
+  const setAudioConnections = useCallback((conns: AudioConnection[]) => {
+    updateStore(prev => updateActiveWorkbench(prev, wb => ({
+      ...wb,
+      audioConnections: conns,
+      updatedAt: new Date().toISOString(),
+    })));
+  }, [updateStore]);
+
+  const acknowledgeAudioWarning = useCallback((connId: string, warningKey: string) => {
+    updateStore(prev => updateActiveWorkbench(prev, wb => ({
+      ...wb,
+      audioConnections: (wb.audioConnections || []).map(c =>
+        c.id === connId
+          ? { ...c, acknowledgedWarnings: [...(c.acknowledgedWarnings || []), warningKey] }
+          : c,
+      ),
+      updatedAt: new Date().toISOString(),
+    })));
+  }, [updateStore]);
+
+  const updateAudioConnectionWaypoints = useCallback((connId: string, waypoints: RouteWaypoint[]) => {
+    updateStore(prev => updateActiveWorkbench(prev, wb => ({
+      ...wb,
+      audioConnections: (wb.audioConnections || []).map(c =>
+        c.id === connId ? { ...c, waypoints } : c,
+      ),
+      updatedAt: new Date().toISOString(),
+    })));
+  }, [updateStore]);
+
+  // --- Virtual nodes ---
+
+  const addVirtualNode = useCallback((node: VirtualNode) => {
+    updateStore(prev => updateActiveWorkbench(prev, wb => ({
+      ...wb,
+      virtualNodes: [...(wb.virtualNodes || []), node],
+      updatedAt: new Date().toISOString(),
+    })));
+  }, [updateStore]);
+
+  const removeVirtualNode = useCallback((instanceId: string) => {
+    updateStore(prev => updateActiveWorkbench(prev, wb => ({
+      ...wb,
+      virtualNodes: (wb.virtualNodes || []).filter(n => n.instanceId !== instanceId),
+      updatedAt: new Date().toISOString(),
+    })));
+  }, [updateStore]);
+
+  const setVirtualNodes = useCallback((nodes: VirtualNode[]) => {
+    updateStore(prev => updateActiveWorkbench(prev, wb => ({
+      ...wb,
+      virtualNodes: nodes,
+      updatedAt: new Date().toISOString(),
+    })));
+  }, [updateStore]);
+
   const totalItemCount = useMemo(
     () => activeWorkbench.items.length,
     [activeWorkbench],
@@ -391,9 +480,17 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
       removePowerConnection,
       setPowerConnections,
       acknowledgeWarning,
+      addAudioConnection,
+      removeAudioConnection,
+      setAudioConnections,
+      acknowledgeAudioWarning,
+      updateAudioConnectionWaypoints,
+      addVirtualNode,
+      removeVirtualNode,
+      setVirtualNodes,
       totalItemCount,
     }),
-    [store.workbenches, activeWorkbench, createWorkbench, renameWorkbench, deleteWorkbench, setActiveWorkbench, addItem, removeItem, removeAllInstances, countInWorkbench, clear, updateViewPosition, updateCardTransform, getViewPositions, getViewportState, updateViewportState, addPowerConnection, removePowerConnection, setPowerConnections, acknowledgeWarning, totalItemCount],
+    [store.workbenches, activeWorkbench, createWorkbench, renameWorkbench, deleteWorkbench, setActiveWorkbench, addItem, removeItem, removeAllInstances, countInWorkbench, clear, updateViewPosition, updateCardTransform, getViewPositions, getViewportState, updateViewportState, addPowerConnection, removePowerConnection, setPowerConnections, acknowledgeWarning, addAudioConnection, removeAudioConnection, setAudioConnections, acknowledgeAudioWarning, updateAudioConnectionWaypoints, addVirtualNode, removeVirtualNode, setVirtualNodes, totalItemCount],
   );
 
   return (
