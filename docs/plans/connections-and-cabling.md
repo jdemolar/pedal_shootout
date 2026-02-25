@@ -9,9 +9,12 @@ Building a pedalboard requires planning dozens of connections — audio signal p
 
 - Stereo signal paths that split/merge
 - Connector mismatches requiring adapter cables (e.g., 5-pin DIN to 3.5mm TRS MIDI)
+- 1/4" TRS wiring variations (TIP/RING assignment differs by manufacturer)
+- 5-pin DIN connector configurations and power-over-MIDI requirements
 - Polarity differences on expression pedals
 - TRS-A vs TRS-B MIDI standards
 - FX loop routing through the amp
+- Direct output routing (FOH, FRFR speakers, audio interfaces)
 
 This design document covers the complete connections architecture: data model, per-category views (Audio, MIDI, Control), a shopping list that synthesizes everything into a cable/adapter bill of materials, and backend tables for future cloud save.
 
@@ -24,14 +27,16 @@ This design document covers the complete connections architecture: data model, p
 | Decision | Choice | Rationale |
 |---|---|---|
 | Connection storage | Separate arrays per category | Matches existing `powerConnections[]` pattern; clean type safety per category; no migration needed |
-| Cable types | Derived from connected jacks | A connection between two jacks with known connector types implies the cable. No cable types table needed. |
-| Shopping list location | Collapsible section in List tab | List tab is already the "what do I need?" view. Cable summary belongs there. |
+| Cable types | Derived from jacks + signal mode | Connector types plus signal mode determine cable type (see section 6.5). No cable types lookup table needed. |
+| Shopping list location | Integrated into List tab table | Cables and adapters appear as rows alongside products in a unified shopping manifest. |
 | Cable length estimation | Derive from layout + 20% slack + user override | Smart defaults with escape hatch. Disclaimer about estimation accuracy. |
 | Adapter handling | Warning system (like power view) | Options: "adapter cable" (noted on shopping list), "add a utility" (links to catalog), "dismiss" |
 | Audio topology | Full (parallel, Y-split, FX loops, stereo) | Covers complex rigs from day one |
-| MIDI metadata | Channels, PC/CC, clock routing | Design the model to capture signal metadata, not just physical wiring |
+| MIDI metadata | Channels, clock routing | Physical connection metadata only. PC/CC mapping is a future MIDI spec sheet feature, not a connection property. |
 | Control metadata | Expression ranges, polarity, aux assignments, CV | Same approach — capture what the user needs to configure |
-| Backend design | Included (for future cloud save) | Ensures frontend model aligns with eventual DB schema |
+| Backend design | JSONB blob (for future cloud save) | Workbench state is loaded/saved whole — no need for normalized tables. Requires user accounts. |
+| Cable routing | User-defined waypoints | Users add bend points to connection lines for realistic routing. Improves length estimation accuracy. |
+| Signal flow direction | Right-to-left | Matches pedal convention (input on right, output on left) |
 
 ---
 
@@ -56,6 +61,7 @@ export interface AudioConnection {
   fxLoopGroupId: string | null;        // Links to jacks.group_id for FX loop association
   signalMode: 'mono' | 'stereo';      // Derived from jacks but can be overridden
   stereoPairConnectionId: string | null; // Links L and R connections as a pair
+  waypoints: Array<{ x: number; y: number }>;  // Cable routing bend points (layout coords, mm)
 }
 ```
 
@@ -75,8 +81,6 @@ export interface MidiConnection {
   // MIDI-specific
   chainIndex: number;                  // Position in daisy chain (0 = first from controller)
   midiChannel: number | null;          // 1-16, null = omni
-  programChangeNumber: number | null;  // 0-127
-  ccAssignments: Array<{ cc: number; parameter: string }> | null;
   carriesClock: boolean;
   trsMidiStandard: 'TRS-A' | 'TRS-B' | null;  // Only relevant for 3.5mm TRS connectors
 }
@@ -117,13 +121,14 @@ export type VirtualNodeType =
   | 'amp_fx_send'
   | 'amp_fx_return'
   | 'secondary_amp_input'  // A/B amp setups
+  | 'direct_output'        // FOH, FRFR speaker, audio interface
   | 'tuner_output';        // Always-on tuner split
 
 export interface VirtualNode {
   instanceId: string;        // Prefixed with 'virtual:' to distinguish
   nodeType: VirtualNodeType;
   label: string;             // User-editable, e.g., "Fender Twin"
-  jackId: number;            // Negative integer (-1, -2, ...) to avoid collision with real jacks.id
+  virtualJackId: string;     // e.g., 'virtual-jack:guitar-out' — string to avoid collision with real jacks.id
   connectorType: string;     // Default: '1/4" TS'
 }
 ```
@@ -161,13 +166,13 @@ export interface Workbench {
 
 ### 2.1 Canvas Layout
 
-The audio view renders the signal chain as a left-to-right directed graph on a Konva canvas (reusing `CanvasBase`, `ProductCard`, `ConnectionLine`, `PortDot`, `ZoomControls`).
+The audio view renders the signal chain as a right-to-left directed graph on a Konva canvas (reusing `CanvasBase`, `ProductCard`, `ConnectionLine`, `PortDot`, `ZoomControls`). This matches pedal convention where input is on the right and output is on the left.
 
-- `guitar_input` virtual node at far left
-- Pedals arranged left-to-right by `orderIndex`
+- `guitar_input` virtual node at far right
+- Pedals arranged right-to-left by `orderIndex`
 - Parallel paths offset vertically (same `orderIndex`, different `parallelPathId`)
 - FX loop sections visually grouped (dashed boundary or subtle background)
-- `amp_input` virtual node at far right
+- `amp_input` / `direct_output` virtual node at far left
 
 ### 2.2 Interaction
 
@@ -184,10 +189,8 @@ When clicking a jack that belongs to a stereo `group_id`, prompt: "Connect as st
 |---|---|---|
 | Connector type mismatch | Warning | "Adapter needed: {source type} to {target type}" |
 | Mono output -> stereo input (unpaired R) | Warning | "Mono source to stereo input — left channel only" |
-| Stereo output -> mono input | Warning | "Stereo output to mono input — signal may be summed" |
+| Stereo output -> mono input | Warning | "Stereo output to mono input — signal may be summed or lose one channel" |
 | Impedance mismatch (if data available) | Warning | "Impedance mismatch: {source} to {target}" |
-| No guitar input node | Error | "Audio chain has no guitar input" |
-| No amp output node | Error | "Audio chain has no amp/output destination" |
 | Circular connection | Error | "Connection creates a circular signal path" |
 | Unconnected audio jack | Info | "Unconnected audio {input/output} on {product}" |
 
@@ -199,16 +202,14 @@ When clicking a jack that belongs to a stereo `group_id`, prompt: "Connect as st
 
 ### 3.1 Canvas Layout
 
-- MIDI controller(s) on the left
-- Connected devices in chain order by `chainIndex`
-- Topology auto-detected: if one device fans out to multiple targets, render as star/hub (MIDI thru box). If linear, render as chain.
+- MIDI controller(s) at bottom center
+- Connected devices above, arranged by `chainIndex`
+- Topology auto-detected from connection graph: if one device's outputs fan out to multiple targets, render as a hub layout. If connections form a linear sequence, render as a chain. This is purely about the visual topology — a MIDI controller with multiple outputs naturally renders as a hub.
 
-### 3.2 Channel Assignment UI
+### 3.2 Channel & Clock UI
 
 Each connection line shows a badge with MIDI channel. Click to edit:
 - Channel dropdown (1-16 or Omni)
-- PC number (0-127)
-- CC mapping table (add rows: CC#, parameter name)
 - Clock toggle
 
 ### 3.3 Validation Rules (`utils/midiUtils.ts`)
@@ -228,7 +229,7 @@ Each connection line shows a badge with MIDI channel. Click to edit:
 
 ### 4.1 Connection Types
 
-- **Expression:** TRS cable from expression pedal to target's expression input jack
+- **Expression:** TRS or TS cable from expression pedal to target's expression input jack (cable type determined by the jacks on both ends)
 - **Aux switch:** TRS/TS cable from external footswitch to target's aux input
 - **CV:** TS cable carrying control voltage (uncommon but exists — e.g., Chase Bliss, Empress Zoia)
 
@@ -294,8 +295,8 @@ export interface CableRequirement {
   sourceConnectorType: string;
   targetConnectorType: string;
   needsAdapter: boolean;
-  estimatedLengthCm: number | null;   // From layout + 20% slack
-  overrideLengthCm: number | null;    // User override
+  estimatedLengthMm: number | null;   // From layout + 20% slack
+  overrideLengthMm: number | null;    // User override
   connectionIds: string[];            // Which connections this serves
   label: string;                      // e.g., '1/4" TS patch cable'
   notes: string[];                    // e.g., 'Polarity reversal needed'
@@ -317,64 +318,106 @@ export interface ShoppingList {
     totalCables: number;
     totalAdapters: number;
     byCategory: Record<CableCategory, { cables: number; adapters: number }>;
-    estimatedTotalLengthM: number;
+    estimatedTotalLengthMm: number;
   };
   lengthDisclaimer: string;
 }
 ```
 
-### 6.2 Cable Length Estimation Algorithm
+### 6.2 Cable Routing Waypoints
+
+Connection lines in the Layout view support user-defined waypoints — draggable intermediate points that let users model realistic cable routing paths between pedals. Cables don't run in straight lines on a pedalboard; they wind between pedals, follow rails, and route through cable channels.
+
+Each connection stores an ordered array of waypoints:
+```typescript
+export interface RouteWaypoint {
+  x: number;  // mm, in layout coordinate space
+  y: number;
+}
+```
+
+Users can:
+- Double-click a connection line to add a waypoint
+- Drag waypoints to bend the cable path
+- Double-click a waypoint to remove it
+
+### 6.3 Cable Length Estimation Algorithm
 
 ```
 For each connection:
   1. Look up source and target instance positions from layout view positions
   2. If either position is missing -> length = null ("Place items in Layout view for estimates")
   3. Estimate jack position relative to card using jack.position field (Top/Left/Right/Bottom)
-  4. Compute Euclidean distance between jack world positions
-  5. Convert pixels to mm (1:1 in layout view)
-  6. Add 20% routing slack (multiply by 1.2)
-  7. Add 2x card height for cables routing under/over the board
-  8. Round to nearest 5 cm
-  9. Clamp minimum to 15 cm
+  4. If waypoints exist: sum the segment distances (jack -> wp1 -> wp2 -> ... -> jack)
+  5. If no waypoints: compute Euclidean distance between jack world positions
+  6. Layout coordinates are 1:1 with mm
+  7. Add 20% routing slack (multiply by 1.2)
+  8. Round to nearest 50 mm
+  9. Clamp minimum to 150 mm
 ```
 
-### 6.3 UI in List Tab
+### 6.4 Unified Shopping List Table
 
-Collapsible "Cable & Connector Summary" section below the existing product table:
+Cables, adapters, and accessories appear as rows in the same table as products — they are all items the user needs to acquire. The List tab becomes a unified shopping manifest.
+
+Each row in the table has:
+- **Type** — Product, Cable, or Adapter (filterable)
+- **Category** — Audio, Power, MIDI, Control (filterable)
+- **Description** — e.g., "1/4" TS patch cable", "Strymon BigSky", "5-pin DIN to 3.5mm TRS-A adapter"
+- **Qty** — Number needed
+- **Est. Length** — For cables only (from layout waypoints + 20% slack, in mm). Editable for user override.
+- **Have** — Checkbox (user marks items they already own)
+- **Price** — MSRP for products, blank for cables/adapters (user can fill in)
+- **Notes** — Warnings, adapter implications, etc.
+
+Summary row at bottom shows totals: items needed, items owned, estimated total cable length, estimated total cost.
 
 ```
-[v] Cable & Connector Summary                    [Export CSV]
-+-------------------------------------------------------+
-| AUDIO CABLES (12)                                     |
-|   8x  1/4" TS patch cable           ~15-30 cm        |
-|   2x  1/4" TS to 1/4" TRS          ~20 cm      [!]  |
-|   2x  1/4" TS instrument cable      ~3 m              |
-|                                                        |
-| POWER CABLES (6)                                      |
-|   6x  2.1mm barrel DC cable         ~25-40 cm        |
-|                                                        |
-| MIDI CABLES (3)                                       |
-|   2x  5-pin DIN MIDI cable          ~30 cm           |
-|   1x  3.5mm TRS MIDI cable          ~20 cm           |
-|                                                        |
-| CONTROL CABLES (2)                                    |
-|   1x  1/4" TRS expression cable     ~60 cm           |
-|   1x  1/4" TRS aux switch cable     ~40 cm           |
-|                                                        |
-| ADAPTERS (2)                                          |
-|   1x  Polarity reversal adapter                       |
-|   1x  5-pin DIN to 3.5mm TRS-A adapter               |
-+-------------------------------------------------------+
-| Estimated total cable: ~8.5 m                         |
-| * Lengths are estimates from Layout view positions    |
-|   with 20% routing slack. Actual lengths may vary.    |
-|   Always buy more cable than you think you need.      |
-+-------------------------------------------------------+
++------+----------+----------------------------------+-----+---------+------+--------+-------+
+| Type | Category | Description                      | Qty | Est. mm | Have | Price  | Notes |
++------+----------+----------------------------------+-----+---------+------+--------+-------+
+| Prod | —        | Strymon BigSky                   |  1  |    —    |  [x] | $479   |       |
+| Prod | —        | Boss DD-500                      |  1  |    —    |  [ ] | $349   |       |
+| Cable| Audio    | 1/4" TS patch cable              |  8  | 150-300 |  [ ] |        |       |
+| Cable| Audio    | 1/4" TS to 1/4" TRS             |  2  |   200   |  [ ] |        |  [!]  |
+| Cable| Audio    | 1/4" TS instrument cable         |  2  |  3000   |  [ ] |        |       |
+| Cable| Power    | 2.1mm barrel DC cable            |  6  | 250-400 |  [ ] |        |       |
+| Cable| MIDI     | 5-pin DIN MIDI cable             |  2  |   300   |  [ ] |        |       |
+| Cable| Control  | 1/4" TRS expression cable        |  1  |   600   |  [ ] |        |       |
+| Adpt | MIDI     | 5-pin DIN to 3.5mm TRS-A adapter |  1  |    —    |  [ ] |        |       |
++------+----------+----------------------------------+-----+---------+------+--------+-------+
+| TOTALS: 24 items | 10 needed | ~8.5 m cable | Est. $828                                   |
++------+----------+----------------------------------+-----+---------+------+--------+-------+
+| * Lengths are estimates from Layout view routing with 20% slack.                          |
+|   Actual lengths may vary. Always buy more cable than you think you need.                 |
++------+----------+----------------------------------+-----+---------+------+--------+-------+
 ```
 
-Each cable row is expandable to show which connections it serves and allow length override.
+[Export CSV] button exports the full table.
 
-### 6.4 Adapter UX Flow
+### 6.5 Cable Type Derivation
+
+Cable types are derived from the connected jacks' connector types and signal mode — no cable types lookup table is needed, but the derivation logic must handle nuanced cases:
+
+| Source Connector | Target Connector | Signal Mode | Cable Type |
+|---|---|---|---|
+| 1/4" TS | 1/4" TS | mono | Mono patch cable |
+| 1/4" TRS | 1/4" TRS | stereo | Stereo cable |
+| 1/4" TRS | 1/4" TRS | mono | Balanced mono cable (e.g., expression) |
+| 1/4" TRS | 2x 1/4" TS | stereo | Stereo breakout cable (TRS -> 2x TS) |
+| 2x 1/4" TS | 2x 1/4" TS | stereo | 2x mono patch cables (paired) |
+| 5-pin DIN | 5-pin DIN | — | 5-pin DIN MIDI cable |
+| 3.5mm TRS | 3.5mm TRS | — | 3.5mm TRS MIDI cable |
+| 5-pin DIN | 3.5mm TRS | — | Adapter needed (see warnings) |
+| 2.1mm barrel | 2.1mm barrel | — | DC power cable |
+
+Key rules:
+- **Both connector types AND signal mode are needed** to determine the cable. Two TRS jacks could mean stereo audio, balanced mono, or expression depending on context.
+- **Stereo connections between TS jacks** are actually two separate mono cables (paired by `stereoPairConnectionId`).
+- **TRS-to-2xTS breakout cables** are a single cable entity on the shopping list even though they serve a stereo pair of connections.
+- When the derivation is ambiguous, show an info message asking the user to confirm the cable type.
+
+### 6.6 Adapter UX Flow
 
 When a connector mismatch is detected on any connection:
 1. Warning appears on the connection (like existing power warnings)
@@ -387,135 +430,65 @@ When a connector mismatch is detected on any connection:
 
 ## 7. Backend Database Design (Future Cloud Save)
 
-### 7.1 New Tables
+Workbench data is user-specific state that gets loaded whole and saved whole — there's no need to query individual connections or positions at the database level. A JSONB blob approach is simpler and maps directly to the localStorage model.
+
+**Prerequisite:** User accounts (authentication/authorization) must be implemented before cloud save is useful.
+
+### 7.1 Table
 
 ```sql
--- Workbenches
 CREATE TABLE workbenches (
     id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    -- user_id INTEGER NOT NULL REFERENCES users(id),  -- Future: when auth is implemented
     name TEXT NOT NULL,
-    board_product_id INTEGER REFERENCES products(id),
+    data JSONB NOT NULL,              -- Complete workbench state (items, connections, positions, virtual nodes)
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
-    -- Future: user_id INTEGER REFERENCES users(id)
 );
 
--- Items on a workbench
-CREATE TABLE workbench_items (
-    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    workbench_id INTEGER NOT NULL REFERENCES workbenches(id) ON DELETE CASCADE,
-    product_id INTEGER NOT NULL REFERENCES products(id),
-    instance_key TEXT NOT NULL,
-    added_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(workbench_id, instance_key)
-);
-
--- View positions
-CREATE TABLE workbench_view_positions (
-    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    workbench_id INTEGER NOT NULL REFERENCES workbenches(id) ON DELETE CASCADE,
-    instance_key TEXT NOT NULL,
-    view_mode TEXT NOT NULL,
-    x DOUBLE PRECISION NOT NULL,
-    y DOUBLE PRECISION NOT NULL,
-    rotation INTEGER DEFAULT 0,
-    z_index INTEGER DEFAULT 0,
-    UNIQUE(workbench_id, instance_key, view_mode)
-);
-
--- Virtual nodes
-CREATE TABLE workbench_virtual_nodes (
-    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    workbench_id INTEGER NOT NULL REFERENCES workbenches(id) ON DELETE CASCADE,
-    instance_key TEXT NOT NULL,
-    node_type TEXT NOT NULL CHECK(node_type IN (
-        'guitar_input', 'amp_input', 'amp_fx_send', 'amp_fx_return',
-        'secondary_amp_input', 'tuner_output'
-    )),
-    label TEXT NOT NULL,
-    virtual_jack_id INTEGER NOT NULL,
-    connector_type TEXT DEFAULT '1/4" TS',
-    UNIQUE(workbench_id, instance_key)
-);
-
--- Connections (single table with category discriminator)
-CREATE TABLE workbench_connections (
-    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    workbench_id INTEGER NOT NULL REFERENCES workbenches(id) ON DELETE CASCADE,
-    category TEXT NOT NULL CHECK(category IN ('power', 'audio', 'midi', 'control')),
-
-    -- Common fields
-    source_jack_id INTEGER REFERENCES jacks(id),
-    target_jack_id INTEGER REFERENCES jacks(id),
-    source_virtual_jack_id INTEGER,
-    target_virtual_jack_id INTEGER,
-    source_instance_key TEXT NOT NULL,
-    target_instance_key TEXT NOT NULL,
-    acknowledged_warnings TEXT[],
-
-    -- Audio-specific
-    order_index INTEGER,
-    parallel_path_id TEXT,
-    fx_loop_group_id TEXT,
-    signal_mode TEXT CHECK(signal_mode IN ('mono', 'stereo')),
-    stereo_pair_connection_id INTEGER REFERENCES workbench_connections(id),
-
-    -- MIDI-specific
-    chain_index INTEGER,
-    midi_channel INTEGER CHECK(midi_channel BETWEEN 1 AND 16),
-    program_change_number INTEGER CHECK(program_change_number BETWEEN 0 AND 127),
-    cc_assignments JSONB,
-    carries_clock BOOLEAN DEFAULT FALSE,
-    trs_midi_standard TEXT CHECK(trs_midi_standard IN ('TRS-A', 'TRS-B')),
-
-    -- Control-specific
-    control_type TEXT CHECK(control_type IN ('expression', 'aux_switch', 'cv')),
-    controlled_parameter TEXT,
-    range_min DOUBLE PRECISION,
-    range_max DOUBLE PRECISION,
-    trs_polarity TEXT CHECK(trs_polarity IN ('tip-active', 'ring-active')),
-    aux_switch_assignments TEXT[],
-    cv_voltage_range TEXT,
-
-    CHECK (
-        (source_jack_id IS NOT NULL OR source_virtual_jack_id IS NOT NULL)
-        AND (target_jack_id IS NOT NULL OR target_virtual_jack_id IS NOT NULL)
-    )
-);
-
-CREATE INDEX idx_wb_conn_workbench ON workbench_connections(workbench_id);
-CREATE INDEX idx_wb_conn_category ON workbench_connections(category);
+CREATE INDEX idx_workbenches_name ON workbenches(name);
+-- Future: CREATE INDEX idx_workbenches_user ON workbenches(user_id);
 ```
 
-**Rationale for single connections table:** The frontend uses separate arrays for type safety, but the database uses a single table with a category discriminator because: (1) simpler cloud sync (one table to CRUD), (2) the shopping list query can aggregate across all categories without JOINs, (3) category-specific columns are nullable which is fine since they only apply to their category.
+The `data` column stores the entire `Workbench` object from the frontend (minus `id`, `name`, `createdAt`, `updatedAt` which live in the table columns). This includes `items`, `viewPositions`, `viewportStates`, `powerConnections`, `audioConnections`, `midiConnections`, `controlConnections`, and `virtualNodes`.
+
+**Sync protocol:** On save, serialize the current localStorage workbench state to JSON and PUT to `/api/workbenches/{id}`. On load, GET the JSON and hydrate localStorage. Conflict resolution is last-write-wins (sufficient for single-user).
 
 ---
 
 ## 8. Phased Implementation Roadmap
 
-### Phase 1: Audio Connections View
+### Phase 1: Structured Validation Types
+- Create shared `utils/connectionValidation.ts` with `ConnectionWarning`, `ConnectionValidation`, `ValidationSeverity` types
+- Migrate `powerUtils.ts` to use structured warnings (backward-compatible)
+- This gives all subsequent phases a shared validation interface from day one
+- **New files:** `utils/connectionValidation.ts`
+- **Modified files:** `utils/powerUtils.ts`
+
+### Phase 2: Audio Connections View
 - Define `AudioConnection` and `VirtualNode` types
 - Add `audioConnections[]` and `virtualNodes[]` to Workbench
 - Add context CRUD methods (following `addPowerConnection` pattern)
-- Create `utils/audioUtils.ts` with validation
+- Create `utils/audioUtils.ts` with validation (using Phase 1 types)
 - Build `AudioView.tsx` (reuse `CanvasBase`, `ProductCard`, `ConnectionLine`, `PortDot`, `ZoomControls`)
 - Virtual node rendering and management
 - Stereo pair UX
+- Cable routing waypoints on connection lines
 - Enable Audio tab in `ViewNav.tsx`
 - **New files:** `types/connections.ts`, `utils/audioUtils.ts`, `AudioView.tsx`
 - **Modified files:** `WorkbenchContext.tsx`, `ViewNav.tsx`, `Workbench/index.tsx`
 
-### Phase 2: MIDI Connections View
+### Phase 3: MIDI Connections View
 - Define `MidiConnection` type
 - Add `midiConnections[]` to Workbench + context methods
 - Create `utils/midiUtils.ts`
-- Build `MidiView.tsx` with chain visualization and channel assignment UI
+- Build `MidiView.tsx` with chain visualization
 - TRS-A/TRS-B detection
 - Enable MIDI tab
 - **New files:** `utils/midiUtils.ts`, `MidiView.tsx`
 - **Modified files:** `WorkbenchContext.tsx`, `ViewNav.tsx`, `Workbench/index.tsx`
 
-### Phase 3: Control Connections View
+### Phase 4: Control Connections View
 - Define `ControlConnection` type
 - Add `controlConnections[]` to Workbench + context methods
 - Create `utils/controlUtils.ts`
@@ -525,27 +498,23 @@ CREATE INDEX idx_wb_conn_category ON workbench_connections(category);
 - **New files:** `utils/controlUtils.ts`, `ControlView.tsx`
 - **Modified files:** `WorkbenchContext.tsx`, `ViewNav.tsx`, `Workbench/index.tsx`
 
-### Phase 4: Shopping List
+### Phase 5: Unified Shopping List
 - Create `utils/shoppingListUtils.ts` with `computeShoppingList()` function
-- Cable length estimation from layout positions
-- Create `ShoppingListSection.tsx` component
-- Integrate into List tab as collapsible section
+- Cable type derivation logic (section 6.5)
+- Cable length estimation from layout waypoints
+- Integrate cables/adapters as rows in the List tab table alongside products
+- "Have" checkbox, price column, totals row
 - User override for cable lengths
 - CSV export
-- **New files:** `utils/shoppingListUtils.ts`, `ShoppingListSection.tsx`
+- Wire `adapterImplication` flow from validation warnings -> shopping list
+- **New files:** `utils/shoppingListUtils.ts`
 - **Modified files:** List tab view component
 
-### Phase 5: Structured Validation Refactor
-- Create shared `utils/connectionValidation.ts` with `ConnectionWarning` types
-- Migrate `powerUtils.ts` to structured warnings
-- Align all four category validators to same interface
-- Wire `adapterImplication` flow from warnings -> shopping list
-
-### Phase 6: Backend Database Tables (deferred until cloud save is needed)
-- Write migration SQL in `data/migrations/`
-- Spring Boot entities, repositories, DTOs, controllers
-- Workbench CRUD API endpoints
-- localStorage <-> server sync protocol
+### Phase 6: Backend Persistence (deferred until user accounts exist)
+- Write migration SQL for `workbenches` table with JSONB `data` column
+- Spring Boot entity, repository, DTO, controller
+- Workbench CRUD API endpoints (GET/PUT)
+- localStorage <-> server sync
 
 ---
 
