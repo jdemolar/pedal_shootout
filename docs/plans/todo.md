@@ -4,7 +4,16 @@
 
 - [ ] Plugs
 
-## 2. Audio / Signal path
+## 2. Connections & Cabling (design: `docs/plans/connections-and-cabling.md`)
+
+- [ ] **Structured validation types** — Shared `ConnectionWarning`/`ConnectionValidation` types; migrate `powerUtils.ts` to use them
+- [ ] **Audio connections view** — Signal chain canvas (right-to-left), virtual nodes, stereo pairs, cable routing waypoints
+- [ ] **MIDI connections view** — Chain/hub topology, channel assignment, TRS-A/B detection
+- [ ] **Control connections view** — Expression, aux switch, CV connections with polarity validation
+- [ ] **Unified shopping list** — Cables/adapters as rows in List tab alongside products, length estimation from waypoints
+- [ ] **Backend persistence** — JSONB workbench storage (deferred until user accounts exist)
+
+## 3. Audio / Signal path
 
 - [ ] **Signal path validator** — Flag mono/stereo mismatches, impedance issues
 
