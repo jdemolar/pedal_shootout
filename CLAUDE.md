@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Git Rules
+
+- **NEVER merge code to main or master.** This applies to Claude and all subagents. Merges to main/master are performed by the user via pull request approval only.
+
 ## Project Overview
 
 Pedal Shootout is a guitar gear database and comparison tool. It consists of:
