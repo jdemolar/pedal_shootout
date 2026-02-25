@@ -79,25 +79,52 @@ describe('validateConnection', () => {
   it('returns error for voltage mismatch', () => {
     const result = validateConnection(baseOutput, { ...baseInput, voltage: '18V' });
     expect(result.status).toBe('error');
-    expect(result.warnings[0]).toMatch(/Voltage mismatch/);
+    expect(result.warnings[0].key).toBe('power:voltage-mismatch');
+    expect(result.warnings[0].severity).toBe('error');
+    expect(result.warnings[0].message).toMatch(/Voltage mismatch/);
   });
 
   it('returns error for current overload', () => {
     const result = validateConnection(baseOutput, baseInput, 600);
     expect(result.status).toBe('error');
-    expect(result.warnings[0]).toMatch(/Current overload/);
+    expect(result.warnings[0].key).toBe('power:current-overload');
+    expect(result.warnings[0].severity).toBe('error');
+    expect(result.warnings[0].message).toMatch(/Current overload/);
   });
 
   it('returns warning for polarity mismatch', () => {
     const result = validateConnection(baseOutput, { ...baseInput, polarity: 'Center Positive' });
     expect(result.status).toBe('warning');
-    expect(result.warnings[0]).toMatch(/Polarity mismatch/);
+    expect(result.warnings[0].key).toBe('power:polarity-mismatch');
+    expect(result.warnings[0].severity).toBe('warning');
+    expect(result.warnings[0].message).toMatch(/Polarity mismatch/);
+    expect(result.warnings[0].adapterImplication).toMatchObject({
+      fromConnectorType: '2.1mm barrel',
+      toConnectorType: '2.1mm barrel',
+      description: expect.stringMatching(/reversal/i),
+    });
   });
 
   it('returns warning for connector mismatch', () => {
     const result = validateConnection(baseOutput, { ...baseInput, connector_type: '2.5mm barrel' });
     expect(result.status).toBe('warning');
-    expect(result.warnings[0]).toMatch(/Connector mismatch/);
+    expect(result.warnings[0].key).toBe('power:connector-mismatch');
+    expect(result.warnings[0].severity).toBe('warning');
+    expect(result.warnings[0].message).toMatch(/Connector mismatch/);
+    expect(result.warnings[0].adapterImplication).toMatchObject({
+      fromConnectorType: '2.1mm barrel',
+      toConnectorType: '2.5mm barrel',
+    });
+  });
+
+  it('returns info notice for adjustable voltage supply', () => {
+    const adjustableOutput = { ...baseOutput, voltage: '9V/12V/18V' };
+    const result = validateConnection(adjustableOutput, baseInput);
+    expect(result.status).toBe('warning');
+    expect(result.warnings[0].key).toBe('power:adjustable-voltage');
+    expect(result.warnings[0].severity).toBe('info');
+    expect(result.warnings[0].message).toMatch(/adjustable/);
+    expect(result.warnings[0].adapterImplication).toBeUndefined();
   });
 
   it('handles null values gracefully', () => {
@@ -106,5 +133,6 @@ describe('validateConnection', () => {
       { voltage: null, current_ma: null, polarity: null, connector_type: null },
     );
     expect(result.status).toBe('valid');
+    expect(result.warnings).toHaveLength(0);
   });
 });
