@@ -1,4 +1,5 @@
 import { Line } from 'react-konva';
+import { RouteWaypoint } from '../../types/connections';
 
 const STATUS_COLORS = {
   valid: '#6aaa6a',
@@ -17,6 +18,7 @@ interface ConnectionLineProps {
   acknowledged?: boolean;
   onClick?: () => void;
   selected?: boolean;
+  waypoints?: RouteWaypoint[];
 }
 
 /**
@@ -32,26 +34,37 @@ const ConnectionLine = ({
   acknowledged = false,
   onClick,
   selected = false,
+  waypoints,
 }: ConnectionLineProps) => {
   const color = acknowledged ? ACKNOWLEDGED_COLOR : STATUS_COLORS[status];
   const strokeWidth = selected ? 3 : 2;
 
+  const commonProps = {
+    stroke: color,
+    strokeWidth,
+    dash: acknowledged ? [6, 4] : undefined,
+    hitStrokeWidth: 12,
+    onClick,
+    onTap: onClick,
+    shadowColor: selected ? color : undefined,
+    shadowBlur: selected ? 8 : 0,
+    shadowOpacity: selected ? 0.5 : 0,
+  };
+
+  if (waypoints && waypoints.length > 0) {
+    const pts: number[] = [sourceX, sourceY];
+    for (const wp of waypoints) pts.push(wp.x, wp.y);
+    pts.push(targetX, targetY);
+    return <Line points={pts} {...commonProps} />;
+  }
+
   // Bezier control point offset — curve bows out horizontally
   const dx = Math.abs(targetX - sourceX) * 0.4;
-
   return (
     <Line
       points={[sourceX, sourceY, sourceX + dx, sourceY, targetX - dx, targetY, targetX, targetY]}
-      stroke={color}
-      strokeWidth={strokeWidth}
       bezier
-      dash={acknowledged ? [6, 4] : undefined}
-      hitStrokeWidth={12}
-      onClick={onClick}
-      onTap={onClick}
-      shadowColor={selected ? color : undefined}
-      shadowBlur={selected ? 8 : 0}
-      shadowOpacity={selected ? 0.5 : 0}
+      {...commonProps}
     />
   );
 };

@@ -4,6 +4,7 @@ import WorkbenchTableView, { useWorkbenchProducts, WorkbenchRow } from './Workbe
 import DetailPanel from './DetailPanel';
 import InsightsSidebar from './InsightsSidebar';
 import ViewNav, { ViewMode } from './ViewNav';
+import AudioView from './AudioView';
 import LayoutView from './LayoutView';
 import PowerView from './PowerView';
 import './index.scss';
@@ -104,6 +105,13 @@ const Workbench = () => {
         return (
           <div className="workbench__content workbench__content--canvas">
             <LayoutView rows={rows} />
+          </div>
+        );
+
+      case 'audio':
+        return (
+          <div className="workbench__content workbench__content--canvas">
+            <AudioView rows={rows} />
           </div>
         );
 

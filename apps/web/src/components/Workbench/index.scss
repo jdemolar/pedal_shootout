@@ -355,6 +355,104 @@
     }
   }
 
+  // Audio view — missing items notice
+  &__audio-missing {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(20, 16, 10, 0.92);
+    border: 1px solid #4a3a20;
+    border-radius: 5px;
+    padding: 7px 14px;
+    z-index: 10;
+    max-width: 420px;
+    font-size: 11px;
+    font-family: monospace;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  &__audio-missing-title {
+    color: #d4a55a;
+  }
+
+  &__audio-missing-list {
+    margin: 4px 0 0;
+    padding-left: 16px;
+    list-style: disc;
+    color: #888;
+    font-size: 10px;
+  }
+
+  // Audio view — add placeholder / add node dropdown menus
+  &__audio-menu {
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 0;
+    min-width: 200px;
+    background: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 5px;
+    z-index: 20;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  &__audio-menu-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 8px 12px;
+    border: none;
+    border-bottom: 1px solid #2a2a2a;
+    background: transparent;
+    color: #ccc;
+    font-family: monospace;
+    font-size: 12px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.1s;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background: #2a2a2a;
+      color: #f0f0f0;
+    }
+  }
+
+  &__audio-menu-desc {
+    font-size: 10px;
+    color: #666;
+    margin-top: 2px;
+  }
+
+  // Audio view — stereo pair prompt
+  &__audio-prompt {
+    background: #1e1e1e;
+    border: 1px solid #3a7070;
+    border-radius: 6px;
+    padding: 10px 14px;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    font-family: monospace;
+    font-size: 12px;
+    transform: translateX(-50%);
+  }
+
+  &__audio-prompt-msg {
+    color: #6adada;
+    margin-right: 4px;
+  }
+
   &__table-wrapper {
     overflow-x: auto;
   }

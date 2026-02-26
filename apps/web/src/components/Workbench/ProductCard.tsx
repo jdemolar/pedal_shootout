@@ -23,6 +23,7 @@ interface ProductCardProps {
   y: number;
   onDragEnd: (x: number, y: number) => void;
   onClick?: () => void;
+  onDblClick?: () => void;
   selected?: boolean;
   children?: ReactNode;
   /** Override card width (e.g., proportional sizing in Layout view) */
@@ -45,6 +46,7 @@ const ProductCard = ({
   y,
   onDragEnd,
   onClick,
+  onDblClick,
   selected = false,
   children,
   cardWidth,
@@ -65,6 +67,8 @@ const ProductCard = ({
       }}
       onClick={onClick}
       onTap={onClick}
+      onDblClick={onDblClick}
+      onDblTap={onDblClick}
     >
       {/* Inner group for center-pivot rotation. Translates to center, rotates, then offsets back. */}
       <Group
