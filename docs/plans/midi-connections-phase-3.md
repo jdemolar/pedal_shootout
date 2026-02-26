@@ -173,12 +173,15 @@ Since `trsMidiStandard` isn't a column on the `jacks` table yet (no per-jack TRS
 
 ### Canvas layout
 
-- **Flow direction:** top-to-bottom — MIDI signal flows from controller down/out to connected devices, then chains further down. MIDI controllers render at **bottom center**; connected devices above arranged by chain depth.
+- **Flow direction:** bottom-to-top — MIDI signal flows from controller upward to connected devices, then chains further up. MIDI controllers render at **bottom center**; connected devices above arranged by chain depth.
 - **Port positions:**
-  - MIDI output port: bottom edge of card — `y ≈ CARD_HEIGHT - 4`
-  - MIDI input port: top edge of card — `y ≈ 4`
-  - Both ports centered horizontally on the card: `x = CARD_WIDTH / 2`
-- **Port spacing:** N/A — MIDI devices typically have at most one in + one out + one thru. All ports render at the horizontal center. If multiple ports exist (e.g., a thru alongside an out), offset them horizontally by ±16px.
+  - MIDI output ports: top edge of card — `y ≈ 4` (signal exits upward toward connected devices)
+  - MIDI input ports: bottom edge of card — `y ≈ CARD_HEIGHT - 4` (signal enters from below, from the controller)
+- **Port spacing:** Multiple ports of the same direction (e.g., a MIDI hub with 4 outputs like the Disaster Area MIDI Box 4) are spaced evenly across the card's top or bottom edge with a fixed horizontal margin:
+  - Single port: centered at `x = CARD_WIDTH / 2`
+  - Multiple ports: `x = MIDI_PORT_MARGIN + i * (effectiveWidth - 2 * MIDI_PORT_MARGIN) / (portCount - 1)` where `MIDI_PORT_MARGIN = 8`
+  - If `portCount > 3`, the card width is extended proportionally so ports don't crowd: `midiCardWidth(portCount) = Math.max(CARD_WIDTH, portCount * 28 + 2 * MIDI_PORT_MARGIN)`
+  - Port width expansion is analogous to AudioView's `audioCardHeight()` height expansion for many audio ports
 
 ### Default positions (first render)
 
