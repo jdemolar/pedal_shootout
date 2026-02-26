@@ -47,7 +47,8 @@
       "Bash(docker-compose exec:*)",
       "Bash(docker exec:*)",
       "Bash(git checkout:*)",
-      "Bash(gh api:*)"
+      "Bash(gh api:*)",
+      "Bash(grep:*)"
     ],
     "deny": [
       "Bash(sudo *)",
