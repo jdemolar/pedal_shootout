@@ -147,7 +147,7 @@ const ADDITIONAL_NODE_PRESETS: Array<{
   virtualJackId: (n: number) => string;
   connectorType: string;
 }> = [
-  { label: 'Second Amp',    nodeType: 'secondary_amp_input', virtualJackId: (n) => `virtual-jack:amp2-in-${n}`,    connectorType: '1/4" TS' },
+  { label: 'Amp',           nodeType: 'secondary_amp_input', virtualJackId: (n) => `virtual-jack:amp2-in-${n}`,    connectorType: '1/4" TS' },
   { label: 'FRFR / Speaker', nodeType: 'frfr_input',          virtualJackId: (n) => `virtual-jack:frfr-in-${n}`,   connectorType: '1/4" TS' },
   { label: 'Direct Out (FOH)', nodeType: 'direct_output',     virtualJackId: (n) => `virtual-jack:direct-out-${n}`, connectorType: 'XLR' },
   { label: 'Tuner Out',     nodeType: 'tuner_output',         virtualJackId: (n) => `virtual-jack:tuner-out-${n}`,  connectorType: '1/4" TS' },
@@ -314,10 +314,9 @@ const AudioView = ({ rows }: AudioViewProps) => {
       const pos = getPosition(entry.placeholder.instanceId, entry.defaultX, entry.defaultY);
       const outputs = entry.placeholder.jacks.filter(j => j.direction === 'output');
       const inputs  = entry.placeholder.jacks.filter(j => j.direction === 'input');
-      const cardH = audioCardHeight(inputs.length, outputs.length);
       outputs.forEach((jack, i) => map.set(portKey(entry.placeholder.instanceId, jack.virtualJackId), {
         x: pos.x + 2,
-        y: pos.y + Math.max(0, cardH - CARD_HEIGHT) + AUDIO_PORT_START_Y - Math.max(0, cardH - CARD_HEIGHT) + AUDIO_PORT_START_Y - (AUDIO_PORT_START_Y - (CARD_HEIGHT - 4)) + i * PORT_SPACING,
+        y: pos.y + AUDIO_PORT_START_Y + i * PORT_SPACING,
       }));
       inputs.forEach((jack, i) => map.set(portKey(entry.placeholder.instanceId, jack.virtualJackId), {
         x: pos.x + CARD_WIDTH - 2,
@@ -413,13 +412,25 @@ const AudioView = ({ rows }: AudioViewProps) => {
       const sourceInstanceId = direction === 'input' ? pendingSource.instanceId : instanceId;
       const targetInstanceId = direction === 'input' ? instanceId : pendingSource.instanceId;
 
-      // Check stereo: both jacks must be real jacks with a stereo partner
+      // Check stereo: real jacks with a stereo partner, or placeholder jacks with a group_id partner
       const srcJack = typeof sourceJackId === 'number' ? jackMap.get(sourceJackId) : null;
       const tgtJack = typeof targetJackId === 'number' ? jackMap.get(targetJackId) : null;
       const srcRow = rowMap.get(sourceInstanceId);
       const tgtRow = rowMap.get(targetInstanceId);
-      const srcHasStereo = srcJack && srcRow && srcJack.group_id !== null && !!getStereoPartner(srcJack, srcRow.jacks);
-      const tgtHasStereo = tgtJack && tgtRow && tgtJack.group_id !== null && !!getStereoPartner(tgtJack, tgtRow.jacks);
+      const placeholderHasStereoPartner = (id: number | string, instanceId: string): boolean => {
+        if (typeof id !== 'string') return false;
+        const p = placeholders.find(pl => pl.instanceId === instanceId);
+        if (!p) return false;
+        const spec = p.jacks.find(j => j.virtualJackId === id);
+        if (!spec || !spec.group_id) return false;
+        return p.jacks.some(j => j.virtualJackId !== id && j.group_id === spec.group_id);
+      };
+      const srcHasStereo =
+        (srcJack && srcRow && srcJack.group_id !== null && !!getStereoPartner(srcJack, srcRow.jacks)) ||
+        placeholderHasStereoPartner(sourceJackId, sourceInstanceId);
+      const tgtHasStereo =
+        (tgtJack && tgtRow && tgtJack.group_id !== null && !!getStereoPartner(tgtJack, tgtRow.jacks)) ||
+        placeholderHasStereoPartner(targetJackId, targetInstanceId);
 
       if (srcHasStereo && tgtHasStereo) {
         const srcPos = portPositions.get(portKey(sourceInstanceId, sourceJackId));
@@ -435,7 +446,7 @@ const AudioView = ({ rows }: AudioViewProps) => {
         setMousePos(null);
       }
     }
-  }, [pendingSource, jackMap, rowMap, portPositions, viewport]);
+  }, [pendingSource, jackMap, rowMap, portPositions, viewport, placeholders]);
 
   const createConnection = useCallback((
     sourceJackId: number | string, sourceInstanceId: string,
@@ -463,15 +474,28 @@ const AudioView = ({ rows }: AudioViewProps) => {
       const srcPartner = srcJack && srcRow ? getStereoPartner(srcJack, srcRow.jacks) : undefined;
       const tgtPartner = tgtJack && tgtRow ? getStereoPartner(tgtJack, tgtRow.jacks) : undefined;
 
+      const findPlaceholderPartner = (id: number | string, instanceId: string): VirtualJackSpec | undefined => {
+        if (typeof id !== 'string') return undefined;
+        const p = placeholders.find(pl => pl.instanceId === instanceId);
+        if (!p) return undefined;
+        const spec = p.jacks.find(j => j.virtualJackId === id);
+        if (!spec || !spec.group_id) return undefined;
+        return p.jacks.find(j => j.virtualJackId !== id && j.group_id === spec.group_id);
+      };
+      const srcPlaceholderPartner = findPlaceholderPartner(sourceJackId, sourceInstanceId);
+      const tgtPlaceholderPartner = findPlaceholderPartner(targetJackId, targetInstanceId);
+
       createConnection(sourceJackId, sourceInstanceId, targetJackId, targetInstanceId, 'stereo', null);
       if (srcPartner && tgtPartner) {
         createConnection(srcPartner.id, sourceInstanceId, tgtPartner.id, targetInstanceId, 'stereo', null);
+      } else if (srcPlaceholderPartner && tgtPlaceholderPartner) {
+        createConnection(srcPlaceholderPartner.virtualJackId, sourceInstanceId, tgtPlaceholderPartner.virtualJackId, targetInstanceId, 'stereo', null);
       }
     } else {
       createConnection(sourceJackId, sourceInstanceId, targetJackId, targetInstanceId, 'mono', null);
     }
     setStereoPrompt(null);
-  }, [stereoPrompt, jackMap, rowMap, createConnection]);
+  }, [stereoPrompt, jackMap, rowMap, placeholders, createConnection]);
 
   const handleStageMouseMove = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
     if (!pendingSource) return;
@@ -711,6 +735,7 @@ const AudioView = ({ rows }: AudioViewProps) => {
               selected={isSelected}
               onDragEnd={(x, y) => handleDragEnd(placeholder.instanceId, x, y)}
               onClick={() => setSelectedInstanceId(placeholder.instanceId)}
+              onDblClick={() => { setEditingId(placeholder.instanceId); setEditingLabel(placeholder.label); }}
             >
               {outputs.map((jack, i) => {
                 const key = portKey(placeholder.instanceId, jack.virtualJackId);
