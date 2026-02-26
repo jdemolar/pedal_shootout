@@ -6,8 +6,13 @@
 
 ## 2. Connections & Cabling (design: `docs/plans/connections-and-cabling.md`)
 
-- [ ] **Structured validation types** — Shared `ConnectionWarning`/`ConnectionValidation` types; migrate `powerUtils.ts` to use them
-- [ ] **Audio connections view** — Signal chain canvas (right-to-left), virtual nodes, stereo pairs, cable routing waypoints
+- [x] **Structured validation types** — Shared `ConnectionWarning`/`ConnectionValidation` types; migrate `powerUtils.ts` to use them (plan: `docs/plans/completed/connections-phase-1-validation-types.md`)
+- [ ] **Audio connections view** — Signal chain schematic (right-to-left), virtual nodes, stereo pairs, per-item missing-data warnings, placeholder items with configurable jack configs
+  - Fix: port labels (In/Out) overlap with manufacturer/model text on cards — move labels outside the card or adjust port Y offset
+  - Add: per-item warning when a workbench item has no audio jacks, listing which products are absent from the view
+  - Add: placeholder items — generic devices users can add to the audio view with a chosen jack configuration (e.g. "Stereo pedal: 2× TS in, 2× TS out") for planning before all gear is entered
+  - Add: additional virtual node types — second/third amp, FRFR speaker, FOH, tuner out, etc.
+- [ ] **Cable routing waypoints** — Hideable cable-path layer over the Layout view (not the Audio schematic view). Full context and existing infrastructure documented in `docs/plans/audio-cable-routing-waypoints.md`. Requires: jack position data per enclosure, port dot placement in Layout view accounting for card rotation, waypoint add/move/remove UI (logic already written — see closed PR #52), length estimation feeding into shopping list.
 - [ ] **MIDI connections view** — Chain/hub topology, channel assignment, TRS-A/B detection
 - [ ] **Control connections view** — Expression, aux switch, CV connections with polarity validation
 - [ ] **Unified shopping list** — Cables/adapters as rows in List tab alongside products, length estimation from waypoints
