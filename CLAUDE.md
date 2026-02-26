@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Git Rules
 
 - **NEVER merge code to main or master.** This applies to Claude and all subagents. Merges to main/master are performed by the user via pull request approval only.
+- **Alert before committing on main.** If the current branch is main or master and the user asks for changes, warn them before proceeding. The warning must be in ALL CAPS to draw attention. Direct commits to main are only allowed with explicit user approval for that specific commit (e.g. updating docs or todo files). When in doubt, create a branch.
 
 ## Project Overview
 
