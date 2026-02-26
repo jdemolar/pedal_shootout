@@ -52,7 +52,12 @@ export interface MidiConnection {
   chainIndex: number;                          // Position in daisy chain (0 = first from controller)
   midiChannel: number | null;                  // 1–16, null = omni
   carriesClock: boolean;                       // Whether this connection routes MIDI clock
-  trsMidiStandard: 'TRS-A' | 'TRS-B' | null;  // Only for 3.5mm TRS connectors; null = unknown
+  trsMidiStandard: 'TRS-A' | 'TRS-B' | 'tip-active' | 'ring-active' | null;
+  // Only relevant for 3.5mm TRS connectors. null = unknown.
+  // TRS-A (Type A): tip → MIDI sink, ring → MIDI source. Boss, EAE, Jackson, Korg.
+  // TRS-B (Type B): ring → MIDI sink, tip → MIDI source. Darkglass, 1010music, many modular.
+  // tip-active: voltage mode, tip carries signal. Strymon, Meris, Empress, Bondi, Alexander.
+  // ring-active: voltage mode, ring carries signal. Chase Bliss Audio.
 }
 ```
 
@@ -124,7 +129,8 @@ export function is5PinDinConnector(connectorType: string | null): boolean
 //
 //   midi:circular         → error (adding this would create a cycle in the connection graph)
 //   midi:din-to-trs       → warning + adapterImplication (5-pin DIN ↔ 3.5mm TRS mismatch)
-//   midi:trs-a-trs-b      → warning + adapterImplication (TRS-A ↔ TRS-B mismatch)
+//   midi:trs-standard-mismatch → warning + adapterImplication (any mismatch between the four
+//                                TRS standards: TRS-A, TRS-B, tip-active, ring-active)
 //   midi:clock-conflict   → warning (existingConnections already has carriesClock=true in this chain)
 //   midi:long-chain       → info (chain depth > 4)
 //
@@ -153,11 +159,13 @@ export function getChainDepth(
 ): number
 ```
 
-### TRS-A / TRS-B logic
+### TRS standard mismatch logic
 
-`trsMidiStandard` on the connection is set by the user via the channel badge after creation. During validation, if both source and target jacks are TRS MIDI connectors, the rule `midi:trs-a-trs-b` fires only when the connection already has a standard set on both sides and they differ. If either is null (unknown), fire `midi:trs-unknown` info instead.
+`trsMidiStandard` is set by the user on each connection via the channel badge after creation. During validation, if both source and target jacks are TRS MIDI connectors, `midi:trs-standard-mismatch` fires when the connection has standards set on both ends and they differ. If either is null (unknown), fire `midi:trs-unknown` info instead.
 
-Since `trsMidiStandard` isn't a field on `Jack` in the database yet (the `jacks` table has no TRS standard column), the validation operates on the connection-level setting rather than per-jack data.
+The four standards are incompatible with each other — any non-matching pair (e.g., TRS-A ↔ tip-active, TRS-B ↔ ring-active) should produce the same mismatch warning. The `adapterImplication` description should name the specific adapter needed (e.g., "TRS-A to Tip Active adapter cable").
+
+Since `trsMidiStandard` isn't a column on the `jacks` table yet (no per-jack TRS wiring field in the DB schema), the validation operates on the connection-level setting rather than per-jack data. This can be upgraded later when the schema adds a `trs_midi_standard` column to `jacks`.
 
 ---
 
@@ -225,7 +233,7 @@ When a connection is selected (`selectedConnId`), render an HTML overlay (not Ko
 
 - Channel dropdown: options `['Omni', '1', '2', ... '16']`. Omni maps to `null`.
 - Clock checkbox: maps to `carriesClock`.
-- TRS Standard: hidden unless `isTrsMidiConnector(sourceJack.connector_type) || isTrsMidiConnector(targetJack.connector_type)`. Options: `['Unknown', 'TRS-A', 'TRS-B']`.
+- TRS Standard: hidden unless `isTrsMidiConnector(sourceJack.connector_type) || isTrsMidiConnector(targetJack.connector_type)`. Options: `['Unknown', 'TRS-A', 'TRS-B', 'Tip Active', 'Ring Active']` mapping to `[null, 'TRS-A', 'TRS-B', 'tip-active', 'ring-active']`. Tip Active is used by Strymon, Meris, Empress, Bondi; Ring Active is used by Chase Bliss Audio.
 - All changes call `updateMidiConnection(connId, { midiChannel, carriesClock, trsMidiStandard })`.
 
 Overlay positioning: use the same `viewport.worldToScreen()` transform to convert the connection midpoint world coords to screen coords, then position the overlay div with `position: absolute`.
@@ -337,7 +345,11 @@ case 'midi':
 - `getChainDepth` — returns 1 for a device one hop from the root
 - `validateMidiConnection` — valid returns status 'valid'
 - `validateMidiConnection` — 5-pin DIN to 3.5mm TRS → warning + adapterImplication
-- `validateMidiConnection` — 3.5mm TRS to 3.5mm TRS (same standard or null) → valid
+- `validateMidiConnection` — TRS-A to TRS-B → mismatch warning + adapterImplication
+- `validateMidiConnection` — TRS-A to tip-active → mismatch warning + adapterImplication
+- `validateMidiConnection` — tip-active to ring-active → mismatch warning + adapterImplication
+- `validateMidiConnection` — 3.5mm TRS to 3.5mm TRS (same standard) → valid
+- `validateMidiConnection` — 3.5mm TRS to 3.5mm TRS (either null/unknown) → info only, not warning
 - `validateMidiConnection` — null connector types handled gracefully (no warning)
 - `validateMidiConnection` — circular connection → error
 - `validateMidiConnection` — chain depth > 4 → info warning
