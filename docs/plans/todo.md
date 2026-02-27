@@ -9,7 +9,7 @@
 - [x] **Structured validation types** — Shared `ConnectionWarning`/`ConnectionValidation` types; migrate `powerUtils.ts` to use them (plan: `docs/plans/completed/connections-phase-1-validation-types.md`)
 - [x] **Audio connections view** — Signal chain schematic (right-to-left), virtual nodes, stereo pairs, per-item missing-data warnings, placeholder items with configurable jack configs (plan: `docs/plans/completed/audio-connections-phase-2-revised.md`)
 - [ ] **Cable routing waypoints** — Hideable cable-path layer over the Layout view (not the Audio schematic view). Full context and existing infrastructure documented in `docs/plans/audio-cable-routing-waypoints.md`. Requires: jack position data per enclosure, port dot placement in Layout view accounting for card rotation, waypoint add/move/remove UI (logic already written — see closed PR #52), length estimation feeding into shopping list.
-- [ ] **MIDI connections view** — Chain/hub topology, channel assignment, TRS standard detection (TRS-A, TRS-B, Tip Active, Ring Active) (plan: `docs/plans/midi-connections-phase-3.md`)
+- [x] **MIDI connections view** — Chain/hub topology, channel assignment, TRS standard detection (TRS-A, TRS-B, Tip Active, Ring Active) (plan: `docs/plans/completed/midi-connections-phase-3.md`)
 - [ ] **Control connections view** — Expression, aux switch, CV connections with polarity validation
 - [ ] **Unified shopping list** — Cables/adapters as rows in List tab alongside products, length estimation from waypoints
 - [ ] **Backend persistence** — JSONB workbench storage (deferred until user accounts exist)

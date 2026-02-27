@@ -48,7 +48,6 @@ export interface AudioPlaceholder {
   jacks: VirtualJackSpec[];
 }
 
-// Stubs for Phases 3–4 (defined but unused until MIDI/Control views)
 export interface MidiConnection {
   id: string;
   sourceJackId: number;
@@ -56,9 +55,20 @@ export interface MidiConnection {
   sourceInstanceId: string;
   targetInstanceId: string;
   acknowledgedWarnings?: string[];
-  midiChannel: number | null;
-  routesMidiClock: boolean;
+
+  // MIDI-specific
+  chainIndex: number;                          // Position in daisy chain (0 = first from controller)
+  midiChannel: number | null;                  // 1–16, null = omni
+  carriesClock: boolean;                       // Whether this connection routes MIDI clock
+  trsMidiStandard: 'TRS-A' | 'TRS-B' | 'tip-active' | 'ring-active' | null;
+  // Only relevant for 3.5mm TRS connectors. null = unknown.
+  // TRS-A (Type A): Boss, EAE, Jackson, Korg.
+  // TRS-B (Type B): Darkglass, 1010music, many modular.
+  // tip-active: voltage mode. Strymon, Meris, Empress, Bondi, Alexander.
+  // ring-active: voltage mode. Chase Bliss Audio.
 }
+
+// Stub for Phase 4 (defined but unused until Control view)
 
 export interface ControlConnection {
   id: string;

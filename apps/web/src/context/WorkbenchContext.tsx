@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
-import { AudioConnection, VirtualNode, AudioPlaceholder, RouteWaypoint } from '../types/connections';
+import { AudioConnection, MidiConnection, VirtualNode, AudioPlaceholder, RouteWaypoint } from '../types/connections';
 
 // --- Types ---
 
@@ -57,6 +57,7 @@ export interface Workbench {
   viewPositions?: ViewPositions;
   powerConnections?: PowerConnection[];
   audioConnections?: AudioConnection[];
+  midiConnections?: MidiConnection[];
   virtualNodes?: VirtualNode[];
   audioPlaceholders?: AudioPlaceholder[];
   viewportStates?: ViewportStates;
@@ -109,6 +110,13 @@ interface WorkbenchContextType {
   addVirtualNode: (node: VirtualNode) => void;
   removeVirtualNode: (instanceId: string) => void;
   setVirtualNodes: (nodes: VirtualNode[]) => void;
+
+  // MIDI connections
+  addMidiConnection: (conn: Omit<MidiConnection, 'id'>) => void;
+  removeMidiConnection: (connId: string) => void;
+  setMidiConnections: (conns: MidiConnection[]) => void;
+  acknowledgeMidiWarning: (connId: string, warningKey: string) => void;
+  updateMidiConnection: (connId: string, updates: Partial<Pick<MidiConnection, 'midiChannel' | 'carriesClock' | 'trsMidiStandard'>>) => void;
 
   // Audio placeholders
   addAudioPlaceholder: (placeholder: AudioPlaceholder) => void;
@@ -433,6 +441,54 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
     })));
   }, [updateStore]);
 
+  // --- MIDI connections ---
+
+  const addMidiConnection = useCallback((conn: Omit<MidiConnection, 'id'>) => {
+    updateStore(prev => updateActiveWorkbench(prev, wb => ({
+      ...wb,
+      midiConnections: [...(wb.midiConnections || []), { ...conn, id: generateId() }],
+      updatedAt: new Date().toISOString(),
+    })));
+  }, [updateStore]);
+
+  const removeMidiConnection = useCallback((connId: string) => {
+    updateStore(prev => updateActiveWorkbench(prev, wb => ({
+      ...wb,
+      midiConnections: (wb.midiConnections || []).filter(c => c.id !== connId),
+      updatedAt: new Date().toISOString(),
+    })));
+  }, [updateStore]);
+
+  const setMidiConnections = useCallback((conns: MidiConnection[]) => {
+    updateStore(prev => updateActiveWorkbench(prev, wb => ({
+      ...wb,
+      midiConnections: conns,
+      updatedAt: new Date().toISOString(),
+    })));
+  }, [updateStore]);
+
+  const acknowledgeMidiWarning = useCallback((connId: string, warningKey: string) => {
+    updateStore(prev => updateActiveWorkbench(prev, wb => ({
+      ...wb,
+      midiConnections: (wb.midiConnections || []).map(c =>
+        c.id === connId
+          ? { ...c, acknowledgedWarnings: [...(c.acknowledgedWarnings || []), warningKey] }
+          : c,
+      ),
+      updatedAt: new Date().toISOString(),
+    })));
+  }, [updateStore]);
+
+  const updateMidiConnection = useCallback((connId: string, updates: Partial<Pick<MidiConnection, 'midiChannel' | 'carriesClock' | 'trsMidiStandard'>>) => {
+    updateStore(prev => updateActiveWorkbench(prev, wb => ({
+      ...wb,
+      midiConnections: (wb.midiConnections || []).map(c =>
+        c.id === connId ? { ...c, ...updates } : c,
+      ),
+      updatedAt: new Date().toISOString(),
+    })));
+  }, [updateStore]);
+
   // --- Virtual nodes ---
 
   const addVirtualNode = useCallback((node: VirtualNode) => {
@@ -519,6 +575,11 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
       setAudioConnections,
       acknowledgeAudioWarning,
       updateAudioConnectionWaypoints,
+      addMidiConnection,
+      removeMidiConnection,
+      setMidiConnections,
+      acknowledgeMidiWarning,
+      updateMidiConnection,
       addVirtualNode,
       removeVirtualNode,
       setVirtualNodes,
@@ -527,7 +588,7 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
       updateAudioPlaceholderLabel,
       totalItemCount,
     }),
-    [store.workbenches, activeWorkbench, createWorkbench, renameWorkbench, deleteWorkbench, setActiveWorkbench, addItem, removeItem, removeAllInstances, countInWorkbench, clear, updateViewPosition, updateCardTransform, getViewPositions, getViewportState, updateViewportState, addPowerConnection, removePowerConnection, setPowerConnections, acknowledgeWarning, addAudioConnection, removeAudioConnection, setAudioConnections, acknowledgeAudioWarning, updateAudioConnectionWaypoints, addVirtualNode, removeVirtualNode, setVirtualNodes, addAudioPlaceholder, removeAudioPlaceholder, updateAudioPlaceholderLabel, totalItemCount],
+    [store.workbenches, activeWorkbench, createWorkbench, renameWorkbench, deleteWorkbench, setActiveWorkbench, addItem, removeItem, removeAllInstances, countInWorkbench, clear, updateViewPosition, updateCardTransform, getViewPositions, getViewportState, updateViewportState, addPowerConnection, removePowerConnection, setPowerConnections, acknowledgeWarning, addAudioConnection, removeAudioConnection, setAudioConnections, acknowledgeAudioWarning, updateAudioConnectionWaypoints, addMidiConnection, removeMidiConnection, setMidiConnections, acknowledgeMidiWarning, updateMidiConnection, addVirtualNode, removeVirtualNode, setVirtualNodes, addAudioPlaceholder, removeAudioPlaceholder, updateAudioPlaceholderLabel, totalItemCount],
   );
 
   return (

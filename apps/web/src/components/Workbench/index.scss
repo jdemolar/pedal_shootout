@@ -453,6 +453,41 @@
     margin-right: 4px;
   }
 
+  &__midi-badge {
+    position: absolute;
+    background: #1e2a2e;
+    border: 1px solid #2a4a52;
+    border-radius: 6px;
+    padding: 8px 12px;
+    min-width: 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 20;
+    color: #c0d8e0;
+    font-size: 12px;
+  }
+
+  &__midi-badge-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__midi-badge-label {
+    color: #888;
+    white-space: nowrap;
+  }
+
+  &__midi-badge select {
+    background: #111;
+    border: 1px solid #334;
+    color: #c0d8e0;
+    border-radius: 3px;
+    padding: 2px 4px;
+    font-size: 11px;
+  }
+
   &__table-wrapper {
     overflow-x: auto;
   }
