@@ -149,13 +149,27 @@ export function validateMidiConnection(
     });
   }
 
-  // Long chain warning (info when depth > 4)
-  const depth = getChainDepth(sourceInstanceId, existingConnections) + 1;
-  if (depth > 4) {
+  // Long chain warning (info when total chain depth > 4)
+  const backDepth = getChainDepth(sourceInstanceId, existingConnections) + 1;
+  // Walk forward from target to find remaining chain length
+  let forwardDepth = 0;
+  {
+    const visited = new Set<string>();
+    let current = targetInstanceId;
+    while (true) {
+      visited.add(current);
+      const outgoing = existingConnections.find(c => c.sourceInstanceId === current);
+      if (!outgoing || visited.has(outgoing.targetInstanceId)) break;
+      forwardDepth++;
+      current = outgoing.targetInstanceId;
+    }
+  }
+  const totalChainDepth = backDepth + forwardDepth;
+  if (totalChainDepth > 4) {
     warnings.push({
       key: 'midi:long-chain',
       severity: 'info',
-      message: `MIDI chain depth is ${depth}. Consider a MIDI thru box for chains longer than 4 devices.`,
+      message: `Total MIDI chain depth is ${totalChainDepth}. Consider a MIDI thru box for chains longer than 4 devices.`,
     });
   }
 
