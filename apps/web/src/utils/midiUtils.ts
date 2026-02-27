@@ -160,7 +160,7 @@ export function validateMidiConnection(
   }
 
   const hasError = warnings.some(w => w.severity === 'error');
-  const hasWarning = warnings.some(w => w.severity === 'warning');
+  const hasWarning = warnings.some(w => w.severity === 'warning' || w.severity === 'info');
 
   return {
     status: hasError ? 'error' : hasWarning ? 'warning' : 'valid',
