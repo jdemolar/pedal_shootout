@@ -88,8 +88,38 @@ export function validateMidiConnection(
   existingConnections: MidiConnection[],
   sourceInstanceId: string,
   targetInstanceId: string,
+  sourceJackId?: number,
+  targetJackId?: number,
 ): ConnectionValidation {
   const warnings: ConnectionWarning[] = [];
+
+  // Shared output jack — MIDI can't be passively split (warning)
+  if (sourceJackId != null) {
+    const otherFromSame = existingConnections.filter(
+      c => c.sourceJackId === sourceJackId && c.sourceInstanceId === sourceInstanceId,
+    );
+    if (otherFromSame.length > 0) {
+      warnings.push({
+        key: 'midi:shared-output',
+        severity: 'warning',
+        message: 'This MIDI output already has a connection. MIDI signals cannot be passively split — a MIDI thru box or splitter is needed.',
+      });
+    }
+  }
+
+  // Shared input jack — only one source can drive a MIDI input (warning)
+  if (targetJackId != null) {
+    const otherToSame = existingConnections.filter(
+      c => c.targetJackId === targetJackId && c.targetInstanceId === targetInstanceId,
+    );
+    if (otherToSame.length > 0) {
+      warnings.push({
+        key: 'midi:shared-input',
+        severity: 'warning',
+        message: 'This MIDI input already has a connection. Only one source can drive a MIDI input.',
+      });
+    }
+  }
 
   // Circular connection check (error)
   if (wouldCreateMidiCycle(sourceInstanceId, targetInstanceId, existingConnections)) {

@@ -287,6 +287,27 @@ describe('validateMidiConnection', () => {
     expect(result.warnings.find(w => w.key === 'midi:long-chain')!.severity).toBe('info');
   });
 
+  it('returns warning when source jack already has a connection (shared output)', () => {
+    const conns = [makeMidiConn({ sourceJackId: 10, sourceInstanceId: 'inst-a', targetJackId: 20, targetInstanceId: 'inst-b' })];
+    const result = validateMidiConnection(baseSrcJack, baseTgtJack, conns, 'inst-a', 'inst-c', 10, 30);
+    expect(result.warnings.some(w => w.key === 'midi:shared-output')).toBe(true);
+    expect(result.warnings.find(w => w.key === 'midi:shared-output')!.severity).toBe('warning');
+  });
+
+  it('returns warning when target jack already has a connection (shared input)', () => {
+    const conns = [makeMidiConn({ sourceJackId: 10, sourceInstanceId: 'inst-a', targetJackId: 20, targetInstanceId: 'inst-b' })];
+    const result = validateMidiConnection(baseSrcJack, baseTgtJack, conns, 'inst-c', 'inst-b', 30, 20);
+    expect(result.warnings.some(w => w.key === 'midi:shared-input')).toBe(true);
+    expect(result.warnings.find(w => w.key === 'midi:shared-input')!.severity).toBe('warning');
+  });
+
+  it('does not warn for shared jacks when jackIds are not provided', () => {
+    const conns = [makeMidiConn({ sourceJackId: 10, sourceInstanceId: 'inst-a', targetJackId: 20, targetInstanceId: 'inst-b' })];
+    const result = validateMidiConnection(baseSrcJack, baseTgtJack, conns, 'inst-a', 'inst-c');
+    expect(result.warnings.some(w => w.key === 'midi:shared-output')).toBe(false);
+    expect(result.warnings.some(w => w.key === 'midi:shared-input')).toBe(false);
+  });
+
   it('does not warn for chain depth <= 4', () => {
     const conns = [
       makeMidiConn({ id: '1', sourceInstanceId: 'A', targetInstanceId: 'B' }),

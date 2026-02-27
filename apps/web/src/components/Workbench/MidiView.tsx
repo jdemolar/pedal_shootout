@@ -167,6 +167,7 @@ const MidiView = ({ rows }: MidiViewProps) => {
           srcJack, tgtJack,
           connections.filter(c => c.id !== conn.id),
           conn.sourceInstanceId, conn.targetInstanceId,
+          conn.sourceJackId, conn.targetJackId,
         ));
       } else {
         map.set(conn.id, { status: 'valid' as const, warnings: [] });
@@ -224,6 +225,7 @@ const MidiView = ({ rows }: MidiViewProps) => {
         const validation = validateMidiConnection(
           srcJack, tgtJack,
           connections, sourceInstanceId, targetInstanceId,
+          sourceJackId, targetJackId,
         );
 
         if (validation.status !== 'error') {
