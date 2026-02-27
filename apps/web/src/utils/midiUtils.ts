@@ -21,7 +21,7 @@ export function hasMidiJacks(row: { jacks: Jack[] }): boolean {
 export function isTrsMidiConnector(connectorType: string | null): boolean {
   if (!connectorType) return false;
   const lower = connectorType.toLowerCase();
-  return lower.includes('3.5mm') || (lower.includes('trs') && !lower.includes('1/4'));
+  return lower.includes('trs');
 }
 
 export function is5PinDinConnector(connectorType: string | null): boolean {

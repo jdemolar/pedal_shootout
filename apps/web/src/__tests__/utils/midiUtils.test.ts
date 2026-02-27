@@ -131,8 +131,8 @@ describe('isTrsMidiConnector', () => {
     expect(isTrsMidiConnector(null)).toBe(false);
   });
 
-  it('returns false for 1/4" TRS (not midi TRS)', () => {
-    expect(isTrsMidiConnector('1/4" TRS')).toBe(false);
+  it('returns true for 1/4" TRS (used for MIDI on some pedals like GFI System)', () => {
+    expect(isTrsMidiConnector('1/4" TRS')).toBe(true);
   });
 });
 
