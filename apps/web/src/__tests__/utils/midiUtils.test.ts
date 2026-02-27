@@ -266,12 +266,12 @@ describe('validateMidiConnection', () => {
     expect(result.warnings).toHaveLength(0);
   });
 
-  it('returns error for circular connection', () => {
+  it('returns warning for circular connection (MIDI loops are common)', () => {
     const conns = [makeMidiConn({ sourceInstanceId: 'inst-a', targetInstanceId: 'inst-b' })];
     const result = validateMidiConnection(baseSrcJack, baseTgtJack, conns, 'inst-b', 'inst-a');
-    expect(result.status).toBe('error');
+    expect(result.status).toBe('warning');
     expect(result.warnings[0].key).toBe('midi:circular');
-    expect(result.warnings[0].severity).toBe('error');
+    expect(result.warnings[0].severity).toBe('warning');
   });
 
   it('returns info warning for chain depth > 4', () => {

@@ -121,12 +121,12 @@ export function validateMidiConnection(
     }
   }
 
-  // Circular connection check (error)
+  // Circular connection check (warning — MIDI loops are common, e.g. controller→chain→controller input)
   if (wouldCreateMidiCycle(sourceInstanceId, targetInstanceId, existingConnections)) {
     warnings.push({
       key: 'midi:circular',
-      severity: 'error',
-      message: 'This connection would create a circular MIDI path.',
+      severity: 'warning',
+      message: 'This connection creates a circular MIDI path. This is normal for chains that return to a controller input.',
     });
   }
 
