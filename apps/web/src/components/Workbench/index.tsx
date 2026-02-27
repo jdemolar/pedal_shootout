@@ -6,6 +6,7 @@ import InsightsSidebar from './InsightsSidebar';
 import ViewNav, { ViewMode } from './ViewNav';
 import AudioView from './AudioView';
 import LayoutView from './LayoutView';
+import MidiView from './MidiView';
 import PowerView from './PowerView';
 import './index.scss';
 
@@ -112,6 +113,13 @@ const Workbench = () => {
         return (
           <div className="workbench__content workbench__content--canvas">
             <AudioView rows={rows} />
+          </div>
+        );
+
+      case 'midi':
+        return (
+          <div className="workbench__content workbench__content--canvas">
+            <MidiView rows={rows} />
           </div>
         );
 
