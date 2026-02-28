@@ -278,20 +278,37 @@ const MidiView = ({ rows }: MidiViewProps) => {
     }
   }, []);
 
+  // Check if a connection involves TRS MIDI connectors
+  const connHasTrs = useCallback((conn: MidiConnection): boolean => {
+    const srcJack = jackMap.get(conn.sourceJackId);
+    const tgtJack = jackMap.get(conn.targetJackId);
+    return isTrsMidiConnector(srcJack?.connector_type ?? null) || isTrsMidiConnector(tgtJack?.connector_type ?? null);
+  }, [jackMap]);
+
   const handleConnectionClick = useCallback((connId: string) => {
     const validation = connectionValidations.get(connId);
     const conn = connections.find(c => c.id === connId);
-    if (validation && validation.warnings.length > 0 && conn) {
+    const hasWarnings = validation && validation.warnings.length > 0;
+    const hasTrs = conn ? connHasTrs(conn) : false;
+
+    if (conn && (hasWarnings || hasTrs)) {
       const srcPos = portPositions.get(portKey(conn.sourceInstanceId, conn.sourceJackId));
       const tgtPos = portPositions.get(portKey(conn.targetInstanceId, conn.targetJackId));
       if (srcPos && tgtPos) {
-        setWarningPopover({ connId, warnings: validation.warnings, x: (srcPos.x + tgtPos.x) / 2, y: (srcPos.y + tgtPos.y) / 2 - 30 });
+        setWarningPopover({
+          connId,
+          warnings: validation?.warnings ?? [],
+          x: (srcPos.x + tgtPos.x) / 2,
+          y: (srcPos.y + tgtPos.y) / 2 - 30,
+        });
       }
+    } else {
+      setWarningPopover(null);
     }
     setSelectedConnectionId(connId);
     setPendingSource(null);
     setEditingDeviceId(null);
-  }, [connectionValidations, connections, portPositions]);
+  }, [connectionValidations, connections, portPositions, connHasTrs]);
 
   const handleCardDoubleClick = useCallback((instanceId: string) => {
     setEditingDeviceId(prev => prev === instanceId ? null : instanceId);
@@ -336,13 +353,6 @@ const MidiView = ({ rows }: MidiViewProps) => {
   }, [midiRows, getDefaultPosition, getPosition, cardWidths, viewport, stageDims]);
 
   const pendingSourcePos = pendingSource ? portPositions.get(pendingSource.compositeKey) : null;
-
-  // Check if a connection involves TRS MIDI connectors
-  const connHasTrs = useCallback((conn: MidiConnection): boolean => {
-    const srcJack = jackMap.get(conn.sourceJackId);
-    const tgtJack = jackMap.get(conn.targetJackId);
-    return isTrsMidiConnector(srcJack?.connector_type ?? null) || isTrsMidiConnector(tgtJack?.connector_type ?? null);
-  }, [jackMap]);
 
   if (rows.length === 0) {
     return <div className="workbench__canvas-placeholder">Your workbench is empty. Add products from the catalog views.</div>;
@@ -580,23 +590,59 @@ const MidiView = ({ rows }: MidiViewProps) => {
         );
       })()}
 
-      {/* Connection badge (simplified — TRS standard + delete only) */}
+      {/* Floating delete button for selected connection */}
       {selectedConnectionId && (() => {
         const conn = connections.find(c => c.id === selectedConnectionId);
         if (!conn) return null;
         const srcPos = portPositions.get(portKey(conn.sourceInstanceId, conn.sourceJackId));
         const tgtPos = portPositions.get(portKey(conn.targetInstanceId, conn.targetJackId));
         if (!srcPos || !tgtPos) return null;
-        const mid = viewport.worldToScreen((srcPos.x + tgtPos.x) / 2, (srcPos.y + tgtPos.y) / 2);
-        const showTrs = connHasTrs(conn);
-
+        const midScreen = viewport.worldToScreen((srcPos.x + tgtPos.x) / 2, (srcPos.y + tgtPos.y) / 2);
         return (
-          <div
-            className="workbench__midi-badge"
-            style={{ position: 'absolute', left: mid.x + 20, top: mid.y - 40 }}
+          <button
+            className="workbench__power-delete-btn"
+            style={{ position: 'absolute', left: midScreen.x, top: midScreen.y }}
+            title="Delete connection"
+            onClick={() => {
+              removeMidiConnection(selectedConnectionId);
+              setSelectedConnectionId(null);
+              setWarningPopover(null);
+            }}
           >
+            &times;
+          </button>
+        );
+      })()}
+
+      {/* Combined warning + TRS popover */}
+      {warningPopover && (() => {
+        const conn = connections.find(c => c.id === warningPopover.connId);
+        if (!conn) return null;
+        const showTrs = connHasTrs(conn);
+        if (warningPopover.warnings.length === 0 && !showTrs) return null;
+        const screenPos = viewport.worldToScreen(warningPopover.x, warningPopover.y);
+        return (
+          <div className="workbench__power-popover" style={{ position: 'absolute', left: screenPos.x, top: screenPos.y }}>
+            {warningPopover.warnings.length > 0 && (
+              <div className="workbench__power-popover-warnings">
+                {warningPopover.warnings.map(w => {
+                  const acked = conn.acknowledgedWarnings?.includes(w.key);
+                  return (
+                    <div key={w.key} className="workbench__power-popover-warning">
+                      <span>{w.message}</span>
+                      {acked
+                        ? <span className="workbench__power-popover-acked">Acknowledged</span>
+                        : <button className="workbench__power-popover-btn" onClick={() => acknowledgeMidiWarning(warningPopover.connId, w.key)}>
+                            {w.adapterImplication ? 'I have this adapter' : 'Got it'}
+                          </button>
+                      }
+                    </div>
+                  );
+                })}
+              </div>
+            )}
             {showTrs && (
-              <div className="workbench__midi-badge-row">
+              <div className="workbench__midi-badge-row" style={{ marginTop: warningPopover.warnings.length > 0 ? 8 : 0 }}>
                 <span className="workbench__midi-badge-label">TRS:</span>
                 <select
                   value={conn.trsMidiStandard ?? ''}
@@ -615,39 +661,6 @@ const MidiView = ({ rows }: MidiViewProps) => {
                 </select>
               </div>
             )}
-            <button
-              className="workbench__power-action-btn workbench__power-action-btn--danger"
-              style={{ alignSelf: 'flex-start', marginTop: 4 }}
-              onClick={() => { removeMidiConnection(selectedConnectionId); setSelectedConnectionId(null); setWarningPopover(null); }}
-            >
-              Delete
-            </button>
-          </div>
-        );
-      })()}
-
-      {/* Warning popover */}
-      {warningPopover && (() => {
-        const screenPos = viewport.worldToScreen(warningPopover.x, warningPopover.y);
-        return (
-          <div className="workbench__power-popover" style={{ position: 'absolute', left: screenPos.x, top: screenPos.y }}>
-            <div className="workbench__power-popover-warnings">
-              {warningPopover.warnings.map(w => {
-                const conn = connections.find(c => c.id === warningPopover.connId);
-                const acked = conn?.acknowledgedWarnings?.includes(w.key);
-                return (
-                  <div key={w.key} className="workbench__power-popover-warning">
-                    <span>{w.message}</span>
-                    {acked
-                      ? <span className="workbench__power-popover-acked">Acknowledged</span>
-                      : <button className="workbench__power-popover-btn" onClick={() => acknowledgeMidiWarning(warningPopover.connId, w.key)}>
-                          {w.adapterImplication ? 'I have this adapter' : 'Got it'}
-                        </button>
-                    }
-                  </div>
-                );
-              })}
-            </div>
             <button className="workbench__power-popover-btn workbench__power-popover-btn--close" onClick={() => setWarningPopover(null)}>Close</button>
           </div>
         );
