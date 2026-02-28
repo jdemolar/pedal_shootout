@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Group, Text, Circle } from 'react-konva';
 import Konva from 'konva';
 import { useWorkbench } from '../../context/WorkbenchContext';
-import { MidiConnection } from '../../types/connections';
+import { MidiConnection, MidiDeviceSettings } from '../../types/connections';
 import { WorkbenchRow } from './WorkbenchTable';
 import {
   getMidiInputJacks,
@@ -47,6 +47,15 @@ function portKey(instanceId: string, jackId: number): string {
   return `${instanceId}:${jackId}`;
 }
 
+/** Format device settings as a short label for display on the card. */
+function formatDeviceSettingsLabel(settings: MidiDeviceSettings): string {
+  const parts: string[] = [];
+  parts.push(settings.midiChannel === null ? 'Omni' : `Ch ${settings.midiChannel}`);
+  if (settings.sendsClock) parts.push('Clock TX');
+  if (settings.receivesClock) parts.push('Clock RX');
+  return parts.join(' | ');
+}
+
 // --- Pending connection state ---
 
 interface PendingMidiConnection {
@@ -69,11 +78,13 @@ const MidiView = ({ rows }: MidiViewProps) => {
     setMidiConnections,
     acknowledgeMidiWarning,
     updateMidiConnection,
+    updateMidiDeviceSettings,
     activeWorkbench,
   } = useWorkbench();
 
   const savedPositions = getViewPositions(VIEW_KEY);
   const connections: MidiConnection[] = activeWorkbench.midiConnections ?? [];
+  const deviceSettings = activeWorkbench.midiDeviceSettings ?? {};
 
   const viewport = useCanvasViewport(VIEW_KEY);
   const [stageDims, setStageDims] = useState({ width: 800, height: 600 });
@@ -84,6 +95,7 @@ const MidiView = ({ rows }: MidiViewProps) => {
   const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
   const [warningPopover, setWarningPopover] = useState<{ connId: string; warnings: ConnectionWarning[]; x: number; y: number } | null>(null);
+  const [editingDeviceId, setEditingDeviceId] = useState<string | null>(null);
 
   // Rows with MIDI jacks
   const midiRows = useMemo(() => rows.filter(hasMidiJacks), [rows]);
@@ -176,20 +188,24 @@ const MidiView = ({ rows }: MidiViewProps) => {
     return map;
   }, [connections, jackMap]);
 
-  // Duplicate channel warnings (render-time only)
-  const duplicateChannelWarnings = useMemo(() => {
-    const channelMap = new Map<number, string[]>(); // channel → instanceIds
-    for (const conn of connections) {
-      if (conn.midiChannel !== null) {
-        const existing = channelMap.get(conn.midiChannel) || [];
-        if (!existing.includes(conn.targetInstanceId)) existing.push(conn.targetInstanceId);
-        channelMap.set(conn.midiChannel, existing);
+  // Duplicate channel warnings — scan midiDeviceSettings for devices sharing a channel
+  // that are connected to the same source
+  const duplicateChannelInstances = useMemo(() => {
+    const channelMap = new Map<number, string[]>(); // channel -> instanceIds
+    for (const instanceId of Object.keys(deviceSettings)) {
+      const ch = deviceSettings[instanceId].midiChannel;
+      if (ch !== null) {
+        const existing = channelMap.get(ch) || [];
+        existing.push(instanceId);
+        channelMap.set(ch, existing);
       }
     }
-    const dupeChannels = new Set<number>();
-    channelMap.forEach((ids, ch) => { if (ids.length > 1) dupeChannels.add(ch); });
-    return dupeChannels;
-  }, [connections]);
+    const dupeInstances = new Set<string>();
+    channelMap.forEach((ids) => {
+      if (ids.length > 1) ids.forEach(id => dupeInstances.add(id));
+    });
+    return dupeInstances;
+  }, [deviceSettings]);
 
   const handleDragEnd = useCallback((instanceId: string, x: number, y: number) => {
     updateViewPosition(VIEW_KEY, instanceId, x, y);
@@ -205,6 +221,7 @@ const MidiView = ({ rows }: MidiViewProps) => {
       setMousePos(null);
       setSelectedConnectionId(null);
       setWarningPopover(null);
+      setEditingDeviceId(null);
     } else if (pendingSource.compositeKey === key) {
       setPendingSource(null);
       setMousePos(null);
@@ -233,8 +250,6 @@ const MidiView = ({ rows }: MidiViewProps) => {
             sourceJackId, targetJackId,
             sourceInstanceId, targetInstanceId,
             chainIndex: getChainDepth(targetInstanceId, connections),
-            midiChannel: null,
-            carriesClock: false,
             trsMidiStandard: null,
           });
         }
@@ -259,6 +274,7 @@ const MidiView = ({ rows }: MidiViewProps) => {
       setPendingSource(null);
       setSelectedConnectionId(null);
       setWarningPopover(null);
+      setEditingDeviceId(null);
     }
   }, []);
 
@@ -274,7 +290,15 @@ const MidiView = ({ rows }: MidiViewProps) => {
     }
     setSelectedConnectionId(connId);
     setPendingSource(null);
+    setEditingDeviceId(null);
   }, [connectionValidations, connections, portPositions]);
+
+  const handleCardDoubleClick = useCallback((instanceId: string) => {
+    setEditingDeviceId(prev => prev === instanceId ? null : instanceId);
+    setSelectedConnectionId(null);
+    setWarningPopover(null);
+    setPendingSource(null);
+  }, []);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     const tag = (e.target as HTMLElement)?.tagName;
@@ -284,6 +308,7 @@ const MidiView = ({ rows }: MidiViewProps) => {
       setPendingSource(null);
       setSelectedConnectionId(null);
       setWarningPopover(null);
+      setEditingDeviceId(null);
     }
 
     if ((e.key === 'Delete' || e.key === 'Backspace') && selectedConnectionId) {
@@ -349,15 +374,12 @@ const MidiView = ({ rows }: MidiViewProps) => {
           const validation = connectionValidations.get(conn.id) ?? { status: 'valid' as const, warnings: [] };
           const isAcked = (conn.acknowledgedWarnings?.length ?? 0) > 0 &&
             validation.warnings.every(w => conn.acknowledgedWarnings?.includes(w.key));
-          // Flag duplicate channel
-          const isDupeChannel = conn.midiChannel !== null && duplicateChannelWarnings.has(conn.midiChannel);
-          const effectiveStatus = isDupeChannel && validation.status === 'valid' ? 'warning' : validation.status;
           return (
             <ConnectionLine
               key={conn.id}
               sourceX={srcPos.x} sourceY={srcPos.y}
               targetX={tgtPos.x} targetY={tgtPos.y}
-              status={effectiveStatus}
+              status={validation.status}
               acknowledged={isAcked}
               selected={selectedConnectionId === conn.id}
               onClick={() => handleConnectionClick(conn.id)}
@@ -381,6 +403,8 @@ const MidiView = ({ rows }: MidiViewProps) => {
           const cw = cardWidths.get(row.instanceId) ?? CARD_WIDTH;
           const outputs = getMidiOutputJacks(row);
           const inputs = getMidiInputJacks(row);
+          const settings = deviceSettings[row.instanceId];
+          const isDupe = duplicateChannelInstances.has(row.instanceId);
 
           return (
             <ProductCard
@@ -391,7 +415,19 @@ const MidiView = ({ rows }: MidiViewProps) => {
               x={pos.x} y={pos.y}
               cardWidth={cw}
               onDragEnd={(x, y) => handleDragEnd(row.instanceId, x, y)}
+              onDblClick={() => handleCardDoubleClick(row.instanceId)}
             >
+              {/* Device settings label below model name */}
+              {settings && (
+                <Text
+                  x={4} y={CARD_HEIGHT / 2 + 6}
+                  width={cw - 8}
+                  text={formatDeviceSettingsLabel(settings)}
+                  fontSize={8} fontFamily="monospace"
+                  fill={isDupe ? '#d4a55a' : '#8a8aaa'}
+                  align="center" listening={false}
+                />
+              )}
               {/* Output ports at top */}
               {outputs.map((jack, i) => {
                 const key = portKey(row.instanceId, jack.id);
@@ -488,7 +524,63 @@ const MidiView = ({ rows }: MidiViewProps) => {
         onFitAll={handleFitAll}
       />
 
-      {/* Channel badge overlay */}
+      {/* Device settings popover (double-click a card) */}
+      {editingDeviceId && (() => {
+        const row = midiRows.find(r => r.instanceId === editingDeviceId);
+        if (!row) return null;
+        const defPos = getDefaultPosition(row);
+        const pos = getPosition(row.instanceId, defPos.x, defPos.y);
+        const cw = cardWidths.get(row.instanceId) ?? CARD_WIDTH;
+        const screenPos = viewport.worldToScreen(pos.x + cw + 8, pos.y);
+        const settings = deviceSettings[editingDeviceId] ?? { midiChannel: null, sendsClock: false, receivesClock: false };
+        const isDupe = duplicateChannelInstances.has(editingDeviceId);
+
+        return (
+          <div
+            className="workbench__midi-badge"
+            style={{ position: 'absolute', left: screenPos.x, top: screenPos.y }}
+          >
+            <div className="workbench__midi-badge-row">
+              <span className="workbench__midi-badge-label">Channel:</span>
+              <select
+                value={settings.midiChannel === null ? '' : String(settings.midiChannel)}
+                onChange={e => {
+                  const val = e.target.value;
+                  updateMidiDeviceSettings(editingDeviceId, { midiChannel: val === '' ? null : Number(val) });
+                }}
+              >
+                <option value="">Omni</option>
+                {Array.from({ length: 16 }, (_, i) => (
+                  <option key={i + 1} value={String(i + 1)}>{i + 1}</option>
+                ))}
+              </select>
+              {isDupe && <span style={{ color: '#d4a55a', fontSize: 10 }}>Duplicate</span>}
+            </div>
+            <div className="workbench__midi-badge-row">
+              <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={settings.sendsClock}
+                  onChange={e => updateMidiDeviceSettings(editingDeviceId, { sendsClock: e.target.checked })}
+                />
+                <span className="workbench__midi-badge-label">Sends Clock</span>
+              </label>
+            </div>
+            <div className="workbench__midi-badge-row">
+              <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={settings.receivesClock}
+                  onChange={e => updateMidiDeviceSettings(editingDeviceId, { receivesClock: e.target.checked })}
+                />
+                <span className="workbench__midi-badge-label">Receives Clock</span>
+              </label>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Connection badge (simplified — TRS standard + delete only) */}
       {selectedConnectionId && (() => {
         const conn = connections.find(c => c.id === selectedConnectionId);
         if (!conn) return null;
@@ -497,39 +589,12 @@ const MidiView = ({ rows }: MidiViewProps) => {
         if (!srcPos || !tgtPos) return null;
         const mid = viewport.worldToScreen((srcPos.x + tgtPos.x) / 2, (srcPos.y + tgtPos.y) / 2);
         const showTrs = connHasTrs(conn);
-        const isDupeChannel = conn.midiChannel !== null && duplicateChannelWarnings.has(conn.midiChannel);
 
         return (
           <div
             className="workbench__midi-badge"
             style={{ position: 'absolute', left: mid.x + 20, top: mid.y - 40 }}
           >
-            <div className="workbench__midi-badge-row">
-              <span className="workbench__midi-badge-label">Channel:</span>
-              <select
-                value={conn.midiChannel === null ? '' : String(conn.midiChannel)}
-                onChange={e => {
-                  const val = e.target.value;
-                  updateMidiConnection(conn.id, { midiChannel: val === '' ? null : Number(val) });
-                }}
-              >
-                <option value="">Omni</option>
-                {Array.from({ length: 16 }, (_, i) => (
-                  <option key={i + 1} value={String(i + 1)}>{i + 1}</option>
-                ))}
-              </select>
-              {isDupeChannel && <span style={{ color: '#d4a55a', fontSize: 10 }}>Duplicate</span>}
-            </div>
-            <div className="workbench__midi-badge-row">
-              <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={conn.carriesClock}
-                  onChange={e => updateMidiConnection(conn.id, { carriesClock: e.target.checked })}
-                />
-                <span className="workbench__midi-badge-label">MIDI Clock</span>
-              </label>
-            </div>
             {showTrs && (
               <div className="workbench__midi-badge-row">
                 <span className="workbench__midi-badge-label">TRS:</span>
