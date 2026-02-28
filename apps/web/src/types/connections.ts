@@ -48,6 +48,12 @@ export interface AudioPlaceholder {
   jacks: VirtualJackSpec[];
 }
 
+export interface MidiDeviceSettings {
+  midiChannel: number | null;    // 1–16, null = omni
+  sendsClock: boolean;           // device sends MIDI clock
+  receivesClock: boolean;        // device receives MIDI clock
+}
+
 export interface MidiConnection {
   id: string;
   sourceJackId: number;
@@ -58,8 +64,6 @@ export interface MidiConnection {
 
   // MIDI-specific
   chainIndex: number;                          // Position in daisy chain (0 = first from controller)
-  midiChannel: number | null;                  // 1–16, null = omni
-  carriesClock: boolean;                       // Whether this connection routes MIDI clock
   trsMidiStandard: 'TRS-A' | 'TRS-B' | 'tip-active' | 'ring-active' | null;
   // Only relevant for 3.5mm TRS connectors. null = unknown.
   // TRS-A (Type A): Boss, EAE, Jackson, Korg.

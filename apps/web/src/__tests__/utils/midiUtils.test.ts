@@ -43,8 +43,6 @@ function makeMidiConn(overrides: Partial<MidiConnection> = {}): MidiConnection {
     sourceInstanceId: 'inst-a',
     targetInstanceId: 'inst-b',
     chainIndex: 0,
-    midiChannel: null,
-    carriesClock: false,
     trsMidiStandard: null,
     ...overrides,
   };
