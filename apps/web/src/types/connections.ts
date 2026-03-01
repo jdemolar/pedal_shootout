@@ -72,8 +72,6 @@ export interface MidiConnection {
   // ring-active: voltage mode. Chase Bliss Audio.
 }
 
-// Stub for Phase 4 (defined but unused until Control view)
-
 export interface ControlConnection {
   id: string;
   sourceJackId: number;
@@ -82,5 +80,5 @@ export interface ControlConnection {
   targetInstanceId: string;
   acknowledgedWarnings?: string[];
   controlType: 'expression' | 'aux_switch' | 'cv' | 'other';
-  polarityNormal: boolean;
+  trsPolarity: 'tip-active' | 'ring-active' | null;
 }
