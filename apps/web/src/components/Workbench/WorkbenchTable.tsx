@@ -10,6 +10,7 @@ import {
   transformUtility,
   Jack,
 } from '../../utils/transformers';
+import { computeShoppingList, ShoppingList } from '../../utils/shoppingListUtils';
 
 export interface WorkbenchRow {
   id: number;
@@ -88,6 +89,109 @@ async function fetchProductData(productId: number, productType: ProductType): Pr
   }
 }
 
+type CableSortField = 'category' | 'label' | 'quantity';
+type SortDir = 'asc' | 'desc';
+
+function CableTable({ shoppingList }: { shoppingList: ShoppingList }) {
+  const [sortField, setSortField] = useState<CableSortField>('category');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
+
+  if (shoppingList.cables.length === 0) return null;
+
+  const handleSort = (field: CableSortField) => {
+    if (sortField === field) {
+      setSortDir(prev => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortDir('asc');
+    }
+  };
+
+  const sortIndicator = (field: CableSortField) =>
+    sortField === field ? (sortDir === 'asc' ? ' \u25b2' : ' \u25bc') : '';
+
+  const sorted = [...shoppingList.cables].sort((a, b) => {
+    const dir = sortDir === 'asc' ? 1 : -1;
+    switch (sortField) {
+      case 'category': return dir * a.category.localeCompare(b.category);
+      case 'label': return dir * a.label.localeCompare(b.label);
+      case 'quantity': return dir * (a.quantity - b.quantity);
+      default: return 0;
+    }
+  });
+
+  const { totalCables, totalCustomCables } = shoppingList.summary;
+
+  return (
+    <div className="workbench__cables-section">
+      <div className="workbench__cables-header">Cables &amp; Adapters</div>
+      <table className="workbench__table">
+        <thead>
+          <tr>
+            <th
+              className="workbench__th workbench__th--sortable"
+              style={{ width: 100, textAlign: 'center', cursor: 'pointer' }}
+              onClick={() => handleSort('category')}
+            >
+              Category{sortIndicator('category')}
+            </th>
+            <th
+              className="workbench__th workbench__th--sortable"
+              style={{ cursor: 'pointer' }}
+              onClick={() => handleSort('label')}
+            >
+              Description{sortIndicator('label')}
+            </th>
+            <th
+              className="workbench__th workbench__th--sortable"
+              style={{ width: 50, textAlign: 'center', cursor: 'pointer' }}
+              onClick={() => handleSort('quantity')}
+            >
+              Qty{sortIndicator('quantity')}
+            </th>
+            <th className="workbench__th" style={{ width: 280 }}>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sorted.map((cable, i) => (
+            <tr key={`${cable.category}-${cable.sourceConnectorType}-${cable.targetConnectorType}`} className={`workbench__row ${i % 2 === 0 ? 'even' : 'odd'}`}>
+              <td className="workbench__td" style={{ textAlign: 'center' }}>
+                <span className={`cable-badge cable-badge--${cable.category}`}>
+                  {cable.category === 'midi' ? 'MIDI' : cable.category.charAt(0).toUpperCase() + cable.category.slice(1)}
+                </span>
+              </td>
+              <td className="workbench__td">
+                <span style={{ color: '#d0d0d0' }}>
+                  {cable.label}
+                  {cable.requiresCustomCable && (
+                    <span className="cable-custom-flag" title="Custom cable or adapter needed"> *</span>
+                  )}
+                </span>
+              </td>
+              <td className="workbench__td" style={{ textAlign: 'center' }}>
+                <span style={{ color: cable.quantity > 1 ? '#6abf7b' : '#888', fontFamily: 'monospace', fontSize: '12px' }}>
+                  {cable.quantity > 1 ? `\u00d7 ${cable.quantity}` : '\u00d7 1'}
+                </span>
+              </td>
+              <td className="workbench__td">
+                {cable.notes.length > 0 && (
+                  <span style={{ color: '#aa8844', fontSize: '11px' }}>
+                    {cable.notes.join('; ')}
+                  </span>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="workbench__cables-totals">
+        {totalCables} cable{totalCables !== 1 ? 's' : ''}
+        {totalCustomCables > 0 && ` (${totalCustomCables} custom)`}
+      </div>
+    </div>
+  );
+}
+
 interface WorkbenchTableProps {
   onRowClick: (row: WorkbenchRow) => void;
   rows: WorkbenchRow[];
@@ -96,7 +200,23 @@ interface WorkbenchTableProps {
 }
 
 const WorkbenchTableView = ({ onRowClick, rows, loading, error }: WorkbenchTableProps) => {
-  const { removeAllInstances } = useWorkbench();
+  const { activeWorkbench, removeAllInstances } = useWorkbench();
+
+  const shoppingList = useMemo(() => {
+    const jackMap = new Map<number, Jack>();
+    for (const row of rows) {
+      for (const jack of row.jacks) {
+        jackMap.set(jack.id, jack);
+      }
+    }
+    return computeShoppingList(
+      activeWorkbench.powerConnections ?? [],
+      activeWorkbench.audioConnections ?? [],
+      activeWorkbench.midiConnections ?? [],
+      activeWorkbench.controlConnections ?? [],
+      jackMap,
+    );
+  }, [activeWorkbench, rows]);
 
   if (loading) {
     return <div className="workbench__loading">Loading workbench products...</div>;
@@ -188,6 +308,7 @@ const WorkbenchTableView = ({ onRowClick, rows, loading, error }: WorkbenchTable
           ))}
         </tbody>
       </table>
+      <CableTable shoppingList={shoppingList} />
     </div>
   );
 };
