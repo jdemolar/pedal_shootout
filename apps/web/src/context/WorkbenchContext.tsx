@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
-import { AudioConnection, MidiConnection, MidiDeviceSettings, VirtualNode, AudioPlaceholder, RouteWaypoint } from '../types/connections';
+import { AudioConnection, MidiConnection, MidiDeviceSettings, ControlConnection, VirtualNode, AudioPlaceholder, RouteWaypoint } from '../types/connections';
 
 // --- Types ---
 
@@ -59,6 +59,7 @@ export interface Workbench {
   audioConnections?: AudioConnection[];
   midiConnections?: MidiConnection[];
   midiDeviceSettings?: { [instanceId: string]: MidiDeviceSettings };
+  controlConnections?: ControlConnection[];
   virtualNodes?: VirtualNode[];
   audioPlaceholders?: AudioPlaceholder[];
   viewportStates?: ViewportStates;
@@ -119,6 +120,13 @@ interface WorkbenchContextType {
   acknowledgeMidiWarning: (connId: string, warningKey: string) => void;
   updateMidiConnection: (connId: string, updates: Partial<Pick<MidiConnection, 'trsMidiStandard'>>) => void;
   updateMidiDeviceSettings: (instanceId: string, settings: Partial<MidiDeviceSettings>) => void;
+
+  // Control connections
+  addControlConnection: (conn: Omit<ControlConnection, 'id'>) => void;
+  removeControlConnection: (connId: string) => void;
+  setControlConnections: (conns: ControlConnection[]) => void;
+  acknowledgeControlWarning: (connId: string, warningKey: string) => void;
+  updateControlConnection: (connId: string, updates: Partial<Pick<ControlConnection, 'trsPolarity'>>) => void;
 
   // Audio placeholders
   addAudioPlaceholder: (placeholder: AudioPlaceholder) => void;
@@ -506,6 +514,54 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
     }));
   }, [updateStore]);
 
+  // --- Control connections ---
+
+  const addControlConnection = useCallback((conn: Omit<ControlConnection, 'id'>) => {
+    updateStore(prev => updateActiveWorkbench(prev, wb => ({
+      ...wb,
+      controlConnections: [...(wb.controlConnections || []), { ...conn, id: generateId() }],
+      updatedAt: new Date().toISOString(),
+    })));
+  }, [updateStore]);
+
+  const removeControlConnection = useCallback((connId: string) => {
+    updateStore(prev => updateActiveWorkbench(prev, wb => ({
+      ...wb,
+      controlConnections: (wb.controlConnections || []).filter(c => c.id !== connId),
+      updatedAt: new Date().toISOString(),
+    })));
+  }, [updateStore]);
+
+  const setControlConnections = useCallback((conns: ControlConnection[]) => {
+    updateStore(prev => updateActiveWorkbench(prev, wb => ({
+      ...wb,
+      controlConnections: conns,
+      updatedAt: new Date().toISOString(),
+    })));
+  }, [updateStore]);
+
+  const acknowledgeControlWarning = useCallback((connId: string, warningKey: string) => {
+    updateStore(prev => updateActiveWorkbench(prev, wb => ({
+      ...wb,
+      controlConnections: (wb.controlConnections || []).map(c =>
+        c.id === connId
+          ? { ...c, acknowledgedWarnings: [...(c.acknowledgedWarnings || []), warningKey] }
+          : c,
+      ),
+      updatedAt: new Date().toISOString(),
+    })));
+  }, [updateStore]);
+
+  const updateControlConnection = useCallback((connId: string, updates: Partial<Pick<ControlConnection, 'trsPolarity'>>) => {
+    updateStore(prev => updateActiveWorkbench(prev, wb => ({
+      ...wb,
+      controlConnections: (wb.controlConnections || []).map(c =>
+        c.id === connId ? { ...c, ...updates } : c,
+      ),
+      updatedAt: new Date().toISOString(),
+    })));
+  }, [updateStore]);
+
   // --- Virtual nodes ---
 
   const addVirtualNode = useCallback((node: VirtualNode) => {
@@ -598,6 +654,11 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
       acknowledgeMidiWarning,
       updateMidiConnection,
       updateMidiDeviceSettings,
+      addControlConnection,
+      removeControlConnection,
+      setControlConnections,
+      acknowledgeControlWarning,
+      updateControlConnection,
       addVirtualNode,
       removeVirtualNode,
       setVirtualNodes,
@@ -606,7 +667,7 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
       updateAudioPlaceholderLabel,
       totalItemCount,
     }),
-    [store.workbenches, activeWorkbench, createWorkbench, renameWorkbench, deleteWorkbench, setActiveWorkbench, addItem, removeItem, removeAllInstances, countInWorkbench, clear, updateViewPosition, updateCardTransform, getViewPositions, getViewportState, updateViewportState, addPowerConnection, removePowerConnection, setPowerConnections, acknowledgeWarning, addAudioConnection, removeAudioConnection, setAudioConnections, acknowledgeAudioWarning, updateAudioConnectionWaypoints, addMidiConnection, removeMidiConnection, setMidiConnections, acknowledgeMidiWarning, updateMidiConnection, updateMidiDeviceSettings, addVirtualNode, removeVirtualNode, setVirtualNodes, addAudioPlaceholder, removeAudioPlaceholder, updateAudioPlaceholderLabel, totalItemCount],
+    [store.workbenches, activeWorkbench, createWorkbench, renameWorkbench, deleteWorkbench, setActiveWorkbench, addItem, removeItem, removeAllInstances, countInWorkbench, clear, updateViewPosition, updateCardTransform, getViewPositions, getViewportState, updateViewportState, addPowerConnection, removePowerConnection, setPowerConnections, acknowledgeWarning, addAudioConnection, removeAudioConnection, setAudioConnections, acknowledgeAudioWarning, updateAudioConnectionWaypoints, addMidiConnection, removeMidiConnection, setMidiConnections, acknowledgeMidiWarning, updateMidiConnection, updateMidiDeviceSettings, addControlConnection, removeControlConnection, setControlConnections, acknowledgeControlWarning, updateControlConnection, addVirtualNode, removeVirtualNode, setVirtualNodes, addAudioPlaceholder, removeAudioPlaceholder, updateAudioPlaceholderLabel, totalItemCount],
   );
 
   return (

@@ -7,6 +7,7 @@ import ViewNav, { ViewMode } from './ViewNav';
 import AudioView from './AudioView';
 import LayoutView from './LayoutView';
 import MidiView from './MidiView';
+import ControlView from './ControlView';
 import PowerView from './PowerView';
 import './index.scss';
 
@@ -120,6 +121,13 @@ const Workbench = () => {
         return (
           <div className="workbench__content workbench__content--canvas">
             <MidiView rows={rows} />
+          </div>
+        );
+
+      case 'control':
+        return (
+          <div className="workbench__content workbench__content--canvas">
+            <ControlView rows={rows} />
           </div>
         );
 

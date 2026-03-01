@@ -11,7 +11,7 @@ const VIEW_TABS: ViewTab[] = [
   { key: 'audio', label: 'Audio', enabled: true },
   { key: 'power', label: 'Power', enabled: true },
   { key: 'midi', label: 'MIDI', enabled: true },
-  { key: 'control', label: 'Control', enabled: false },
+  { key: 'control', label: 'Control', enabled: true },
   { key: 'list', label: 'List', enabled: true },
 ];
 
