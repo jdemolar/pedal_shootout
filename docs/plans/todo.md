@@ -55,6 +55,22 @@
 - [ ] Populate plug data (not started)
 - [ ] Add `trs_midi_standard` column to `jacks` table — currently the MIDI connections view stores TRS wiring configuration (TRS-A, TRS-B, Tip Active, Ring Active) at the connection level rather than per-jack. Once this column exists, validation can derive the standard from the jack data directly and pre-populate the connection's TRS setting automatically.
 
+### Control connections enhancements
+
+#### Schema gaps
+
+- [ ] **TRS polarity per jack** — Add `trs_polarity` column to `jacks` table (`'tip-active'`, `'ring-active'`, or NULL). Expression jacks have a default polarity that determines compatibility (e.g., Mission Engineering is tip-active, Chase Bliss is ring-active). Currently the Control view stores polarity on the connection, but per-jack data would enable automatic mismatch detection.
+- [ ] **Potentiometer resistance** — Add `impedance_ohms` or `pot_resistance_ohms` column to `jacks` table for expression jacks. Pot resistance (e.g., 10K vs 25K Ohm) affects compatibility between expression pedals and their targets. The existing `impedance_ohms` column is intended for audio impedance matching, so a separate column may be needed.
+- [ ] **Toe switch type** — Add `footswitch_type` column to `jacks` table (`'momentary'`, `'latching'`) for aux/toe switch jacks. Currently `footswitch_type` only exists on `midi_controller_details`. Expression pedals with toe switches (e.g., Mission SP-25M-PRO Aero) need this data for the Control view to validate switch compatibility.
+- [ ] **Independent channel count** — Add a way to represent ganged vs independent expression outputs. Multi-channel expression pedals (e.g., Mission SP-25L-PRO Aero with 3 independent outputs) need to indicate whether channels move together or independently. This could be a column on `utility_details` or a relationship between jacks.
+
+#### Deferred `ControlConnection` fields
+
+- [ ] **`controlledParameter`** — Which parameter on the target device is being controlled (e.g., volume, feedback, mix). Requires parameter assignment UI.
+- [ ] **`rangeMin` / `rangeMax`** — Parameter range clamping for expression connections. Limits the effective sweep of the control source.
+- [ ] **`auxSwitchAssignments`** — Per-contact function names for aux switch connections (e.g., tap tempo, preset up/down).
+- [ ] **`cvVoltageRange`** — Voltage range spec for CV connections (e.g., 0–5V, ±10V).
+
 ## 9. MIDI controller guides
 
 - [ ] Add instruction manuals for popular MIDI controllers to provide a guide on pedalboard programming. Although there may be multiple ways of accomplishing various goals with a controller, having a guide can at least recommend solutions when given a specific problem.
