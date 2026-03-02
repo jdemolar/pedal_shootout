@@ -1,6 +1,9 @@
+import { useMemo } from 'react';
 import { WorkbenchRow } from './WorkbenchTable';
-import { ProductType } from '../../context/WorkbenchContext';
+import { ProductType, useWorkbench } from '../../context/WorkbenchContext';
 import { formatMsrp } from '../../utils/formatters';
+import { Jack } from '../../utils/transformers';
+import { computeShoppingList, CableCategory } from '../../utils/shoppingListUtils';
 import PowerBudgetInsight from './PowerBudgetInsight';
 
 interface InsightsSidebarProps {
@@ -122,6 +125,51 @@ function MidiPedals({ rows }: { rows: WorkbenchRow[] }) {
   );
 }
 
+function CableSummary({ rows }: { rows: WorkbenchRow[] }) {
+  const { activeWorkbench } = useWorkbench();
+
+  const shoppingList = useMemo(() => {
+    const jackMap = new Map<number, Jack>();
+    for (const row of rows) {
+      for (const jack of row.jacks) {
+        jackMap.set(jack.id, jack);
+      }
+    }
+    return computeShoppingList(
+      activeWorkbench.powerConnections ?? [],
+      activeWorkbench.audioConnections ?? [],
+      activeWorkbench.midiConnections ?? [],
+      activeWorkbench.controlConnections ?? [],
+      jackMap,
+    );
+  }, [activeWorkbench, rows]);
+
+  if (shoppingList.summary.totalCables === 0) return null;
+
+  const { totalCables, totalCustomCables, byCategory } = shoppingList.summary;
+  const parts: string[] = [];
+  const order: CableCategory[] = ['audio', 'power', 'midi', 'control'];
+  for (const cat of order) {
+    if (byCategory[cat] > 0) {
+      const label = cat === 'midi' ? 'MIDI' : cat.charAt(0).toUpperCase() + cat.slice(1);
+      parts.push(`${label}: ${byCategory[cat]}`);
+    }
+  }
+
+  return (
+    <div className="insights__card">
+      <div className="insights__card-label">Cables</div>
+      <div className="insights__card-value">
+        {totalCables} cable{totalCables !== 1 ? 's' : ''}
+        {totalCustomCables > 0 && ` (${totalCustomCables} custom)`}
+      </div>
+      {parts.length > 0 && (
+        <div className="insights__card-detail">{parts.join(' \u00b7 ')}</div>
+      )}
+    </div>
+  );
+}
+
 const InsightsSidebar = ({ rows }: InsightsSidebarProps) => {
   return (
     <div className="insights">
@@ -130,6 +178,7 @@ const InsightsSidebar = ({ rows }: InsightsSidebarProps) => {
       <TotalWeight rows={rows} />
       <MidiPedals rows={rows} />
       <PowerBudgetInsight rows={rows} />
+      <CableSummary rows={rows} />
     </div>
   );
 };

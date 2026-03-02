@@ -12,7 +12,14 @@
 - [x] **MIDI connections view** — Chain/hub topology, channel assignment, TRS standard detection (TRS-A, TRS-B, Tip Active, Ring Active) (plan: `docs/plans/completed/midi-connections-phase-3.md`)
 - [x] **MIDI device settings refactor** — Move MIDI channel and clock send/receive from connection-level to device-level settings (plan: `docs/plans/completed/midi-device-settings-refactor.md`)
 - [x] **Control connections view** — Expression, aux switch, CV connections with polarity validation (plan: `docs/plans/completed/control-connections-phase-4.md`)
-- [ ] **Unified shopping list** — Cables/adapters as rows in List tab alongside products, length estimation from waypoints
+- [x] **Unified shopping list** — Cable requirements as rows in List tab alongside products, custom cable detection for connector mismatches (plan: `docs/plans/completed/unified-shopping-list-phase-5.md`)
+
+#### Shopping list — deferred improvements
+
+- [ ] **Cable length estimation** — Requires Layout view waypoint data (cable routing); blocked on cable routing waypoints task above
+- [ ] **CSV export** — Export shopping list as CSV for offline use
+- [ ] **User-editable cable prices** — Allow users to set per-cable-type prices for cost estimation
+- [ ] **"Have" checkbox persistence** — Let users mark cables they already own; requires new workbench state field
 - [ ] **Backend persistence** — JSONB workbench storage (deferred until user accounts exist)
 
 ## 3. Audio / Signal path

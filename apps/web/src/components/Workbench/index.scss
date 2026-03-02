@@ -712,6 +712,76 @@
   color: #444;
 }
 
+// Cable shopping list section
+.workbench__cables-section {
+  margin-top: 16px;
+  border-top: 1px solid #333;
+  padding-top: 8px;
+}
+
+.workbench__cables-header {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #888;
+  padding: 4px 8px 8px;
+}
+
+.workbench__cables-totals {
+  padding: 6px 8px;
+  font-size: 11px;
+  color: #888;
+  text-align: right;
+}
+
+.workbench__th--sortable {
+  user-select: none;
+
+  &:hover {
+    color: #ccc;
+  }
+}
+
+.cable-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+
+  &--audio {
+    background: #1a2a1a;
+    color: #6aaa6a;
+    border: 1px solid #2a3a2a;
+  }
+
+  &--power {
+    background: #2a1a1a;
+    color: #aa6a6a;
+    border: 1px solid #3a2a2a;
+  }
+
+  &--midi {
+    background: #2a1a2a;
+    color: #aa6aaa;
+    border: 1px solid #3a2a3a;
+  }
+
+  &--control {
+    background: #1a2a2a;
+    color: #6aaaaa;
+    border: 1px solid #2a3a3a;
+  }
+}
+
+.cable-custom-flag {
+  color: #aa8844;
+  font-weight: 700;
+}
+
 // Slide-out detail panel
 .detail-panel {
   width: 360px;
