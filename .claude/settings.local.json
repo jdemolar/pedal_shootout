@@ -48,7 +48,19 @@
       "Bash(docker exec:*)",
       "Bash(git checkout:*)",
       "Bash(gh api:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "WebFetch(domain:missionengineering.com)",
+      "WebFetch(domain:www.stompbx.com)",
+      "WebFetch(domain:thepedalzone.com)",
+      "WebFetch(domain:www.thomannmusic.com)",
+      "WebFetch(domain:motorcityguitar.com)",
+      "WebFetch(domain:www.chicagomusicexchange.com)",
+      "WebFetch(domain:media.rockboard.de)",
+      "WebFetch(domain:m.media-amazon.com)",
+      "WebFetch(domain:manualzz.com)",
+      "WebFetch(domain:static1.squarespace.com)",
+      "WebFetch(domain:www.in2guitar.com)",
+      "WebFetch(domain:www.creamcitymusic.com)"
     ],
     "deny": [
       "Bash(sudo *)",
