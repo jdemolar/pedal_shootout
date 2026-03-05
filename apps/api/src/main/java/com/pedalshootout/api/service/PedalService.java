@@ -9,7 +9,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Service for pedal-specific operations.
@@ -39,8 +41,12 @@ public class PedalService {
         } else {
             pedals = pedalDetailRepository.findAll();
         }
+        List<Integer> productIds = pedals.stream().map(PedalDetail::getProductId).toList();
+        Map<Integer, List<JackDto>> jacksByProduct = jacksForAll(productIds);
+
         return pedals.stream()
-                .map(this::toDto)
+                .map(pd -> PedalDto.from(pd.getProduct(), pd,
+                        jacksByProduct.getOrDefault(pd.getProductId(), List.of())))
                 .toList();
     }
 
@@ -55,5 +61,13 @@ public class PedalService {
                 .map(JackDto::from)
                 .toList();
         return PedalDto.from(pd.getProduct(), pd, jacks);
+    }
+
+    private Map<Integer, List<JackDto>> jacksForAll(List<Integer> productIds) {
+        return jackRepository.findByProductIdIn(productIds).stream()
+                .collect(Collectors.groupingBy(
+                        j -> j.getProduct().getId(),
+                        Collectors.mapping(JackDto::from, Collectors.toList())
+                ));
     }
 }

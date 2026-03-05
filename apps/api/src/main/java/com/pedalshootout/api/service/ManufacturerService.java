@@ -7,7 +7,9 @@ import com.pedalshootout.api.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Service layer for manufacturer business logic.
@@ -45,8 +47,16 @@ public class ManufacturerService {
         } else {
             manufacturers = manufacturerRepository.findAll();
         }
+        // Batch: 1 query for all counts instead of N
+        Map<Integer, Long> countsByManufacturer = productRepository.countGroupedByManufacturerId()
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> (Integer) row[0],
+                        row -> (Long) row[1]
+                ));
+
         return manufacturers.stream()
-                .map(m -> ManufacturerDto.from(m, productRepository.countByManufacturerId(m.getId())))
+                .map(m -> ManufacturerDto.from(m, countsByManufacturer.getOrDefault(m.getId(), 0L)))
                 .toList();
     }
 

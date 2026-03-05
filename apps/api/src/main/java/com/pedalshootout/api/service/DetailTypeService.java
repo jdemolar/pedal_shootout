@@ -7,7 +7,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Service for all detail types except pedals (which has its own service due to
@@ -53,11 +55,23 @@ public class DetailTypeService {
                 .toList();
     }
 
+    private Map<Integer, List<JackDto>> jacksForAll(List<Integer> productIds) {
+        return jackRepository.findByProductIdIn(productIds).stream()
+                .collect(Collectors.groupingBy(
+                        j -> j.getProduct().getId(),
+                        Collectors.mapping(JackDto::from, Collectors.toList())
+                ));
+    }
+
     // --- Power Supplies ---
 
     public List<PowerSupplyDto> findAllPowerSupplies() {
-        return powerSupplyRepo.findAll().stream()
-                .map(d -> PowerSupplyDto.from(d.getProduct(), d, jacksFor(d.getProductId())))
+        List<PowerSupplyDetail> details = powerSupplyRepo.findAll();
+        List<Integer> productIds = details.stream().map(PowerSupplyDetail::getProductId).toList();
+        Map<Integer, List<JackDto>> jacksByProduct = jacksForAll(productIds);
+        return details.stream()
+                .map(d -> PowerSupplyDto.from(d.getProduct(), d,
+                        jacksByProduct.getOrDefault(d.getProductId(), List.of())))
                 .toList();
     }
 
@@ -69,8 +83,12 @@ public class DetailTypeService {
     // --- Pedalboards ---
 
     public List<PedalboardDto> findAllPedalboards() {
-        return pedalboardRepo.findAll().stream()
-                .map(d -> PedalboardDto.from(d.getProduct(), d, jacksFor(d.getProductId())))
+        List<PedalboardDetail> details = pedalboardRepo.findAll();
+        List<Integer> productIds = details.stream().map(PedalboardDetail::getProductId).toList();
+        Map<Integer, List<JackDto>> jacksByProduct = jacksForAll(productIds);
+        return details.stream()
+                .map(d -> PedalboardDto.from(d.getProduct(), d,
+                        jacksByProduct.getOrDefault(d.getProductId(), List.of())))
                 .toList();
     }
 
@@ -82,8 +100,12 @@ public class DetailTypeService {
     // --- MIDI Controllers ---
 
     public List<MidiControllerDto> findAllMidiControllers() {
-        return midiControllerRepo.findAll().stream()
-                .map(d -> MidiControllerDto.from(d.getProduct(), d, jacksFor(d.getProductId())))
+        List<MidiControllerDetail> details = midiControllerRepo.findAll();
+        List<Integer> productIds = details.stream().map(MidiControllerDetail::getProductId).toList();
+        Map<Integer, List<JackDto>> jacksByProduct = jacksForAll(productIds);
+        return details.stream()
+                .map(d -> MidiControllerDto.from(d.getProduct(), d,
+                        jacksByProduct.getOrDefault(d.getProductId(), List.of())))
                 .toList();
     }
 
@@ -101,8 +123,11 @@ public class DetailTypeService {
         } else {
             details = utilityRepo.findAll();
         }
+        List<Integer> productIds = details.stream().map(UtilityDetail::getProductId).toList();
+        Map<Integer, List<JackDto>> jacksByProduct = jacksForAll(productIds);
         return details.stream()
-                .map(d -> UtilityDto.from(d.getProduct(), d, jacksFor(d.getProductId())))
+                .map(d -> UtilityDto.from(d.getProduct(), d,
+                        jacksByProduct.getOrDefault(d.getProductId(), List.of())))
                 .toList();
     }
 
@@ -114,8 +139,12 @@ public class DetailTypeService {
     // --- Plugs ---
 
     public List<PlugDto> findAllPlugs() {
-        return plugRepo.findAll().stream()
-                .map(d -> PlugDto.from(d.getProduct(), d, jacksFor(d.getProductId())))
+        List<PlugDetail> details = plugRepo.findAll();
+        List<Integer> productIds = details.stream().map(PlugDetail::getProductId).toList();
+        Map<Integer, List<JackDto>> jacksByProduct = jacksForAll(productIds);
+        return details.stream()
+                .map(d -> PlugDto.from(d.getProduct(), d,
+                        jacksByProduct.getOrDefault(d.getProductId(), List.of())))
                 .toList();
     }
 

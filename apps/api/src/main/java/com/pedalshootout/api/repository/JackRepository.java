@@ -18,4 +18,6 @@ public interface JackRepository extends JpaRepository<Jack, Integer> {
     List<Jack> findByProductIdAndCategory(Integer productId, String category);
 
     List<Jack> findByProductIdAndDirection(Integer productId, String direction);
+
+    List<Jack> findByProductIdIn(List<Integer> productIds);
 }
