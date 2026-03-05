@@ -8,7 +8,7 @@
 
 ## Approach
 
-Add the shared `wouldCreateCycle` function and a `DirectedEdge` interface to `connectionValidation.ts`, which already serves as the shared module for all connection validation types. Remove the local copies from `audioUtils.ts` and `midiUtils.ts`, replacing them with imports and re-exports to maintain backward compatibility.
+Add the shared `wouldCreateCycle` function and a `DirectedEdge` interface to `connectionValidation.ts`, which already serves as the shared module for all connection validation types. Remove the local copies from `audioUtils.ts` and `midiUtils.ts`, and update all imports (including tests) to point at the new location. No re-exports needed — the function is only used in a handful of places.
 
 ## Files to Modify
 
@@ -53,22 +53,26 @@ Both `AudioConnection` and `MidiConnection` have `sourceInstanceId` and `targetI
 
 - Add `wouldCreateCycle` to the import from `'./connectionValidation'` (line 3)
 - Delete the local `wouldCreateCycle` function (lines 24-49, including the `// --- Cycle detection ---` comment)
-- Add re-export: `export { wouldCreateCycle } from './connectionValidation';`
-- The call at line 65 (`validateAudioConnection`) stays unchanged — same name, same signature
+- The call in `validateAudioConnection` stays unchanged — same name, same signature
 
 ### 3. `apps/web/src/utils/midiUtils.ts`
 
 - Add `wouldCreateCycle` to the import from `'./connectionValidation'` (line 3)
 - Delete the local `wouldCreateMidiCycle` function (lines 33-58, including the `// --- Cycle detection ---` comment)
 - Update the call at line 125: `wouldCreateMidiCycle(...)` -> `wouldCreateCycle(...)`
-- Add alias re-export for backward compatibility: `export { wouldCreateCycle as wouldCreateMidiCycle } from './connectionValidation';`
 
-### 4. Test files — no changes needed
+### 4. `apps/web/src/__tests__/utils/audioUtils.test.ts`
 
-- `__tests__/utils/audioUtils.test.ts` imports `wouldCreateCycle` from `audioUtils` — the re-export keeps this working
-- `__tests__/utils/midiUtils.test.ts` imports `wouldCreateMidiCycle` from `midiUtils` — the alias re-export keeps this working
+- Move `wouldCreateCycle` from the `audioUtils` import to a new import from `connectionValidation`
+
+### 5. `apps/web/src/__tests__/utils/midiUtils.test.ts`
+
+- Remove `wouldCreateMidiCycle` from the `midiUtils` import
+- Add import of `wouldCreateCycle` from `connectionValidation`
+- Rename all `wouldCreateMidiCycle` calls to `wouldCreateCycle` (5 occurrences)
+- Rename the `describe` block from `'wouldCreateMidiCycle'` to `'wouldCreateCycle'`
 
 ## Verification
 
-1. `npm run web:test` — all existing tests pass with zero test file changes
+1. `npm run web:test` — all existing tests pass
 2. `npm run web:build` — no TypeScript errors
