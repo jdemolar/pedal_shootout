@@ -2,6 +2,7 @@ package com.pedalshootout.api.repository;
 
 import com.pedalshootout.api.entity.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 
@@ -20,4 +21,7 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     List<Product> findByProductTypeId(Integer productTypeId);
 
     long countByManufacturerId(Integer manufacturerId);
+
+    @Query("SELECT p.manufacturer.id, COUNT(p) FROM Product p GROUP BY p.manufacturer.id")
+    List<Object[]> countGroupedByManufacturerId();
 }
