@@ -4,10 +4,10 @@ import {
   hasMidiJacks,
   isTrsMidiConnector,
   is5PinDinConnector,
-  wouldCreateMidiCycle,
   getChainDepth,
   validateMidiConnection,
 } from '../../utils/midiUtils';
+import { wouldCreateCycle } from '../../utils/connectionValidation';
 import { Jack } from '../../utils/transformers';
 import { MidiConnection } from '../../types/connections';
 
@@ -154,16 +154,16 @@ describe('is5PinDinConnector', () => {
   });
 });
 
-// --- wouldCreateMidiCycle ---
+// --- wouldCreateCycle ---
 
-describe('wouldCreateMidiCycle', () => {
+describe('wouldCreateCycle', () => {
   it('returns false for new unconnected items', () => {
-    expect(wouldCreateMidiCycle('A', 'B', [])).toBe(false);
+    expect(wouldCreateCycle('A', 'B', [])).toBe(false);
   });
 
   it('returns true when adding connection would close a loop', () => {
     const conns = [makeMidiConn({ sourceInstanceId: 'A', targetInstanceId: 'B' })];
-    expect(wouldCreateMidiCycle('B', 'A', conns)).toBe(true);
+    expect(wouldCreateCycle('B', 'A', conns)).toBe(true);
   });
 
   it('returns true for indirect cycle A→B→C and C→A attempted', () => {
@@ -171,14 +171,14 @@ describe('wouldCreateMidiCycle', () => {
       makeMidiConn({ id: '1', sourceInstanceId: 'A', targetInstanceId: 'B' }),
       makeMidiConn({ id: '2', sourceInstanceId: 'B', targetInstanceId: 'C' }),
     ];
-    expect(wouldCreateMidiCycle('C', 'A', conns)).toBe(true);
+    expect(wouldCreateCycle('C', 'A', conns)).toBe(true);
   });
 
   it('returns false for non-cyclic addition', () => {
     const conns = [
       makeMidiConn({ id: '1', sourceInstanceId: 'A', targetInstanceId: 'B' }),
     ];
-    expect(wouldCreateMidiCycle('A', 'C', conns)).toBe(false);
+    expect(wouldCreateCycle('A', 'C', conns)).toBe(false);
   });
 });
 

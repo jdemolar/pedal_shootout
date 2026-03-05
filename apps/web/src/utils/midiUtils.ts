@@ -1,6 +1,6 @@
 import { Jack } from './transformers';
 import { MidiConnection } from '../types/connections';
-import { ConnectionValidation, ConnectionWarning } from './connectionValidation';
+import { ConnectionValidation, ConnectionWarning, wouldCreateCycle } from './connectionValidation';
 
 // --- Jack filtering helpers ---
 
@@ -28,33 +28,6 @@ export function is5PinDinConnector(connectorType: string | null): boolean {
   if (!connectorType) return false;
   const lower = connectorType.toLowerCase();
   return lower.includes('5-pin') || lower.includes('din');
-}
-
-// --- Cycle detection ---
-
-export function wouldCreateMidiCycle(
-  sourceInstanceId: string,
-  targetInstanceId: string,
-  existingConnections: MidiConnection[],
-): boolean {
-  // BFS: can we reach sourceInstanceId starting from targetInstanceId?
-  const visited = new Set<string>();
-  const queue: string[] = [targetInstanceId];
-
-  while (queue.length > 0) {
-    const current = queue.shift()!;
-    if (current === sourceInstanceId) return true;
-    if (visited.has(current)) continue;
-    visited.add(current);
-
-    for (const conn of existingConnections) {
-      if (conn.sourceInstanceId === current && !visited.has(conn.targetInstanceId)) {
-        queue.push(conn.targetInstanceId);
-      }
-    }
-  }
-
-  return false;
 }
 
 // --- Chain depth ---
@@ -122,7 +95,7 @@ export function validateMidiConnection(
   }
 
   // Circular connection check (warning — MIDI loops are common, e.g. controller→chain→controller input)
-  if (wouldCreateMidiCycle(sourceInstanceId, targetInstanceId, existingConnections)) {
+  if (wouldCreateCycle(sourceInstanceId, targetInstanceId, existingConnections)) {
     warnings.push({
       key: 'midi:circular',
       severity: 'warning',

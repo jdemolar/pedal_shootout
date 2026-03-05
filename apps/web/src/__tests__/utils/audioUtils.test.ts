@@ -4,8 +4,8 @@ import {
   hasAudioJacks,
   getStereoPartner,
   validateAudioConnection,
-  wouldCreateCycle,
 } from '../../utils/audioUtils';
+import { wouldCreateCycle } from '../../utils/connectionValidation';
 import { Jack } from '../../utils/transformers';
 import { AudioConnection } from '../../types/connections';
 
