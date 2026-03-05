@@ -24,3 +24,32 @@ export interface ConnectionValidation {
   status: 'valid' | 'warning' | 'error';
   warnings: ConnectionWarning[];
 }
+
+export interface DirectedEdge {
+  sourceInstanceId: string;
+  targetInstanceId: string;
+}
+
+export function wouldCreateCycle(
+  sourceInstanceId: string,
+  targetInstanceId: string,
+  existingConnections: ReadonlyArray<DirectedEdge>,
+): boolean {
+  const visited = new Set<string>();
+  const queue: string[] = [targetInstanceId];
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    if (current === sourceInstanceId) return true;
+    if (visited.has(current)) continue;
+    visited.add(current);
+
+    for (const conn of existingConnections) {
+      if (conn.sourceInstanceId === current && !visited.has(conn.targetInstanceId)) {
+        queue.push(conn.targetInstanceId);
+      }
+    }
+  }
+
+  return false;
+}

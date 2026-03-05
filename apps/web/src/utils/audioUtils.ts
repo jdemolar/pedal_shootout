@@ -1,6 +1,6 @@
 import { Jack } from './transformers';
 import { AudioConnection } from '../types/connections';
-import { ConnectionValidation, ConnectionWarning } from './connectionValidation';
+import { ConnectionValidation, ConnectionWarning, wouldCreateCycle } from './connectionValidation';
 
 // --- Jack filtering helpers ---
 
@@ -19,33 +19,6 @@ export function hasAudioJacks(row: { jacks: Jack[] }): boolean {
 export function getStereoPartner(jack: Jack, allJacks: Jack[]): Jack | undefined {
   if (!jack.group_id) return undefined;
   return allJacks.find(j => j.id !== jack.id && j.group_id === jack.group_id);
-}
-
-// --- Cycle detection ---
-
-export function wouldCreateCycle(
-  sourceInstanceId: string,
-  targetInstanceId: string,
-  existingConnections: AudioConnection[],
-): boolean {
-  // BFS: can we reach sourceInstanceId starting from targetInstanceId?
-  const visited = new Set<string>();
-  const queue: string[] = [targetInstanceId];
-
-  while (queue.length > 0) {
-    const current = queue.shift()!;
-    if (current === sourceInstanceId) return true;
-    if (visited.has(current)) continue;
-    visited.add(current);
-
-    for (const conn of existingConnections) {
-      if (conn.sourceInstanceId === current && !visited.has(conn.targetInstanceId)) {
-        queue.push(conn.targetInstanceId);
-      }
-    }
-  }
-
-  return false;
 }
 
 // --- Connection validation ---
