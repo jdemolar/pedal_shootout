@@ -1,5 +1,6 @@
 package com.pedalshootout.api.service;
 
+import com.pedalshootout.api.dto.DtoUtils;
 import com.pedalshootout.api.dto.PowerBudgetDto;
 import com.pedalshootout.api.entity.Jack;
 import com.pedalshootout.api.entity.PowerSupplyDetail;
@@ -120,14 +121,9 @@ public class PowerBudgetService {
                         p.getId(), p.getModel(), p.getManufacturer().getName(),
                         s.getTotalCurrentMa(), requiredMa,
                         s.getTotalCurrentMa() - requiredMa,
-                        formatMsrp(p.getMsrpCents())
+                        DtoUtils.formatMsrp(p.getMsrpCents())
                     );
                 })
                 .toList();
-    }
-
-    private String formatMsrp(Integer cents) {
-        if (cents == null) return null;
-        return String.format("$%d.%02d", cents / 100, cents % 100);
     }
 }

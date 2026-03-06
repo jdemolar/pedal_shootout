@@ -20,7 +20,7 @@ The codebase is well-organized and follows its own conventions consistently in m
 - [x] #3 — N+1 query: DetailTypeService / PedalService per-product jack queries
 
 ### Recommended
-- [ ] #4 — `formatMsrp` duplicated in 8 DTOs + 1 service
+- [x] #4 — `formatMsrp` duplicated in 8 DTOs + 1 service
 - [ ] #5 — WorkbenchContext: four identical connection CRUD patterns
 - [ ] #6 — Inline styles duplicated across data view components
 - [ ] #7 — Expanded-row detail blocks: boolean field pattern (21 occurrences)

@@ -34,16 +34,11 @@ public record PlugDto(
         return new PlugDto(
             p.getId(), p.getModel(), p.getManufacturer().getName(), p.getManufacturer().getId(),
             p.getColorOptions(), p.getInProduction(),
-            formatMsrp(p.getMsrpCents()), p.getMsrpCents(), p.getProductPage(), p.getImagePath(),
+            DtoUtils.formatMsrp(p.getMsrpCents()), p.getMsrpCents(), p.getProductPage(), p.getImagePath(),
             d.getPlugType(), d.getConnectorType(), d.getIsRightAngle(), d.getIsPancake(),
             d.getPlugWidthMm(), d.getPlugDepthMm(), d.getPlugHeightMm(),
             d.getCableExitDirection(), d.getIsSolderless(), d.getHousingMaterial(), d.getHasLockingMechanism(),
             jacks
         );
-    }
-
-    private static String formatMsrp(Integer cents) {
-        if (cents == null) return null;
-        return String.format("$%d.%02d", cents / 100, cents % 100);
     }
 }

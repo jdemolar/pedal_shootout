@@ -50,7 +50,7 @@ public record PowerSupplyDto(
             p.getId(), p.getModel(), p.getManufacturer().getName(), p.getManufacturer().getId(),
             p.getColorOptions(), p.getInProduction(),
             p.getWidthMm(), p.getDepthMm(), p.getHeightMm(), p.getWeightGrams(),
-            formatMsrp(p.getMsrpCents()), p.getMsrpCents(), p.getProductPage(), p.getInstructionManual(),
+            DtoUtils.formatMsrp(p.getMsrpCents()), p.getMsrpCents(), p.getProductPage(), p.getInstructionManual(),
             p.getImagePath(), p.getDataReliability(),
             d.getSupplyType(), d.getTopology(), d.getInputVoltageRange(), d.getInputFrequency(),
             d.getTotalOutputCount(), d.getTotalCurrentMa(), d.getIsolatedOutputCount(),
@@ -59,10 +59,5 @@ public record PowerSupplyDto(
             d.getIsBatteryPowered(), d.getBatteryCapacityWh(),
             jacks
         );
-    }
-
-    private static String formatMsrp(Integer cents) {
-        if (cents == null) return null;
-        return String.format("$%d.%02d", cents / 100, cents % 100);
     }
 }
