@@ -49,7 +49,7 @@ public record UtilityDto(
             p.getId(), p.getModel(), p.getManufacturer().getName(), p.getManufacturer().getId(),
             p.getColorOptions(), p.getInProduction(),
             p.getWidthMm(), p.getDepthMm(), p.getHeightMm(), p.getWeightGrams(),
-            formatMsrp(p.getMsrpCents()), p.getMsrpCents(), p.getProductPage(), p.getInstructionManual(), p.getImagePath(),
+            DtoUtils.formatMsrp(p.getMsrpCents()), p.getMsrpCents(), p.getProductPage(), p.getInstructionManual(), p.getImagePath(),
             p.getDataReliability(),
             d.getUtilityType(), d.getIsActive(), d.getSignalType(), d.getBypassType(),
             d.getHasGroundLift(), d.getHasPad(), d.getPadDb(),
@@ -59,10 +59,5 @@ public record UtilityDto(
             d.getAttenuationRangeDb(), d.getHasCabSim(),
             jacks
         );
-    }
-
-    private static String formatMsrp(Integer cents) {
-        if (cents == null) return null;
-        return String.format("$%d.%02d", cents / 100, cents % 100);
     }
 }

@@ -47,15 +47,10 @@ public record ProductSummaryDto(
             p.getDepthMm(),
             p.getHeightMm(),
             p.getWeightGrams(),
-            formatMsrp(p.getMsrpCents()),
+            DtoUtils.formatMsrp(p.getMsrpCents()),
             p.getMsrpCents(),
             p.getProductPage(),
             p.getImagePath()
         );
-    }
-
-    private static String formatMsrp(Integer cents) {
-        if (cents == null) return null;
-        return String.format("$%d.%02d", cents / 100, cents % 100);
     }
 }
