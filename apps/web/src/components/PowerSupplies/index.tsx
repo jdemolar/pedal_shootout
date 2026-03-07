@@ -6,6 +6,7 @@ import { useApiData } from '../../hooks/useApiData';
 import { api } from '../../services/api';
 import { transformPowerSupply, Jack } from '../../utils/transformers';
 import { voltagesCompatible } from '../../utils/powerUtils';
+import { BooleanDetail, LinkDetail } from '../DetailHelpers';
 import JacksList from '../JacksList';
 import WorkbenchToggle from '../WorkbenchToggle';
 
@@ -128,42 +129,22 @@ const renderExpandedRow = (ps: PowerSupply): ReactNode => (
         <div className="data-table__detail-value">{ps.available_voltages}</div>
       </div>
     )}
-    <div className="data-table__detail">
-      <div className="data-table__detail-label">Variable Voltage</div>
-      <div className="data-table__detail-value">
-        <span className={ps.has_variable_voltage ? 'bool-yes' : 'bool-no'}>{ps.has_variable_voltage ? 'Yes' : 'No'}</span>
-      </div>
-    </div>
+    <BooleanDetail label="Variable Voltage" value={ps.has_variable_voltage} />
     {ps.voltage_range != null && (
       <div className="data-table__detail">
         <div className="data-table__detail-label">Voltage Range</div>
         <div className="data-table__detail-value">{ps.voltage_range}</div>
       </div>
     )}
-    <div className="data-table__detail">
-      <div className="data-table__detail-label">Bracket Included</div>
-      <div className="data-table__detail-value">
-        <span className={ps.bracket_included ? 'bool-yes' : 'bool-no'}>{ps.bracket_included ? 'Yes' : 'No'}</span>
-      </div>
-    </div>
-    <div className="data-table__detail">
-      <div className="data-table__detail-label">Expandable</div>
-      <div className="data-table__detail-value">
-        <span className={ps.is_expandable ? 'bool-yes' : 'bool-no'}>{ps.is_expandable ? 'Yes' : 'No'}</span>
-      </div>
-    </div>
+    <BooleanDetail label="Bracket Included" value={ps.bracket_included} />
+    <BooleanDetail label="Expandable" value={ps.is_expandable} />
     {ps.expansion_port_type != null && (
       <div className="data-table__detail">
         <div className="data-table__detail-label">Expansion Port Type</div>
         <div className="data-table__detail-value">{ps.expansion_port_type}</div>
       </div>
     )}
-    <div className="data-table__detail">
-      <div className="data-table__detail-label">Battery Powered</div>
-      <div className="data-table__detail-value">
-        <span className={ps.is_battery_powered ? 'bool-yes' : 'bool-no'}>{ps.is_battery_powered ? 'Yes' : 'No'}</span>
-      </div>
-    </div>
+    <BooleanDetail label="Battery Powered" value={ps.is_battery_powered} />
     {ps.battery_capacity_wh != null && (
       <div className="data-table__detail">
         <div className="data-table__detail-label">Battery Capacity</div>
@@ -180,26 +161,8 @@ const renderExpandedRow = (ps: PowerSupply): ReactNode => (
         </div>
       </div>
     )}
-    {ps.product_page != null && (
-      <div className="data-table__detail">
-        <div className="data-table__detail-label">Product Page</div>
-        <div className="data-table__detail-value">
-          <a href={ps.product_page} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="detail-link">
-            {ps.product_page}
-          </a>
-        </div>
-      </div>
-    )}
-    {ps.instruction_manual != null && (
-      <div className="data-table__detail">
-        <div className="data-table__detail-label">Instruction Manual</div>
-        <div className="data-table__detail-value">
-          <a href={ps.instruction_manual} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="detail-link">
-            {ps.instruction_manual}
-          </a>
-        </div>
-      </div>
-    )}
+    <LinkDetail label="Product Page" url={ps.product_page} />
+    <LinkDetail label="Instruction Manual" url={ps.instruction_manual} />
     <JacksList jacks={ps.jacks} />
   </>
 );
