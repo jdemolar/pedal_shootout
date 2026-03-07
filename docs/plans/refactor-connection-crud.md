@@ -32,9 +32,22 @@ Add a `makeConnectionOps` factory function inside `WorkbenchProvider` (it needs 
 
 | File | Change |
 |---|---|
-| `apps/web/src/context/WorkbenchContext.tsx` | Add factory, replace 16 callbacks with 4 factory calls |
+| `apps/web/src/context/WorkbenchContext.tsx` | Add factory, replace 16 callbacks with 4 factory calls, rename `acknowledgeWarning` → `acknowledgePowerWarning` |
+| `apps/web/src/components/Workbench/PowerView.tsx` | Update 2 references: destructure and click handler |
 
 No new files needed — the factory is a private function inside the provider.
+
+### Prerequisite: Rename `acknowledgeWarning` → `acknowledgePowerWarning`
+
+The power connection's acknowledge function is named `acknowledgeWarning` (no type prefix) because it was created first, before the other connection types were added. The other three use prefixed names (`acknowledgeAudioWarning`, `acknowledgeMidiWarning`, `acknowledgeControlWarning`). Rename it for consistency before applying the factory.
+
+**`WorkbenchContext.tsx` changes:**
+- Interface `WorkbenchContextType`: rename `acknowledgeWarning` → `acknowledgePowerWarning`
+- The `useCallback` definition (or factory destructure) and the `value` object
+
+**`PowerView.tsx` changes (only consumer):**
+- Line 61: destructure `acknowledgePowerWarning` instead of `acknowledgeWarning`
+- Line 577: `onClick={() => acknowledgePowerWarning(...)}`
 
 ## Implementation
 
@@ -98,7 +111,7 @@ const {
   add: addPowerConnection,
   remove: removePowerConnection,
   setAll: setPowerConnections,
-  acknowledgeWarning: acknowledgeWarning,
+  acknowledgeWarning: acknowledgePowerWarning,
 } = useMemo(() => makeConnectionOps<PowerConnection>('powerConnections'), [updateStore]);
 
 const {
@@ -127,7 +140,7 @@ The four type-specific callbacks (`updateAudioConnectionWaypoints`, `updateMidiC
 
 ### 3. Update the `useMemo` dependency array for `value`
 
-The 16 replaced callbacks are now derived from `useMemo` instead of `useCallback`. The dependency array for `value` should still list all the same names — they're just sourced differently. No change needed to the names in the array or the context value object.
+The 16 replaced callbacks are now derived from `useMemo` instead of `useCallback`. The dependency array for `value` should still list all the same names — they're just sourced differently. Update `acknowledgeWarning` → `acknowledgePowerWarning` in the context interface, context value object, and the `useMemo` dependency array.
 
 ## Verification
 
