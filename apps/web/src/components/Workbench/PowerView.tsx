@@ -58,7 +58,7 @@ const PowerView = ({ rows }: PowerViewProps) => {
     addPowerConnection,
     removePowerConnection,
     setPowerConnections,
-    acknowledgeWarning,
+    acknowledgePowerWarning,
     activeWorkbench,
   } = useWorkbench();
 
@@ -574,7 +574,7 @@ const PowerView = ({ rows }: PowerViewProps) => {
                     ) : (
                       <button
                         className="workbench__power-popover-btn"
-                        onClick={() => acknowledgeWarning(warningPopover.connId, w.key)}
+                        onClick={() => acknowledgePowerWarning(warningPopover.connId, w.key)}
                       >
                         {isVoltageNotice ? 'Got it' : 'I have this adapter'}
                       </button>
