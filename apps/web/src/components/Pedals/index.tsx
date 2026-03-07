@@ -39,9 +39,9 @@ interface Pedal {
 
 const columns: ColumnDef<Pedal>[] = [
   { label: 'Manufacturer', width: 160, sortKey: 'manufacturer',
-    render: p => <span style={{ color: '#f0f0f0', fontSize: '12.5px', fontWeight: 600, fontFamily: "'Helvetica Neue', sans-serif" }}>{p.manufacturer}</span> },
+    render: p => <span className="data-table__cell-manufacturer">{p.manufacturer}</span> },
   { label: 'Model', width: 200, sortKey: 'model',
-    render: p => <span style={{ color: '#d0d0d0' }}>{p.model}</span> },
+    render: p => <span className="data-table__cell-model">{p.model}</span> },
   { label: 'Type', width: 120, align: 'center', sortKey: 'effect_type',
     render: p => p.effect_type
       ? <span className={`effect-badge effect-badge--${p.effect_type.toLowerCase().replace(/[\s/]+/g, '-')}`}>{p.effect_type}</span>

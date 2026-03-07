@@ -59,9 +59,9 @@ function supplyHasVoltage(ps: PowerSupply, voltage: string): boolean {
 
 const columns: ColumnDef<PowerSupply>[] = [
   { label: 'Manufacturer', width: 180, sortKey: 'manufacturer',
-    render: ps => <span style={{ color: '#f0f0f0', fontSize: '12.5px', fontWeight: 600, fontFamily: "'Helvetica Neue', sans-serif" }}>{ps.manufacturer}</span> },
+    render: ps => <span className="data-table__cell-manufacturer">{ps.manufacturer}</span> },
   { label: 'Model', width: 200, sortKey: 'model',
-    render: ps => <span style={{ color: '#d0d0d0' }}>{ps.model}</span> },
+    render: ps => <span className="data-table__cell-model">{ps.model}</span> },
   { label: 'Type', width: 120, align: 'center', sortKey: 'supply_type',
     render: ps => ps.supply_type
       ? <>{ps.supply_type}</>

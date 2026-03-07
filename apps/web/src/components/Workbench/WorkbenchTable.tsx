@@ -161,7 +161,7 @@ function CableTable({ shoppingList }: { shoppingList: ShoppingList }) {
                 </span>
               </td>
               <td className="workbench__td">
-                <span style={{ color: '#d0d0d0' }}>
+                <span className="data-table__cell-model">
                   {cable.label}
                   {cable.requiresCustomCable && (
                     <span className="cable-custom-flag" title="Custom cable or adapter needed"> *</span>
@@ -254,12 +254,12 @@ const WorkbenchTableView = ({ onRowClick, rows, loading, error }: WorkbenchTable
               onClick={() => onRowClick(row)}
             >
               <td className="workbench__td">
-                <span style={{ color: '#f0f0f0', fontSize: '12.5px', fontWeight: 600, fontFamily: "'Helvetica Neue', sans-serif" }}>
+                <span className="data-table__cell-manufacturer">
                   {row.manufacturer}
                 </span>
               </td>
               <td className="workbench__td">
-                <span style={{ color: '#d0d0d0' }}>{row.model}</span>
+                <span className="data-table__cell-model">{row.model}</span>
               </td>
               <td className="workbench__td" style={{ textAlign: 'center' }}>
                 <span style={{ color: row.quantity > 1 ? '#6abf7b' : '#888', fontFamily: 'monospace', fontSize: '12px' }}>

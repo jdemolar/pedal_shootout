@@ -25,7 +25,7 @@ const columns: ColumnDef<Manufacturer>[] = [
   { label: '#', width: 40, align: 'center', sortKey: 'id',
     render: m => <span style={{ color: '#3a3a3a', fontSize: '10px' }}>{m.id}</span> },
   { label: 'Manufacturer', width: 200, sortKey: 'name',
-    render: m => <span style={{ color: '#f0f0f0', fontSize: '12.5px', fontWeight: 600, fontFamily: "'Helvetica Neue', sans-serif" }}>{m.name}</span> },
+    render: m => <span className="data-table__cell-manufacturer">{m.name}</span> },
   { label: 'Country', width: 120, sortKey: 'country',
     render: m => m.country != null ? <span style={{ color: '#a0a0a0' }}>{m.country}</span> : <span className="null-value">{'\u2014'}</span> },
   { label: 'Founded', width: 80, align: 'center', sortKey: 'founded',
