@@ -99,7 +99,7 @@ interface WorkbenchContextType {
   addPowerConnection: (conn: Omit<PowerConnection, 'id'>) => void;
   removePowerConnection: (connId: string) => void;
   setPowerConnections: (conns: PowerConnection[]) => void;
-  acknowledgeWarning: (connId: string, warningKey: string) => void;
+  acknowledgePowerWarning: (connId: string, warningKey: string) => void;
 
   // Audio connections
   addAudioConnection: (conn: Omit<AudioConnection, 'id'>) => void;
@@ -365,125 +365,85 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
     }));
   }, [updateStore]);
 
-  // --- Power connections ---
+  // --- Connection CRUD (factory-generated) ---
 
-  const addPowerConnection = useCallback((conn: Omit<PowerConnection, 'id'>) => {
-    updateStore(prev => updateActiveWorkbench(prev, wb => ({
-      ...wb,
-      powerConnections: [...(wb.powerConnections || []), { ...conn, id: generateId() }],
-      updatedAt: new Date().toISOString(),
-    })));
-  }, [updateStore]);
+  function makeConnectionOps<T extends { id: string; acknowledgedWarnings?: string[] }>(
+    field: 'powerConnections' | 'audioConnections' | 'midiConnections' | 'controlConnections',
+  ) {
+    const add = (conn: Omit<T, 'id'>) => {
+      updateStore(prev => updateActiveWorkbench(prev, wb => ({
+        ...wb,
+        [field]: [...((wb[field] as T[] | undefined) || []), { ...conn, id: generateId() }],
+        updatedAt: new Date().toISOString(),
+      })));
+    };
 
-  const removePowerConnection = useCallback((connId: string) => {
-    updateStore(prev => updateActiveWorkbench(prev, wb => ({
-      ...wb,
-      powerConnections: (wb.powerConnections || []).filter(c => c.id !== connId),
-      updatedAt: new Date().toISOString(),
-    })));
-  }, [updateStore]);
+    const remove = (connId: string) => {
+      updateStore(prev => updateActiveWorkbench(prev, wb => ({
+        ...wb,
+        [field]: ((wb[field] as T[] | undefined) || []).filter(c => c.id !== connId),
+        updatedAt: new Date().toISOString(),
+      })));
+    };
 
-  const setPowerConnections = useCallback((conns: PowerConnection[]) => {
-    updateStore(prev => updateActiveWorkbench(prev, wb => ({
-      ...wb,
-      powerConnections: conns,
-      updatedAt: new Date().toISOString(),
-    })));
-  }, [updateStore]);
+    const setAll = (conns: T[]) => {
+      updateStore(prev => updateActiveWorkbench(prev, wb => ({
+        ...wb,
+        [field]: conns,
+        updatedAt: new Date().toISOString(),
+      })));
+    };
 
-  const acknowledgeWarning = useCallback((connId: string, warningKey: string) => {
-    updateStore(prev => updateActiveWorkbench(prev, wb => ({
-      ...wb,
-      powerConnections: (wb.powerConnections || []).map(c =>
-        c.id === connId
-          ? { ...c, acknowledgedWarnings: [...(c.acknowledgedWarnings || []), warningKey] }
-          : c,
-      ),
-      updatedAt: new Date().toISOString(),
-    })));
-  }, [updateStore]);
+    const acknowledgeWarning = (connId: string, warningKey: string) => {
+      updateStore(prev => updateActiveWorkbench(prev, wb => ({
+        ...wb,
+        [field]: ((wb[field] as T[] | undefined) || []).map(c =>
+          c.id === connId
+            ? { ...c, acknowledgedWarnings: [...(c.acknowledgedWarnings || []), warningKey] }
+            : c,
+        ),
+        updatedAt: new Date().toISOString(),
+      })));
+    };
 
-  // --- Audio connections ---
+    return { add, remove, setAll, acknowledgeWarning };
+  }
 
-  const addAudioConnection = useCallback((conn: Omit<AudioConnection, 'id'>) => {
-    updateStore(prev => updateActiveWorkbench(prev, wb => ({
-      ...wb,
-      audioConnections: [...(wb.audioConnections || []), { ...conn, id: generateId() }],
-      updatedAt: new Date().toISOString(),
-    })));
-  }, [updateStore]);
+  const {
+    add: addPowerConnection,
+    remove: removePowerConnection,
+    setAll: setPowerConnections,
+    acknowledgeWarning: acknowledgePowerWarning,
+  } = useMemo(() => makeConnectionOps<PowerConnection>('powerConnections'), [updateStore]);
 
-  const removeAudioConnection = useCallback((connId: string) => {
-    updateStore(prev => updateActiveWorkbench(prev, wb => ({
-      ...wb,
-      audioConnections: (wb.audioConnections || []).filter(c => c.id !== connId),
-      updatedAt: new Date().toISOString(),
-    })));
-  }, [updateStore]);
+  const {
+    add: addAudioConnection,
+    remove: removeAudioConnection,
+    setAll: setAudioConnections,
+    acknowledgeWarning: acknowledgeAudioWarning,
+  } = useMemo(() => makeConnectionOps<AudioConnection>('audioConnections'), [updateStore]);
 
-  const setAudioConnections = useCallback((conns: AudioConnection[]) => {
-    updateStore(prev => updateActiveWorkbench(prev, wb => ({
-      ...wb,
-      audioConnections: conns,
-      updatedAt: new Date().toISOString(),
-    })));
-  }, [updateStore]);
+  const {
+    add: addMidiConnection,
+    remove: removeMidiConnection,
+    setAll: setMidiConnections,
+    acknowledgeWarning: acknowledgeMidiWarning,
+  } = useMemo(() => makeConnectionOps<MidiConnection>('midiConnections'), [updateStore]);
 
-  const acknowledgeAudioWarning = useCallback((connId: string, warningKey: string) => {
-    updateStore(prev => updateActiveWorkbench(prev, wb => ({
-      ...wb,
-      audioConnections: (wb.audioConnections || []).map(c =>
-        c.id === connId
-          ? { ...c, acknowledgedWarnings: [...(c.acknowledgedWarnings || []), warningKey] }
-          : c,
-      ),
-      updatedAt: new Date().toISOString(),
-    })));
-  }, [updateStore]);
+  const {
+    add: addControlConnection,
+    remove: removeControlConnection,
+    setAll: setControlConnections,
+    acknowledgeWarning: acknowledgeControlWarning,
+  } = useMemo(() => makeConnectionOps<ControlConnection>('controlConnections'), [updateStore]);
+
+  // --- Type-specific connection operations ---
 
   const updateAudioConnectionWaypoints = useCallback((connId: string, waypoints: RouteWaypoint[]) => {
     updateStore(prev => updateActiveWorkbench(prev, wb => ({
       ...wb,
       audioConnections: (wb.audioConnections || []).map(c =>
         c.id === connId ? { ...c, waypoints } : c,
-      ),
-      updatedAt: new Date().toISOString(),
-    })));
-  }, [updateStore]);
-
-  // --- MIDI connections ---
-
-  const addMidiConnection = useCallback((conn: Omit<MidiConnection, 'id'>) => {
-    updateStore(prev => updateActiveWorkbench(prev, wb => ({
-      ...wb,
-      midiConnections: [...(wb.midiConnections || []), { ...conn, id: generateId() }],
-      updatedAt: new Date().toISOString(),
-    })));
-  }, [updateStore]);
-
-  const removeMidiConnection = useCallback((connId: string) => {
-    updateStore(prev => updateActiveWorkbench(prev, wb => ({
-      ...wb,
-      midiConnections: (wb.midiConnections || []).filter(c => c.id !== connId),
-      updatedAt: new Date().toISOString(),
-    })));
-  }, [updateStore]);
-
-  const setMidiConnections = useCallback((conns: MidiConnection[]) => {
-    updateStore(prev => updateActiveWorkbench(prev, wb => ({
-      ...wb,
-      midiConnections: conns,
-      updatedAt: new Date().toISOString(),
-    })));
-  }, [updateStore]);
-
-  const acknowledgeMidiWarning = useCallback((connId: string, warningKey: string) => {
-    updateStore(prev => updateActiveWorkbench(prev, wb => ({
-      ...wb,
-      midiConnections: (wb.midiConnections || []).map(c =>
-        c.id === connId
-          ? { ...c, acknowledgedWarnings: [...(c.acknowledgedWarnings || []), warningKey] }
-          : c,
       ),
       updatedAt: new Date().toISOString(),
     })));
@@ -512,44 +472,6 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
         updatedAt: new Date().toISOString(),
       };
     }));
-  }, [updateStore]);
-
-  // --- Control connections ---
-
-  const addControlConnection = useCallback((conn: Omit<ControlConnection, 'id'>) => {
-    updateStore(prev => updateActiveWorkbench(prev, wb => ({
-      ...wb,
-      controlConnections: [...(wb.controlConnections || []), { ...conn, id: generateId() }],
-      updatedAt: new Date().toISOString(),
-    })));
-  }, [updateStore]);
-
-  const removeControlConnection = useCallback((connId: string) => {
-    updateStore(prev => updateActiveWorkbench(prev, wb => ({
-      ...wb,
-      controlConnections: (wb.controlConnections || []).filter(c => c.id !== connId),
-      updatedAt: new Date().toISOString(),
-    })));
-  }, [updateStore]);
-
-  const setControlConnections = useCallback((conns: ControlConnection[]) => {
-    updateStore(prev => updateActiveWorkbench(prev, wb => ({
-      ...wb,
-      controlConnections: conns,
-      updatedAt: new Date().toISOString(),
-    })));
-  }, [updateStore]);
-
-  const acknowledgeControlWarning = useCallback((connId: string, warningKey: string) => {
-    updateStore(prev => updateActiveWorkbench(prev, wb => ({
-      ...wb,
-      controlConnections: (wb.controlConnections || []).map(c =>
-        c.id === connId
-          ? { ...c, acknowledgedWarnings: [...(c.acknowledgedWarnings || []), warningKey] }
-          : c,
-      ),
-      updatedAt: new Date().toISOString(),
-    })));
   }, [updateStore]);
 
   const updateControlConnection = useCallback((connId: string, updates: Partial<Pick<ControlConnection, 'trsPolarity'>>) => {
@@ -642,7 +564,7 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
       addPowerConnection,
       removePowerConnection,
       setPowerConnections,
-      acknowledgeWarning,
+      acknowledgePowerWarning,
       addAudioConnection,
       removeAudioConnection,
       setAudioConnections,
@@ -667,7 +589,7 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
       updateAudioPlaceholderLabel,
       totalItemCount,
     }),
-    [store.workbenches, activeWorkbench, createWorkbench, renameWorkbench, deleteWorkbench, setActiveWorkbench, addItem, removeItem, removeAllInstances, countInWorkbench, clear, updateViewPosition, updateCardTransform, getViewPositions, getViewportState, updateViewportState, addPowerConnection, removePowerConnection, setPowerConnections, acknowledgeWarning, addAudioConnection, removeAudioConnection, setAudioConnections, acknowledgeAudioWarning, updateAudioConnectionWaypoints, addMidiConnection, removeMidiConnection, setMidiConnections, acknowledgeMidiWarning, updateMidiConnection, updateMidiDeviceSettings, addControlConnection, removeControlConnection, setControlConnections, acknowledgeControlWarning, updateControlConnection, addVirtualNode, removeVirtualNode, setVirtualNodes, addAudioPlaceholder, removeAudioPlaceholder, updateAudioPlaceholderLabel, totalItemCount],
+    [store.workbenches, activeWorkbench, createWorkbench, renameWorkbench, deleteWorkbench, setActiveWorkbench, addItem, removeItem, removeAllInstances, countInWorkbench, clear, updateViewPosition, updateCardTransform, getViewPositions, getViewportState, updateViewportState, addPowerConnection, removePowerConnection, setPowerConnections, acknowledgePowerWarning, addAudioConnection, removeAudioConnection, setAudioConnections, acknowledgeAudioWarning, updateAudioConnectionWaypoints, addMidiConnection, removeMidiConnection, setMidiConnections, acknowledgeMidiWarning, updateMidiConnection, updateMidiDeviceSettings, addControlConnection, removeControlConnection, setControlConnections, acknowledgeControlWarning, updateControlConnection, addVirtualNode, removeVirtualNode, setVirtualNodes, addAudioPlaceholder, removeAudioPlaceholder, updateAudioPlaceholderLabel, totalItemCount],
   );
 
   return (

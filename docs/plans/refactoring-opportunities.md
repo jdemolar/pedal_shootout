@@ -21,7 +21,7 @@ The codebase is well-organized and follows its own conventions consistently in m
 
 ### Recommended
 - [x] #4 — `formatMsrp` duplicated in 8 DTOs + 1 service
-- [ ] #5 — WorkbenchContext: four identical connection CRUD patterns
+- [x] #5 — WorkbenchContext: four identical connection CRUD patterns
 - [ ] #6 — Inline styles duplicated across data view components
 - [ ] #7 — Expanded-row detail blocks: boolean field pattern (21 occurrences)
 - [ ] #8 — `extractPowerVoltage` / `extractPowerCurrentMa` redundant array scans
