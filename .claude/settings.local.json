@@ -60,7 +60,8 @@
       "WebFetch(domain:manualzz.com)",
       "WebFetch(domain:static1.squarespace.com)",
       "WebFetch(domain:www.in2guitar.com)",
-      "WebFetch(domain:www.creamcitymusic.com)"
+      "WebFetch(domain:www.creamcitymusic.com)",
+      "Bash(gh pr:*)"
     ],
     "deny": [
       "Bash(sudo *)",

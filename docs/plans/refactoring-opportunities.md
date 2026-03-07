@@ -15,7 +15,7 @@ The codebase is well-organized and follows its own conventions consistently in m
 ## Checklist
 
 ### Critical
-- [X] #1 — Duplicate cycle-detection implementations (audioUtils / midiUtils)
+- [x] #1 — Duplicate cycle-detection implementations (audioUtils / midiUtils)
 - [x] #2 — N+1 query: ManufacturerService per-manufacturer count queries
 - [x] #3 — N+1 query: DetailTypeService / PedalService per-product jack queries
 
