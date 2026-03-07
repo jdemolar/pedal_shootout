@@ -4,6 +4,7 @@ import { formatMsrp, formatDimensions } from '../../utils/formatters';
 import { useApiData } from '../../hooks/useApiData';
 import { api } from '../../services/api';
 import { transformPedalboard, Jack } from '../../utils/transformers';
+import { BooleanDetail, LinkDetail } from '../DetailHelpers';
 import JacksList from '../JacksList';
 import WorkbenchToggle from '../WorkbenchToggle';
 
@@ -77,30 +78,10 @@ const renderExpandedRow = (p: Pedalboard): ReactNode => (
         <div className="data-table__detail-value">{p.surface_type}</div>
       </div>
     )}
-    <div className="data-table__detail">
-      <div className="data-table__detail-label">Second Tier</div>
-      <div className="data-table__detail-value">
-        <span className={p.has_second_tier ? 'bool-yes' : 'bool-no'}>{p.has_second_tier ? 'Yes' : 'No'}</span>
-      </div>
-    </div>
-    <div className="data-table__detail">
-      <div className="data-table__detail-label">Integrated Power</div>
-      <div className="data-table__detail-value">
-        <span className={p.has_integrated_power ? 'bool-yes' : 'bool-no'}>{p.has_integrated_power ? 'Yes' : 'No'}</span>
-      </div>
-    </div>
-    <div className="data-table__detail">
-      <div className="data-table__detail-label">Patch Bay</div>
-      <div className="data-table__detail-value">
-        <span className={p.has_integrated_patch_bay ? 'bool-yes' : 'bool-no'}>{p.has_integrated_patch_bay ? 'Yes' : 'No'}</span>
-      </div>
-    </div>
-    <div className="data-table__detail">
-      <div className="data-table__detail-label">Case Included</div>
-      <div className="data-table__detail-value">
-        <span className={p.case_included ? 'bool-yes' : 'bool-no'}>{p.case_included ? 'Yes' : 'No'}</span>
-      </div>
-    </div>
+    <BooleanDetail label="Second Tier" value={p.has_second_tier} />
+    <BooleanDetail label="Integrated Power" value={p.has_integrated_power} />
+    <BooleanDetail label="Patch Bay" value={p.has_integrated_patch_bay} />
+    <BooleanDetail label="Case Included" value={p.case_included} />
     {p.weight_grams != null && (
       <div className="data-table__detail">
         <div className="data-table__detail-label">Weight</div>
@@ -109,26 +90,8 @@ const renderExpandedRow = (p: Pedalboard): ReactNode => (
         </div>
       </div>
     )}
-    {p.product_page != null && (
-      <div className="data-table__detail">
-        <div className="data-table__detail-label">Product Page</div>
-        <div className="data-table__detail-value">
-          <a href={p.product_page} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="detail-link">
-            {p.product_page}
-          </a>
-        </div>
-      </div>
-    )}
-    {p.instruction_manual != null && (
-      <div className="data-table__detail">
-        <div className="data-table__detail-label">Instruction Manual</div>
-        <div className="data-table__detail-value">
-          <a href={p.instruction_manual} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="detail-link">
-            {p.instruction_manual}
-          </a>
-        </div>
-      </div>
-    )}
+    <LinkDetail label="Product Page" url={p.product_page} />
+    <LinkDetail label="Instruction Manual" url={p.instruction_manual} />
     <JacksList jacks={p.jacks} />
   </>
 );

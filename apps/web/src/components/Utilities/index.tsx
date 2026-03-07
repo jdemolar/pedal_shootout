@@ -4,6 +4,7 @@ import { formatMsrp, formatDimensions } from '../../utils/formatters';
 import { useApiData } from '../../hooks/useApiData';
 import { api } from '../../services/api';
 import { transformUtility, Jack } from '../../utils/transformers';
+import { BooleanDetail, LinkDetail } from '../DetailHelpers';
 import JacksList from '../JacksList';
 import WorkbenchToggle from '../WorkbenchToggle';
 
@@ -76,12 +77,7 @@ const renderExpandedRow = (u: Utility): ReactNode => (
         <div className="data-table__detail-value">{u.bypass_type}</div>
       </div>
     )}
-    <div className="data-table__detail">
-      <div className="data-table__detail-label">Ground Lift</div>
-      <div className="data-table__detail-value">
-        <span className={u.has_ground_lift ? 'bool-yes' : 'bool-no'}>{u.has_ground_lift ? 'Yes' : 'No'}</span>
-      </div>
-    </div>
+    <BooleanDetail label="Ground Lift" value={u.has_ground_lift} />
     {u.weight_grams != null && (
       <div className="data-table__detail">
         <div className="data-table__detail-label">Weight</div>
@@ -90,26 +86,8 @@ const renderExpandedRow = (u: Utility): ReactNode => (
         </div>
       </div>
     )}
-    {u.product_page != null && (
-      <div className="data-table__detail">
-        <div className="data-table__detail-label">Product Page</div>
-        <div className="data-table__detail-value">
-          <a href={u.product_page} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="detail-link">
-            {u.product_page}
-          </a>
-        </div>
-      </div>
-    )}
-    {u.instruction_manual != null && (
-      <div className="data-table__detail">
-        <div className="data-table__detail-label">Instruction Manual</div>
-        <div className="data-table__detail-value">
-          <a href={u.instruction_manual} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="detail-link">
-            {u.instruction_manual}
-          </a>
-        </div>
-      </div>
-    )}
+    <LinkDetail label="Product Page" url={u.product_page} />
+    <LinkDetail label="Instruction Manual" url={u.instruction_manual} />
     <JacksList jacks={u.jacks} />
   </>
 );

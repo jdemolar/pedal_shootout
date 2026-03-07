@@ -4,6 +4,7 @@ import { formatMsrp, formatDimensions, formatPower } from '../../utils/formatter
 import { useApiData } from '../../hooks/useApiData';
 import { api } from '../../services/api';
 import { transformPedal, Jack } from '../../utils/transformers';
+import { BooleanDetail, LinkDetail } from '../DetailHelpers';
 import JacksList from '../JacksList';
 import WorkbenchToggle from '../WorkbenchToggle';
 
@@ -96,62 +97,24 @@ const renderExpandedRow = (p: Pedal): ReactNode => (
         <div className="data-table__detail-value">{p.mono_stereo}</div>
       </div>
     )}
-    <div className="data-table__detail">
-      <div className="data-table__detail-label">MIDI Capable</div>
-      <div className="data-table__detail-value">
-        <span className={p.midi_capable ? 'bool-yes' : 'bool-no'}>{p.midi_capable ? 'Yes' : 'No'}</span>
-      </div>
-    </div>
+    <BooleanDetail label="MIDI Capable" value={p.midi_capable} />
     {p.preset_count > 0 && (
       <div className="data-table__detail">
         <div className="data-table__detail-label">Presets</div>
         <div className="data-table__detail-value data-table__detail-value--highlight">{p.preset_count}</div>
       </div>
     )}
-    <div className="data-table__detail">
-      <div className="data-table__detail-label">Tap Tempo</div>
-      <div className="data-table__detail-value">
-        <span className={p.has_tap_tempo ? 'bool-yes' : 'bool-no'}>{p.has_tap_tempo ? 'Yes' : 'No'}</span>
-      </div>
-    </div>
-    <div className="data-table__detail">
-      <div className="data-table__detail-label">Battery</div>
-      <div className="data-table__detail-value">
-        <span className={p.battery_capable ? 'bool-yes' : 'bool-no'}>{p.battery_capable ? 'Yes' : 'No'}</span>
-      </div>
-    </div>
-    <div className="data-table__detail">
-      <div className="data-table__detail-label">Software Editor</div>
-      <div className="data-table__detail-value">
-        <span className={p.has_software_editor ? 'bool-yes' : 'bool-no'}>{p.has_software_editor ? 'Yes' : 'No'}</span>
-      </div>
-    </div>
+    <BooleanDetail label="Tap Tempo" value={p.has_tap_tempo} />
+    <BooleanDetail label="Battery" value={p.battery_capable} />
+    <BooleanDetail label="Software Editor" value={p.has_software_editor} />
     {p.color_options != null && (
       <div className="data-table__detail">
         <div className="data-table__detail-label">Color Options</div>
         <div className="data-table__detail-value">{p.color_options}</div>
       </div>
     )}
-    {p.product_page != null && (
-      <div className="data-table__detail">
-        <div className="data-table__detail-label">Product Page</div>
-        <div className="data-table__detail-value">
-          <a href={p.product_page} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="detail-link">
-            {p.product_page}
-          </a>
-        </div>
-      </div>
-    )}
-    {p.instruction_manual != null && (
-      <div className="data-table__detail">
-        <div className="data-table__detail-label">Instruction Manual</div>
-        <div className="data-table__detail-value">
-          <a href={p.instruction_manual} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="detail-link">
-            {p.instruction_manual}
-          </a>
-        </div>
-      </div>
-    )}
+    <LinkDetail label="Product Page" url={p.product_page} />
+    <LinkDetail label="Instruction Manual" url={p.instruction_manual} />
     <JacksList jacks={p.jacks} />
   </>
 );

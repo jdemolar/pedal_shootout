@@ -4,6 +4,7 @@ import { formatMsrp, formatDimensions, formatPower } from '../../utils/formatter
 import { useApiData } from '../../hooks/useApiData';
 import { api } from '../../services/api';
 import { transformMidiController, Jack } from '../../utils/transformers';
+import { BooleanDetail, LinkDetail } from '../DetailHelpers';
 import JacksList from '../JacksList';
 import WorkbenchToggle from '../WorkbenchToggle';
 
@@ -96,14 +97,7 @@ const renderExpandedRow = (c: MidiController): ReactNode => (
         <div className="data-table__detail-value">{c.display_type}</div>
       </div>
     )}
-    <div className="data-table__detail">
-      <div className="data-table__detail-label">Per-Switch Displays</div>
-      <div className="data-table__detail-value">
-        <span className={c.has_per_switch_displays ? 'bool-yes' : 'bool-no'}>
-          {c.has_per_switch_displays ? 'Yes' : 'No'}
-        </span>
-      </div>
-    </div>
+    <BooleanDetail label="Per-Switch Displays" value={c.has_per_switch_displays} />
     <div className="data-table__detail">
       <div className="data-table__detail-label">Expression Inputs</div>
       <div className="data-table__detail-value data-table__detail-value--highlight">
@@ -114,62 +108,19 @@ const renderExpandedRow = (c: MidiController): ReactNode => (
       <div className="data-table__detail-label">Aux Switch Inputs</div>
       <div className="data-table__detail-value">{c.aux_switch_input_count}</div>
     </div>
-    <div className="data-table__detail">
-      <div className="data-table__detail-label">Tuner</div>
-      <div className="data-table__detail-value">
-        <span className={c.has_tuner ? 'bool-yes' : 'bool-no'}>{c.has_tuner ? 'Yes' : 'No'}</span>
-      </div>
-    </div>
-    <div className="data-table__detail">
-      <div className="data-table__detail-label">Tap Tempo</div>
-      <div className="data-table__detail-value">
-        <span className={c.has_tap_tempo ? 'bool-yes' : 'bool-no'}>{c.has_tap_tempo ? 'Yes' : 'No'}</span>
-      </div>
-    </div>
-    <div className="data-table__detail">
-      <div className="data-table__detail-label">Setlist Mode</div>
-      <div className="data-table__detail-value">
-        <span className={c.has_setlist_mode ? 'bool-yes' : 'bool-no'}>{c.has_setlist_mode ? 'Yes' : 'No'}</span>
-      </div>
-    </div>
-    <div className="data-table__detail">
-      <div className="data-table__detail-label">Bluetooth MIDI</div>
-      <div className="data-table__detail-value">
-        <span className={c.has_bluetooth_midi ? 'bool-yes' : 'bool-no'}>{c.has_bluetooth_midi ? 'Yes' : 'No'}</span>
-      </div>
-    </div>
-    <div className="data-table__detail">
-      <div className="data-table__detail-label">Software Editor</div>
-      <div className="data-table__detail-value">
-        <span className={c.software_editor_available ? 'bool-yes' : 'bool-no'}>{c.software_editor_available ? 'Yes' : 'No'}</span>
-      </div>
-    </div>
+    <BooleanDetail label="Tuner" value={c.has_tuner} />
+    <BooleanDetail label="Tap Tempo" value={c.has_tap_tempo} />
+    <BooleanDetail label="Setlist Mode" value={c.has_setlist_mode} />
+    <BooleanDetail label="Bluetooth MIDI" value={c.has_bluetooth_midi} />
+    <BooleanDetail label="Software Editor" value={c.software_editor_available} />
     {c.software_platforms != null && (
       <div className="data-table__detail">
         <div className="data-table__detail-label">Platforms</div>
         <div className="data-table__detail-value">{c.software_platforms}</div>
       </div>
     )}
-    {c.product_page != null && (
-      <div className="data-table__detail">
-        <div className="data-table__detail-label">Product Page</div>
-        <div className="data-table__detail-value">
-          <a href={c.product_page} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="detail-link">
-            {c.product_page}
-          </a>
-        </div>
-      </div>
-    )}
-    {c.instruction_manual != null && (
-      <div className="data-table__detail">
-        <div className="data-table__detail-label">Instruction Manual</div>
-        <div className="data-table__detail-value">
-          <a href={c.instruction_manual} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="detail-link">
-            {c.instruction_manual}
-          </a>
-        </div>
-      </div>
-    )}
+    <LinkDetail label="Product Page" url={c.product_page} />
+    <LinkDetail label="Instruction Manual" url={c.instruction_manual} />
     <JacksList jacks={c.jacks} />
   </>
 );
