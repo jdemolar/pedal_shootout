@@ -31,9 +31,9 @@ interface Utility {
 
 const columns: ColumnDef<Utility>[] = [
   { label: 'Manufacturer', width: 180, sortKey: 'manufacturer',
-    render: u => <span style={{ color: '#f0f0f0', fontSize: '12.5px', fontWeight: 600, fontFamily: "'Helvetica Neue', sans-serif" }}>{u.manufacturer}</span> },
+    render: u => <span className="data-table__cell-manufacturer">{u.manufacturer}</span> },
   { label: 'Model', width: 200, sortKey: 'model',
-    render: u => <span style={{ color: '#d0d0d0' }}>{u.model}</span> },
+    render: u => <span className="data-table__cell-model">{u.model}</span> },
   { label: 'Type', width: 150, sortKey: 'utility_type',
     render: u => <>{u.utility_type}</> },
   { label: 'Active/Passive', width: 110, align: 'center', sortKey: 'is_active',

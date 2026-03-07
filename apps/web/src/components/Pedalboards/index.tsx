@@ -34,9 +34,9 @@ interface Pedalboard {
 
 const columns: ColumnDef<Pedalboard>[] = [
   { label: 'Manufacturer', width: 180, sortKey: 'manufacturer',
-    render: p => <span style={{ color: '#f0f0f0', fontSize: '12.5px', fontWeight: 600, fontFamily: "'Helvetica Neue', sans-serif" }}>{p.manufacturer}</span> },
+    render: p => <span className="data-table__cell-manufacturer">{p.manufacturer}</span> },
   { label: 'Model', width: 200, sortKey: 'model',
-    render: p => <span style={{ color: '#d0d0d0' }}>{p.model}</span> },
+    render: p => <span className="data-table__cell-model">{p.model}</span> },
   { label: 'Width (mm)', width: 100, align: 'center', sortKey: 'usable_width_mm',
     render: p => p.usable_width_mm != null
       ? <>{p.usable_width_mm}</>

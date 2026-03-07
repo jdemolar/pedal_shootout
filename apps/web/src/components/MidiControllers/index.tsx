@@ -42,9 +42,9 @@ interface MidiController {
 
 const columns: ColumnDef<MidiController>[] = [
   { label: 'Manufacturer', width: 180, sortKey: 'manufacturer',
-    render: c => <span style={{ color: '#f0f0f0', fontSize: '12.5px', fontWeight: 600, fontFamily: "'Helvetica Neue', sans-serif" }}>{c.manufacturer}</span> },
+    render: c => <span className="data-table__cell-manufacturer">{c.manufacturer}</span> },
   { label: 'Model', width: 200, sortKey: 'model',
-    render: c => <span style={{ color: '#d0d0d0' }}>{c.model}</span> },
+    render: c => <span className="data-table__cell-model">{c.model}</span> },
   { label: 'Switches', width: 80, align: 'center', sortKey: 'footswitch_count',
     render: c => <>{c.footswitch_count}</> },
   { label: 'Presets', width: 80, align: 'right', sortKey: 'total_preset_slots',
