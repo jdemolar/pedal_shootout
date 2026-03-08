@@ -19,46 +19,47 @@ The `AudioConnection` type already has an `fxLoopGroupId` field (linked to `jack
 
 ## Approach
 
-The fix has two parts:
+When `wouldCreateCycle` returns `true`, perform a secondary check: does the cycle pass through a device via paired send/return jacks (same `group_id`)? If so, it's intentional topology — downgrade from `error` to `info`.
 
-**Part A — Populate `fxLoopGroupId` on connections.** When the user creates a connection where one endpoint is a loop switcher's send or return jack (identifiable by `group_id` linking send/return pairs), set `fxLoopGroupId` on the connection. This tags the connection as part of a send/return loop.
+The key insight: a send/return loop — regardless of how many pedals are in the chain — always **enters and exits the same device** through paired jacks. The Send jack is the cycle's exit point and the Return jack is the cycle's entry point (or vice versa), and they share a `group_id`.
 
-**Part B — Make cycle detection aware of send/return pairs.** When `validateAudioConnection` detects a cycle, check whether all connections forming the cycle are part of the same FX loop group. If so, downgrade from `error` to `info`.
+### Scenarios considered
 
-However, Part A requires UI changes to the AudioView connection creation flow and potentially jack metadata lookups, which adds scope. A simpler approach that achieves the same result without needing `fxLoopGroupId`:
-
-**Simplified approach — Check if the cycle involves a loop switcher's paired send/return jacks.** When a cycle is detected, trace the cycle path and check whether the connections use jacks that share a `group_id` on the same device (i.e., a send/return pair). If the cycle passes through a send/return pair, it's an intentional loop topology.
-
-After reviewing the complexity tradeoffs, the simplest correct fix is:
-
-**Final approach — Exempt connections between jacks that share a `group_id` on the same instance.** A send/return loop always involves two connections to the same device where one jack is the send (output) and the other is the return (input), linked by `group_id`. When checking for cycles, if the proposed connection's source and target jacks share a `group_id` with existing connection jacks on the same instance, it's a send/return pair.
-
-Actually, the simplest approach: pass jack info into the validator and check whether the source jack and target jack of the **new** connection correspond to the return and send of a loop on the same device. But connections go between *different* devices, so that doesn't apply directly.
-
-Let me re-examine the actual scenario:
-
+**Simple case — one pedal in the loop:**
 ```
-Loop Switcher (instance A):
-  - Loop 1 Send (output, group_id = "loop-1")
-  - Loop 1 Return (input, group_id = "loop-1")
-
-Pedal (instance B):
-  - Audio Input
-  - Audio Output
-
 Connections:
-  1. A (Send) → B (Input)     [sourceInstanceId=A, targetInstanceId=B]
-  2. B (Output) → A (Return)  [sourceInstanceId=B, targetInstanceId=A]
+  1. A(Send, group_id=loop-1) → B(Input)
+  2. B(Output) → A(Return, group_id=loop-1)   ← new
 ```
+Cycle detected. On device A: the new connection enters via Return, and existing connection 1 exits via Send. Both jacks share `group_id=loop-1` → send/return loop → `info`.
 
-When connection 2 is being created, the BFS from A finds A→B (via connection 1), so it reports a cycle. The key distinguishing feature: the two connections to the loop switcher (A) use jacks that share a `group_id` — Send and Return are paired. A genuine feedback loop would connect to unrelated jacks.
+**Multi-pedal chain in one loop:**
+```
+Connections:
+  1. A(Send, group_id=loop-1) → B(Input)
+  2. B(Output) → C(Input)
+  3. C(Output) → A(Return, group_id=loop-1)   ← new
+```
+Cycle detected (A→B→C→A). On device A: the new connection enters via Return (jack id from connection 3's `targetJackId`), and the cycle exits via Send (jack id from connection 1's `sourceJackId`). Both share `group_id=loop-1` → send/return loop → `info`.
 
-### Implementation approach
+**Send to separate amp (no return):**
+```
+Connections:
+  1. A(Send) → B(AmpInput)
+```
+No cycle detected — `wouldCreateCycle` returns false. The `isSendReturnLoop` check is never reached. No issue.
 
-When `wouldCreateCycle` returns `true`, perform a secondary check: trace the cycle and determine if the connections touching the same device use jacks from a send/return pair (same `group_id`). This requires passing jack information into the validation.
+**Genuine feedback loop (no paired jacks):**
+```
+Connections:
+  1. A(Output) → B(Input)
+  2. B(Output) → A(Input)   ← new, different jack, no shared group_id
+```
+Cycle detected. On device A: the entry jack and exit jack do NOT share a `group_id` → genuine feedback loop → `error`.
 
-Concretely:
-1. Add a new function `isSendReturnLoop` that checks whether a detected cycle is actually a send/return topology
+### Implementation steps
+
+1. Add a new function `isSendReturnLoop` that checks whether the cycle enters and exits any device through paired jacks (same `group_id`)
 2. Pass jack lookup data into `validateAudioConnection` so it can resolve `group_id` for connection jacks
 3. When cycle detected + send/return confirmed → emit `info` instead of `error`
 
@@ -74,17 +75,23 @@ Concretely:
 
 ### 1. Add `isSendReturnLoop` helper to `audioUtils.ts`
 
-This function checks whether a cycle between two instances is caused by a send/return pair on one of the devices.
+This function checks whether a detected cycle enters and exits any single device through paired send/return jacks (same `group_id`). It handles both the simple 2-device case and multi-pedal chains.
 
 ```ts
 /**
- * Check if a detected cycle between sourceInstanceId and targetInstanceId
- * is actually a send/return loop (not a genuine feedback loop).
+ * Check if a detected cycle is actually a send/return loop topology.
  *
- * A send/return loop exists when two connections between the same pair of
- * instances use jacks that share a group_id on one device — meaning one
- * connection uses the "send" jack and the other uses the "return" jack
- * of the same FX loop.
+ * A send/return loop exists when the cycle enters and exits the same device
+ * through jacks that share a group_id (a paired send/return). This works
+ * regardless of how many pedals are in the chain between send and return.
+ *
+ * For the new connection and all existing connections, we check both endpoints:
+ * - On the new connection's TARGET instance: does the cycle exit that device
+ *   (via an existing connection's sourceJackId) through a jack that shares
+ *   group_id with the new connection's entry jack (targetJackId)?
+ * - On the new connection's SOURCE instance: does the cycle enter that device
+ *   (via an existing connection's targetJackId) through a jack that shares
+ *   group_id with the new connection's exit jack (sourceJackId)?
  */
 function isSendReturnLoop(
   sourceInstanceId: string,
@@ -94,40 +101,33 @@ function isSendReturnLoop(
   existingConnections: AudioConnection[],
   jackLookup: ReadonlyMap<number, { group_id: string | null }>,
 ): boolean {
-  // Find existing connections that go in the opposite direction
-  // (targetInstanceId → sourceInstanceId) — these complete the "loop"
-  const reverseConnections = existingConnections.filter(
-    c => c.sourceInstanceId === targetInstanceId && c.targetInstanceId === sourceInstanceId,
-  );
-
-  if (reverseConnections.length === 0) return false;
-
-  // For each reverse connection, check if the jacks on the shared device(s)
-  // form a send/return pair (same group_id)
-  for (const rev of reverseConnections) {
-    // On the source instance (loop switcher side of the new connection):
-    // - The new connection uses newSourceJackId (we're connecting FROM this device)
-    // - The reverse connection uses rev.targetJackId (it connects TO this device)
-    // If these two jacks share a group_id → send/return pair on source instance
-    const srcNewJack = typeof newSourceJackId === 'number' ? jackLookup.get(newSourceJackId) : null;
-    const srcRevJack = typeof rev.targetJackId === 'number' ? jackLookup.get(rev.targetJackId) : null;
-    if (
-      srcNewJack?.group_id && srcRevJack?.group_id &&
-      srcNewJack.group_id === srcRevJack.group_id
-    ) {
-      return true;
+  // Check the new connection's TARGET instance (where the cycle closes).
+  // The new connection enters this device via newTargetJackId.
+  // Look for existing connections where this device is the source (the exit point).
+  const entryJack = typeof newTargetJackId === 'number' ? jackLookup.get(newTargetJackId) : null;
+  if (entryJack?.group_id) {
+    for (const conn of existingConnections) {
+      if (conn.sourceInstanceId === targetInstanceId) {
+        const exitJack = typeof conn.sourceJackId === 'number' ? jackLookup.get(conn.sourceJackId) : null;
+        if (exitJack?.group_id && exitJack.group_id === entryJack.group_id) {
+          return true;
+        }
+      }
     }
+  }
 
-    // Same check on the target instance side:
-    // - The new connection uses newTargetJackId (connecting TO this device)
-    // - The reverse connection uses rev.sourceJackId (it connects FROM this device)
-    const tgtNewJack = typeof newTargetJackId === 'number' ? jackLookup.get(newTargetJackId) : null;
-    const tgtRevJack = typeof rev.sourceJackId === 'number' ? jackLookup.get(rev.sourceJackId) : null;
-    if (
-      tgtNewJack?.group_id && tgtRevJack?.group_id &&
-      tgtNewJack.group_id === tgtRevJack.group_id
-    ) {
-      return true;
+  // Check the new connection's SOURCE instance (the other closing point).
+  // The new connection exits this device via newSourceJackId.
+  // Look for existing connections where this device is the target (the entry point).
+  const exitJack = typeof newSourceJackId === 'number' ? jackLookup.get(newSourceJackId) : null;
+  if (exitJack?.group_id) {
+    for (const conn of existingConnections) {
+      if (conn.targetInstanceId === sourceInstanceId) {
+        const connEntryJack = typeof conn.targetJackId === 'number' ? jackLookup.get(conn.targetJackId) : null;
+        if (connEntryJack?.group_id && connEntryJack.group_id === exitJack.group_id) {
+          return true;
+        }
+      }
     }
   }
 
@@ -181,17 +181,24 @@ The AudioView already has a `jackMap: Map<number, Jack>` which satisfies `Readon
 ### 4. Add tests
 
 ```ts
-// Test: send/return loop returns info, not error
-it('returns info for send/return loop (not error)', () => {
-  // Existing connection: Switcher(Send, group_id=loop1) → Pedal(Input)
-  // New connection: Pedal(Output) → Switcher(Return, group_id=loop1)
-  // The jacks on the switcher share group_id → send/return pair
+// Test: simple send/return loop (2 devices) returns info, not error
+it('returns info for simple send/return loop (not error)', () => {
+  // Existing: Switcher(Send, group_id=loop1) → Pedal(Input)
+  // New: Pedal(Output) → Switcher(Return, group_id=loop1)
+  // Entry/exit jacks on switcher share group_id → send/return → info
+});
+
+// Test: multi-pedal chain in send/return loop returns info, not error
+it('returns info for multi-pedal send/return chain (not error)', () => {
+  // Existing: Switcher(Send, group_id=loop1) → PedalB(Input), PedalB(Output) → PedalC(Input)
+  // New: PedalC(Output) → Switcher(Return, group_id=loop1)
+  // Entry/exit jacks on switcher share group_id → send/return → info
 });
 
 // Test: genuine cycle still returns error
 it('returns error for genuine feedback loop', () => {
-  // Existing: A→B
-  // New: B→A, but jacks on shared device do NOT share group_id
+  // Existing: A(Output) → B(Input)
+  // New: B(Output) → A(Input), jacks on A do NOT share group_id
 });
 
 // Test: send/return with virtual/placeholder jacks (string IDs) falls through to error
