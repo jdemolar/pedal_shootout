@@ -52,17 +52,16 @@ export function transformJacks(dtos: JackApiResponse[]): Jack[] {
   return dtos.map(transformJack);
 }
 
-function extractPowerVoltage(jacks: JackApiResponse[]): string | null {
+function extractPowerInfo(jacks: JackApiResponse[]): { voltage: string | null; current_ma: number | null } {
   const powerJack = jacks.find(j => j.category === 'power' && j.direction === 'input');
-  return powerJack?.voltage ?? null;
-}
-
-function extractPowerCurrentMa(jacks: JackApiResponse[]): number | null {
-  const powerJack = jacks.find(j => j.category === 'power' && j.direction === 'input');
-  return powerJack?.currentMa ?? null;
+  return {
+    voltage: powerJack?.voltage ?? null,
+    current_ma: powerJack?.currentMa ?? null,
+  };
 }
 
 export function transformPedal(dto: PedalApiResponse) {
+  const power = extractPowerInfo(dto.jacks);
   return {
     id: dto.id,
     manufacturer: dto.manufacturerName,
@@ -88,8 +87,8 @@ export function transformPedal(dto: PedalApiResponse) {
     has_tap_tempo: dto.pedalDetails?.hasTapTempo ?? false,
     battery_capable: dto.pedalDetails?.batteryCapable ?? false,
     has_software_editor: dto.pedalDetails?.hasSoftwareEditor ?? false,
-    power_voltage: extractPowerVoltage(dto.jacks),
-    power_current_ma: extractPowerCurrentMa(dto.jacks),
+    power_voltage: power.voltage,
+    power_current_ma: power.current_ma,
     jacks: transformJacks(dto.jacks),
   };
 }
@@ -110,6 +109,7 @@ export function transformManufacturer(dto: ManufacturerApiResponse) {
 }
 
 export function transformMidiController(dto: MidiControllerApiResponse) {
+  const power = extractPowerInfo(dto.jacks);
   return {
     id: dto.id,
     manufacturer: dto.manufacturerName,
@@ -137,8 +137,8 @@ export function transformMidiController(dto: MidiControllerApiResponse) {
     has_bluetooth_midi: dto.hasBluetoothMidi,
     software_editor_available: dto.softwareEditorAvailable,
     software_platforms: dto.softwarePlatforms,
-    power_voltage: extractPowerVoltage(dto.jacks),
-    power_current_ma: extractPowerCurrentMa(dto.jacks),
+    power_voltage: power.voltage,
+    power_current_ma: power.current_ma,
     jacks: transformJacks(dto.jacks),
   };
 }
