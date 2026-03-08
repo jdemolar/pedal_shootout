@@ -24,11 +24,47 @@ export function getStereoPartner(jack: Jack, allJacks: Jack[]): Jack | undefined
 // --- Send/return loop detection ---
 
 /**
+ * Find the existing path from `fromId` to `toId` via BFS.
+ * Returns the ordered list of connections forming the path, or null if none.
+ */
+function findCyclePath(
+  fromId: string,
+  toId: string,
+  connections: AudioConnection[],
+): AudioConnection[] | null {
+  if (fromId === toId) return [];
+  const visited = new Set<string>();
+  const queue: Array<[string, AudioConnection[]]> = [[fromId, []]];
+
+  while (queue.length > 0) {
+    const [current, path] = queue.shift()!;
+    if (visited.has(current)) continue;
+    visited.add(current);
+
+    for (const conn of connections) {
+      if (conn.sourceInstanceId === current) {
+        const newPath = [...path, conn];
+        if (conn.targetInstanceId === toId) return newPath;
+        if (!visited.has(conn.targetInstanceId)) {
+          queue.push([conn.targetInstanceId, newPath]);
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
  * Check if a detected cycle is actually a send/return loop topology.
  *
- * A send/return loop exists when the cycle enters and exits the same device
- * through jacks that share a group_id (a paired send/return). This works
- * regardless of how many pedals are in the chain between send and return.
+ * Traces the full cycle path and checks every node — not just the endpoints
+ * of the new connection. A send/return loop exists when any device in the
+ * cycle is entered and exited through jacks that share a group_id (a paired
+ * send/return). This works regardless of how many pedals are between send
+ * and return, and correctly identifies loops when the new connection is
+ * between two pedals inside the loop (where the loop switcher is an
+ * intermediate node).
  */
 function isSendReturnLoop(
   sourceInstanceId: string,
@@ -38,33 +74,29 @@ function isSendReturnLoop(
   existingConnections: AudioConnection[],
   jackLookup: ReadonlyMap<number, { group_id: string | null }>,
 ): boolean {
-  // Check the new connection's TARGET instance (where the cycle closes).
-  // The new connection enters this device via newTargetJackId.
-  // Look for existing connections where this device is the source (the exit point).
-  const entryJack = typeof newTargetJackId === 'number' ? jackLookup.get(newTargetJackId) : null;
-  if (entryJack?.group_id) {
-    for (const conn of existingConnections) {
-      if (conn.sourceInstanceId === targetInstanceId) {
-        const exitJack = typeof conn.sourceJackId === 'number' ? jackLookup.get(conn.sourceJackId) : null;
-        if (exitJack?.group_id && exitJack.group_id === entryJack.group_id) {
-          return true;
-        }
-      }
-    }
-  }
+  // Find the existing path that completes the cycle: target → ... → source
+  const path = findCyclePath(targetInstanceId, sourceInstanceId, existingConnections);
+  if (!path) return false;
 
-  // Check the new connection's SOURCE instance (the other closing point).
-  // The new connection exits this device via newSourceJackId.
-  // Look for existing connections where this device is the target (the entry point).
-  const exitJack = typeof newSourceJackId === 'number' ? jackLookup.get(newSourceJackId) : null;
-  if (exitJack?.group_id) {
-    for (const conn of existingConnections) {
-      if (conn.targetInstanceId === sourceInstanceId) {
-        const connEntryJack = typeof conn.targetJackId === 'number' ? jackLookup.get(conn.targetJackId) : null;
-        if (connEntryJack?.group_id && connEntryJack.group_id === exitJack.group_id) {
-          return true;
-        }
-      }
+  // Build the full cycle as ordered edges
+  type CycleEdge = { exitJackId: number | string; entryJackId: number | string };
+  const cycle: CycleEdge[] = [
+    { exitJackId: newSourceJackId, entryJackId: newTargetJackId },
+    ...path.map(c => ({ exitJackId: c.sourceJackId, entryJackId: c.targetJackId })),
+  ];
+
+  // For each node, check if its entry jack (from previous edge) and exit jack
+  // (from current edge) share a group_id — indicating a paired send/return.
+  const len = cycle.length;
+  for (let i = 0; i < len; i++) {
+    const entryJackId = cycle[(i + len - 1) % len].entryJackId;
+    const exitJackId = cycle[i].exitJackId;
+
+    const entryJack = typeof entryJackId === 'number' ? jackLookup.get(entryJackId) : null;
+    const exitJack = typeof exitJackId === 'number' ? jackLookup.get(exitJackId) : null;
+
+    if (entryJack?.group_id && exitJack?.group_id && entryJack.group_id === exitJack.group_id) {
+      return true;
     }
   }
 
