@@ -24,6 +24,7 @@
 
 ## 3. Audio / Signal path
 
+- [ ] **False cycle detection in loop switcher send/return** — Audio cycle detection falsely flags feedback loops when connecting a pedal in a loop switcher's send/return loop (e.g., RJM Mastermind PBC 10). The cycle detection sees A→B and B→A as a cycle, but send/return is intentionally bidirectional. Noted during cycle detection extraction (refactor #1, `docs/plans/completed/extract-shared-cycle-detection.md`).
 - [ ] **Signal path validator** — Flag mono/stereo mismatches, impedance issues
 
 ## 3. MIDI
