@@ -49,44 +49,38 @@ export function formatMa(ma: number): string {
   return `${ma.toLocaleString()}mA`;
 }
 
-/** Find the majority polarity among supply output jacks (normalized) */
-export function getMajorityPolarity(jacks: Jack[]): string | null {
+function getMajority<T>(
+  items: T[],
+  extract: (item: T) => string | null,
+  normalize: (value: string) => string,
+): string | null {
   const counts: Record<string, number> = {};
-  for (const j of jacks) {
-    if (j.polarity) {
-      const norm = normalizePolarity(j.polarity);
+  for (const item of items) {
+    const raw = extract(item);
+    if (raw) {
+      const norm = normalize(raw);
       counts[norm] = (counts[norm] || 0) + 1;
     }
   }
   let best: string | null = null;
   let bestCount = 0;
-  for (const [pol, count] of Object.entries(counts)) {
+  for (const [value, count] of Object.entries(counts)) {
     if (count > bestCount) {
-      best = pol;
+      best = value;
       bestCount = count;
     }
   }
   return best;
 }
 
+/** Find the majority polarity among supply output jacks (normalized) */
+export function getMajorityPolarity(jacks: Jack[]): string | null {
+  return getMajority(jacks, j => j.polarity, normalizePolarity);
+}
+
 /** Find the majority connector type among supply output jacks (normalized) */
 export function getMajorityConnector(jacks: Jack[]): string | null {
-  const counts: Record<string, number> = {};
-  for (const j of jacks) {
-    if (j.connector_type) {
-      const norm = normalizeConnector(j.connector_type);
-      counts[norm] = (counts[norm] || 0) + 1;
-    }
-  }
-  let best: string | null = null;
-  let bestCount = 0;
-  for (const [ct, count] of Object.entries(counts)) {
-    if (count > bestCount) {
-      best = ct;
-      bestCount = count;
-    }
-  }
-  return best;
+  return getMajority(jacks, j => j.connector_type, normalizeConnector);
 }
 
 /**

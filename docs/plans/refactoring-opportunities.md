@@ -25,7 +25,7 @@ The codebase is well-organized and follows its own conventions consistently in m
 - [x] #6 — Inline styles duplicated across data view components
 - [x] #7 — Expanded-row detail blocks: boolean field pattern (21 occurrences)
 - [x] #8 — `extractPowerVoltage` / `extractPowerCurrentMa` redundant array scans
-- [ ] #9 — `getMajorityPolarity` / `getMajorityConnector` identical algorithms
+- [x] #9 — `getMajorityPolarity` / `getMajorityConnector` identical algorithms
 - [ ] #10 — `WorkbenchRow.detail` typed as `Record<string, unknown>`
 - [ ] #11 — Frontend type interfaces defined locally in each component
 - [ ] #12 — `WorkbenchTable.tsx` exports hook, type, and component from one file
