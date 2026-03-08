@@ -370,6 +370,8 @@ const AudioView = ({ rows }: AudioViewProps) => {
           conn.signalMode, conn.signalMode,
           connections.filter(c => c.id !== conn.id),
           conn.sourceInstanceId, conn.targetInstanceId,
+          conn.sourceJackId, conn.targetJackId,
+          jackMap,
         ));
       } else {
         map.set(conn.id, { status: 'valid' as const, warnings: [] });

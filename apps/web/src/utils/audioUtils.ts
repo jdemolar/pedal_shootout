@@ -21,6 +21,56 @@ export function getStereoPartner(jack: Jack, allJacks: Jack[]): Jack | undefined
   return allJacks.find(j => j.id !== jack.id && j.group_id === jack.group_id);
 }
 
+// --- Send/return loop detection ---
+
+/**
+ * Check if a detected cycle is actually a send/return loop topology.
+ *
+ * A send/return loop exists when the cycle enters and exits the same device
+ * through jacks that share a group_id (a paired send/return). This works
+ * regardless of how many pedals are in the chain between send and return.
+ */
+function isSendReturnLoop(
+  sourceInstanceId: string,
+  targetInstanceId: string,
+  newSourceJackId: number | string,
+  newTargetJackId: number | string,
+  existingConnections: AudioConnection[],
+  jackLookup: ReadonlyMap<number, { group_id: string | null }>,
+): boolean {
+  // Check the new connection's TARGET instance (where the cycle closes).
+  // The new connection enters this device via newTargetJackId.
+  // Look for existing connections where this device is the source (the exit point).
+  const entryJack = typeof newTargetJackId === 'number' ? jackLookup.get(newTargetJackId) : null;
+  if (entryJack?.group_id) {
+    for (const conn of existingConnections) {
+      if (conn.sourceInstanceId === targetInstanceId) {
+        const exitJack = typeof conn.sourceJackId === 'number' ? jackLookup.get(conn.sourceJackId) : null;
+        if (exitJack?.group_id && exitJack.group_id === entryJack.group_id) {
+          return true;
+        }
+      }
+    }
+  }
+
+  // Check the new connection's SOURCE instance (the other closing point).
+  // The new connection exits this device via newSourceJackId.
+  // Look for existing connections where this device is the target (the entry point).
+  const exitJack = typeof newSourceJackId === 'number' ? jackLookup.get(newSourceJackId) : null;
+  if (exitJack?.group_id) {
+    for (const conn of existingConnections) {
+      if (conn.targetInstanceId === sourceInstanceId) {
+        const connEntryJack = typeof conn.targetJackId === 'number' ? jackLookup.get(conn.targetJackId) : null;
+        if (connEntryJack?.group_id && connEntryJack.group_id === exitJack.group_id) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
 // --- Connection validation ---
 
 export function validateAudioConnection(
@@ -31,16 +81,27 @@ export function validateAudioConnection(
   existingConnections: AudioConnection[],
   sourceInstanceId: string,
   targetInstanceId: string,
+  newSourceJackId: number | string,
+  newTargetJackId: number | string,
+  jackLookup: ReadonlyMap<number, { group_id: string | null }>,
 ): ConnectionValidation {
   const warnings: ConnectionWarning[] = [];
 
-  // Circular connection check (error)
+  // Circular connection check (error, or info if send/return loop)
   if (wouldCreateCycle(sourceInstanceId, targetInstanceId, existingConnections)) {
-    warnings.push({
-      key: 'audio:circular-connection',
-      severity: 'error',
-      message: 'This connection would create a feedback loop in the signal chain.',
-    });
+    if (isSendReturnLoop(sourceInstanceId, targetInstanceId, newSourceJackId, newTargetJackId, existingConnections, jackLookup)) {
+      warnings.push({
+        key: 'audio:send-return-loop',
+        severity: 'info',
+        message: 'This connection completes a send/return loop \u2014 this is expected topology.',
+      });
+    } else {
+      warnings.push({
+        key: 'audio:circular-connection',
+        severity: 'error',
+        message: 'This connection would create a feedback loop in the signal chain.',
+      });
+    }
   }
 
   // Connector mismatch (warning + adapter)

@@ -173,17 +173,13 @@ describe('wouldCreateCycle', () => {
 
 const baseSourceJack = { connector_type: '1/4" TS', group_id: null, impedance_ohms: null };
 const baseTargetJack = { connector_type: '1/4" TS', group_id: null, impedance_ohms: null };
+const emptyJackLookup = new Map<number, { group_id: string | null }>();
 
 describe('validateAudioConnection', () => {
   it('returns valid status for compatible jacks', () => {
     const result = validateAudioConnection(
-      baseSourceJack,
-      baseTargetJack,
-      'mono',
-      'mono',
-      [],
-      'inst-a',
-      'inst-b',
+      baseSourceJack, baseTargetJack, 'mono', 'mono',
+      [], 'inst-a', 'inst-b', 1, 2, emptyJackLookup,
     );
     expect(result.status).toBe('valid');
     expect(result.warnings).toHaveLength(0);
@@ -192,28 +188,124 @@ describe('validateAudioConnection', () => {
   it('returns error for circular connection', () => {
     const conns = [makeConn({ sourceInstanceId: 'inst-a', targetInstanceId: 'inst-b' })];
     const result = validateAudioConnection(
-      baseSourceJack,
-      baseTargetJack,
-      'mono',
-      'mono',
-      conns,
-      'inst-b',
-      'inst-a',
+      baseSourceJack, baseTargetJack, 'mono', 'mono',
+      conns, 'inst-b', 'inst-a', 3, 4, emptyJackLookup,
     );
     expect(result.status).toBe('error');
     expect(result.warnings[0].key).toBe('audio:circular-connection');
     expect(result.warnings[0].severity).toBe('error');
   });
 
+  it('returns info for simple send/return loop (not error)', () => {
+    // Switcher (inst-a): Send jack 10 (group_id=loop-1), Return jack 11 (group_id=loop-1)
+    // Pedal (inst-b): Input jack 20, Output jack 21
+    // Existing: Switcher Send → Pedal Input
+    const conns = [makeConn({
+      sourceInstanceId: 'inst-a', targetInstanceId: 'inst-b',
+      sourceJackId: 10, targetJackId: 20,
+    })];
+    // New: Pedal Output → Switcher Return
+    const jackLookup = new Map<number, { group_id: string | null }>([
+      [10, { group_id: 'loop-1' }],  // Send
+      [11, { group_id: 'loop-1' }],  // Return
+      [20, { group_id: null }],
+      [21, { group_id: null }],
+    ]);
+    const result = validateAudioConnection(
+      baseSourceJack, baseTargetJack, 'mono', 'mono',
+      conns, 'inst-b', 'inst-a', 21, 11, jackLookup,
+    );
+    expect(result.warnings[0].key).toBe('audio:send-return-loop');
+    expect(result.warnings[0].severity).toBe('info');
+    expect(result.status).toBe('valid');
+  });
+
+  it('returns info for multi-pedal send/return chain (not error)', () => {
+    // Switcher (inst-a): Send jack 10 (group_id=loop-1), Return jack 11 (group_id=loop-1)
+    // PedalB (inst-b): Input 20, Output 21
+    // PedalC (inst-c): Input 30, Output 31
+    // Existing: Switcher Send → PedalB, PedalB → PedalC
+    const conns = [
+      makeConn({ id: 'c1', sourceInstanceId: 'inst-a', targetInstanceId: 'inst-b', sourceJackId: 10, targetJackId: 20 }),
+      makeConn({ id: 'c2', sourceInstanceId: 'inst-b', targetInstanceId: 'inst-c', sourceJackId: 21, targetJackId: 30 }),
+    ];
+    // New: PedalC Output → Switcher Return
+    const jackLookup = new Map<number, { group_id: string | null }>([
+      [10, { group_id: 'loop-1' }],
+      [11, { group_id: 'loop-1' }],
+      [20, { group_id: null }],
+      [21, { group_id: null }],
+      [30, { group_id: null }],
+      [31, { group_id: null }],
+    ]);
+    const result = validateAudioConnection(
+      baseSourceJack, baseTargetJack, 'mono', 'mono',
+      conns, 'inst-c', 'inst-a', 31, 11, jackLookup,
+    );
+    expect(result.warnings[0].key).toBe('audio:send-return-loop');
+    expect(result.warnings[0].severity).toBe('info');
+    expect(result.status).toBe('valid');
+  });
+
+  it('returns error for genuine feedback loop (no shared group_id)', () => {
+    // Device A: Output jack 10 (no group_id), Input jack 11 (no group_id)
+    // Device B: Input jack 20, Output jack 21
+    const conns = [makeConn({
+      sourceInstanceId: 'inst-a', targetInstanceId: 'inst-b',
+      sourceJackId: 10, targetJackId: 20,
+    })];
+    const jackLookup = new Map<number, { group_id: string | null }>([
+      [10, { group_id: null }],
+      [11, { group_id: null }],
+      [20, { group_id: null }],
+      [21, { group_id: null }],
+    ]);
+    const result = validateAudioConnection(
+      baseSourceJack, baseTargetJack, 'mono', 'mono',
+      conns, 'inst-b', 'inst-a', 21, 11, jackLookup,
+    );
+    expect(result.status).toBe('error');
+    expect(result.warnings[0].key).toBe('audio:circular-connection');
+  });
+
+  it('returns error when cycle involves virtual jacks (no group_id available)', () => {
+    const conns = [makeConn({
+      sourceInstanceId: 'inst-a', targetInstanceId: 'inst-b',
+      sourceJackId: 'virtual-jack:send',
+    })];
+    const result = validateAudioConnection(
+      baseSourceJack, baseTargetJack, 'mono', 'mono',
+      conns, 'inst-b', 'inst-a', 'virtual-jack:out', 'virtual-jack:return', emptyJackLookup,
+    );
+    expect(result.status).toBe('error');
+    expect(result.warnings[0].key).toBe('audio:circular-connection');
+  });
+
+  it('returns error for cross-loop wiring (different group_ids)', () => {
+    // Switcher: Loop1 Send jack 10 (group_id=loop-1), Loop2 Return jack 13 (group_id=loop-2)
+    const conns = [makeConn({
+      sourceInstanceId: 'inst-a', targetInstanceId: 'inst-b',
+      sourceJackId: 10, targetJackId: 20,
+    })];
+    const jackLookup = new Map<number, { group_id: string | null }>([
+      [10, { group_id: 'loop-1' }],
+      [13, { group_id: 'loop-2' }],
+      [20, { group_id: null }],
+      [21, { group_id: null }],
+    ]);
+    const result = validateAudioConnection(
+      baseSourceJack, baseTargetJack, 'mono', 'mono',
+      conns, 'inst-b', 'inst-a', 21, 13, jackLookup,
+    );
+    expect(result.status).toBe('error');
+    expect(result.warnings[0].key).toBe('audio:circular-connection');
+  });
+
   it('returns warning with adapterImplication for connector mismatch', () => {
     const result = validateAudioConnection(
       { ...baseSourceJack, connector_type: '1/4" TS' },
       { ...baseTargetJack, connector_type: 'XLR' },
-      'mono',
-      'mono',
-      [],
-      'inst-a',
-      'inst-b',
+      'mono', 'mono', [], 'inst-a', 'inst-b', 1, 2, emptyJackLookup,
     );
     expect(result.status).toBe('warning');
     expect(result.warnings[0].key).toBe('audio:connector-mismatch');
@@ -226,13 +318,8 @@ describe('validateAudioConnection', () => {
 
   it('returns warning for mono to stereo connection', () => {
     const result = validateAudioConnection(
-      baseSourceJack,
-      baseTargetJack,
-      'mono',
-      'stereo',
-      [],
-      'inst-a',
-      'inst-b',
+      baseSourceJack, baseTargetJack, 'mono', 'stereo',
+      [], 'inst-a', 'inst-b', 1, 2, emptyJackLookup,
     );
     expect(result.status).toBe('warning');
     expect(result.warnings[0].key).toBe('audio:mono-to-stereo');
@@ -242,13 +329,8 @@ describe('validateAudioConnection', () => {
 
   it('returns warning for stereo to mono connection', () => {
     const result = validateAudioConnection(
-      baseSourceJack,
-      baseTargetJack,
-      'stereo',
-      'mono',
-      [],
-      'inst-a',
-      'inst-b',
+      baseSourceJack, baseTargetJack, 'stereo', 'mono',
+      [], 'inst-a', 'inst-b', 1, 2, emptyJackLookup,
     );
     expect(result.status).toBe('warning');
     expect(result.warnings[0].key).toBe('audio:stereo-to-mono');
@@ -260,11 +342,7 @@ describe('validateAudioConnection', () => {
     const result = validateAudioConnection(
       { ...baseSourceJack, impedance_ohms: 150 },
       { ...baseTargetJack, impedance_ohms: 20000 },
-      'mono',
-      'mono',
-      [],
-      'inst-a',
-      'inst-b',
+      'mono', 'mono', [], 'inst-a', 'inst-b', 1, 2, emptyJackLookup,
     );
     expect(result.status).toBe('warning');
     expect(result.warnings[0].key).toBe('audio:impedance-mismatch');
@@ -275,11 +353,7 @@ describe('validateAudioConnection', () => {
     const result = validateAudioConnection(
       { ...baseSourceJack, impedance_ohms: 150 },
       { ...baseTargetJack, impedance_ohms: 15000 },
-      'mono',
-      'mono',
-      [],
-      'inst-a',
-      'inst-b',
+      'mono', 'mono', [], 'inst-a', 'inst-b', 1, 2, emptyJackLookup,
     );
     expect(result.status).toBe('valid');
   });
@@ -288,11 +362,7 @@ describe('validateAudioConnection', () => {
     const result = validateAudioConnection(
       { connector_type: null, group_id: null, impedance_ohms: null },
       { connector_type: null, group_id: null, impedance_ohms: null },
-      'mono',
-      'mono',
-      [],
-      'inst-a',
-      'inst-b',
+      'mono', 'mono', [], 'inst-a', 'inst-b', 1, 2, emptyJackLookup,
     );
     expect(result.status).toBe('valid');
     expect(result.warnings).toHaveLength(0);
@@ -302,11 +372,7 @@ describe('validateAudioConnection', () => {
     const result = validateAudioConnection(
       { ...baseSourceJack, impedance_ohms: null },
       { ...baseTargetJack, impedance_ohms: null },
-      'mono',
-      'mono',
-      [],
-      'inst-a',
-      'inst-b',
+      'mono', 'mono', [], 'inst-a', 'inst-b', 1, 2, emptyJackLookup,
     );
     expect(result.status).toBe('valid');
   });
@@ -315,11 +381,7 @@ describe('validateAudioConnection', () => {
     const result = validateAudioConnection(
       { connector_type: '1/4" TS', group_id: null, impedance_ohms: 150 },
       { connector_type: 'XLR', group_id: null, impedance_ohms: 20000 },
-      'mono',
-      'stereo',
-      [],
-      'inst-a',
-      'inst-b',
+      'mono', 'stereo', [], 'inst-a', 'inst-b', 1, 2, emptyJackLookup,
     );
     expect(result.status).toBe('warning');
     expect(result.warnings.length).toBeGreaterThanOrEqual(2);
