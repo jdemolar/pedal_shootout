@@ -247,6 +247,33 @@ describe('validateAudioConnection', () => {
     expect(result.status).toBe('valid');
   });
 
+  it('returns info when new connection is between two pedals inside a send/return loop', () => {
+    // Switcher (inst-a): Send jack 10 (group_id=loop-1), Return jack 11 (group_id=loop-1)
+    // PedalA (inst-b): Input 20, Output 21
+    // PedalB (inst-c): Input 30, Output 31
+    // Existing: Switcher Send → PedalA, PedalB → Switcher Return
+    const conns = [
+      makeConn({ id: 'c1', sourceInstanceId: 'inst-a', targetInstanceId: 'inst-b', sourceJackId: 10, targetJackId: 20 }),
+      makeConn({ id: 'c2', sourceInstanceId: 'inst-c', targetInstanceId: 'inst-a', sourceJackId: 31, targetJackId: 11 }),
+    ];
+    // New: PedalA Output → PedalB Input (neither pedal has paired jacks — loop switcher is intermediate)
+    const jackLookup = new Map<number, { group_id: string | null }>([
+      [10, { group_id: 'loop-1' }],
+      [11, { group_id: 'loop-1' }],
+      [20, { group_id: null }],
+      [21, { group_id: null }],
+      [30, { group_id: null }],
+      [31, { group_id: null }],
+    ]);
+    const result = validateAudioConnection(
+      baseSourceJack, baseTargetJack, 'mono', 'mono',
+      conns, 'inst-b', 'inst-c', 21, 30, jackLookup,
+    );
+    expect(result.warnings[0].key).toBe('audio:send-return-loop');
+    expect(result.warnings[0].severity).toBe('info');
+    expect(result.status).toBe('valid');
+  });
+
   it('returns error for genuine feedback loop (no shared group_id)', () => {
     // Device A: Output jack 10 (no group_id), Input jack 11 (no group_id)
     // Device B: Input jack 20, Output jack 21
