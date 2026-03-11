@@ -62,7 +62,9 @@
       "WebFetch(domain:www.in2guitar.com)",
       "WebFetch(domain:www.creamcitymusic.com)",
       "Bash(gh pr:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [
       "Bash(sudo *)",
