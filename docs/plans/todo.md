@@ -25,6 +25,7 @@
 ## 3. Audio / Signal path
 
 - [x] **False cycle detection in loop switcher send/return** — Audio cycle detection falsely flags feedback loops when connecting a pedal in a loop switcher's send/return loop (e.g., RJM Mastermind PBC 10). The cycle detection sees A→B and B→A as a cycle, but send/return is intentionally bidirectional. (plan: `docs/plans/completed/fix-send-return-cycle-detection.md`)
+- [ ] **TRS multi-connection support for stereo pairs** — A TRS jack can carry two independent signals (tip + ring), but the stereo pair auto-connection logic assumes each connection needs a unique jack on both sides. When one side has a single TRS jack and the other has discrete L/R jacks (stereo pair with shared `group_id`), the same TRS jack should be reused for both connections — one per conductor. This generalizes beyond send/return loops to any TRS-to-discrete-stereo scenario (balanced connections, mixer inserts, etc.). The shopping list should derive "TRS to 2×TS insert cable" when a single TRS jack sources two connections.
 - [ ] **Signal path validator** — Flag mono/stereo mismatches, impedance issues
 
 ## 3. MIDI
