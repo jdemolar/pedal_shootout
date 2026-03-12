@@ -9,6 +9,7 @@ import {
   getAudioOutputJacks,
   hasAudioJacks,
   getStereoPartner,
+  isTrsConnector,
   validateAudioConnection,
 } from '../../utils/audioUtils';
 import { ConnectionValidation, ConnectionWarning } from '../../utils/connectionValidation';
@@ -434,7 +435,23 @@ const AudioView = ({ rows }: AudioViewProps) => {
         (tgtJack && tgtRow && tgtJack.group_id !== null && !!getStereoPartner(tgtJack, tgtRow.jacks)) ||
         placeholderHasStereoPartner(targetJackId, targetInstanceId);
 
-      if (srcHasStereo && tgtHasStereo) {
+      // TRS jacks can carry stereo on a single connector (tip + ring)
+      const srcIsTrs = srcJack && isTrsConnector(srcJack.connector_type);
+      const tgtIsTrs = tgtJack && isTrsConnector(tgtJack.connector_type);
+
+      const canStereoPair =
+        (srcHasStereo && tgtHasStereo) ||          // Both have discrete partners
+        (srcIsTrs && tgtHasStereo) ||               // TRS source ↔ discrete stereo target
+        (srcHasStereo && tgtIsTrs);                 // Discrete stereo source ↔ TRS target
+
+      // TRS-to-TRS: single cable carries both channels — auto-stereo, no prompt
+      const bothTrs = srcIsTrs && tgtIsTrs && !srcHasStereo && !tgtHasStereo;
+
+      if (bothTrs) {
+        createConnection(sourceJackId, sourceInstanceId, targetJackId, targetInstanceId, 'stereo', null);
+        setPendingSource(null);
+        setMousePos(null);
+      } else if (canStereoPair) {
         const srcPos = portPositions.get(portKey(sourceInstanceId, sourceJackId));
         const tgtPos = portPositions.get(portKey(targetInstanceId, targetJackId));
         const midWorld = srcPos && tgtPos ? { x: (srcPos.x + tgtPos.x) / 2, y: (srcPos.y + tgtPos.y) / 2 } : { x: 0, y: 0 };
@@ -488,10 +505,15 @@ const AudioView = ({ rows }: AudioViewProps) => {
       const tgtPlaceholderPartner = findPlaceholderPartner(targetJackId, targetInstanceId);
 
       createConnection(sourceJackId, sourceInstanceId, targetJackId, targetInstanceId, 'stereo', null);
-      if (srcPartner && tgtPartner) {
-        createConnection(srcPartner.id, sourceInstanceId, tgtPartner.id, targetInstanceId, 'stereo', null);
-      } else if (srcPlaceholderPartner && tgtPlaceholderPartner) {
-        createConnection(srcPlaceholderPartner.virtualJackId, sourceInstanceId, tgtPlaceholderPartner.virtualJackId, targetInstanceId, 'stereo', null);
+
+      // Determine partner jack IDs — discrete partner, placeholder partner, or TRS reuse
+      const srcPartnerJackId = srcPartner?.id ?? srcPlaceholderPartner?.virtualJackId
+        ?? (srcJack && isTrsConnector(srcJack.connector_type) ? sourceJackId : undefined);
+      const tgtPartnerJackId = tgtPartner?.id ?? tgtPlaceholderPartner?.virtualJackId
+        ?? (tgtJack && isTrsConnector(tgtJack.connector_type) ? targetJackId : undefined);
+
+      if (srcPartnerJackId !== undefined && tgtPartnerJackId !== undefined) {
+        createConnection(srcPartnerJackId, sourceInstanceId, tgtPartnerJackId, targetInstanceId, 'stereo', null);
       }
     } else {
       createConnection(sourceJackId, sourceInstanceId, targetJackId, targetInstanceId, 'mono', null);

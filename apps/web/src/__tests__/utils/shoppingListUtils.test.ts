@@ -344,6 +344,85 @@ describe('computeShoppingList', () => {
     expect(result.summary.totalCustomCables).toBe(2);
   });
 
+  it('consolidates TRS-to-2xTS stereo pair into single insert cable (shared source)', () => {
+    // TRS send jack 1 fans out to TS jacks 2 (L) and 3 (R)
+    const jackMap = new Map<number, Jack>([
+      [1, makeJack({ id: 1, connector_type: '1/4" TRS' })],
+      [2, makeJack({ id: 2, connector_type: '1/4" TS', direction: 'input' })],
+      [3, makeJack({ id: 3, connector_type: '1/4" TS', direction: 'input' })],
+    ]);
+    const audio = [
+      makeAudioConnection({ id: 'a1', sourceJackId: 1, targetJackId: 2, signalMode: 'stereo' }),
+      makeAudioConnection({ id: 'a2', sourceJackId: 1, targetJackId: 3, signalMode: 'stereo' }),
+    ];
+    const result = computeShoppingList([], audio, [], [], jackMap);
+
+    expect(result.cables).toHaveLength(1);
+    expect(result.cables[0].label).toBe('1/4" TRS to 2\u00D71/4" TS insert cable');
+    expect(result.cables[0].quantity).toBe(1);
+    expect(result.cables[0].requiresCustomCable).toBe(true);
+    expect(result.cables[0].connectionIds).toEqual(['a1', 'a2']);
+    expect(result.summary.totalCables).toBe(1);
+    expect(result.summary.totalCustomCables).toBe(1);
+  });
+
+  it('consolidates TRS-to-2xTS stereo pair into single insert cable (shared target)', () => {
+    // TS jacks 1 (L) and 2 (R) fan into TRS return jack 3
+    const jackMap = new Map<number, Jack>([
+      [1, makeJack({ id: 1, connector_type: '1/4" TS' })],
+      [2, makeJack({ id: 2, connector_type: '1/4" TS' })],
+      [3, makeJack({ id: 3, connector_type: '1/4" TRS', direction: 'input' })],
+    ]);
+    const audio = [
+      makeAudioConnection({ id: 'a1', sourceJackId: 1, targetJackId: 3, signalMode: 'stereo' }),
+      makeAudioConnection({ id: 'a2', sourceJackId: 2, targetJackId: 3, signalMode: 'stereo' }),
+    ];
+    const result = computeShoppingList([], audio, [], [], jackMap);
+
+    expect(result.cables).toHaveLength(1);
+    expect(result.cables[0].label).toBe('1/4" TRS to 2\u00D71/4" TS insert cable');
+    expect(result.cables[0].quantity).toBe(1);
+    expect(result.cables[0].requiresCustomCable).toBe(true);
+    expect(result.summary.totalCables).toBe(1);
+  });
+
+  it('does not consolidate mono connections sharing a jack', () => {
+    // Two mono connections happen to share a TRS jack — not an insert cable
+    const jackMap = new Map<number, Jack>([
+      [1, makeJack({ id: 1, connector_type: '1/4" TRS' })],
+      [2, makeJack({ id: 2, connector_type: '1/4" TS', direction: 'input' })],
+      [3, makeJack({ id: 3, connector_type: '1/4" TS', direction: 'input' })],
+    ]);
+    const audio = [
+      makeAudioConnection({ id: 'a1', sourceJackId: 1, targetJackId: 2, signalMode: 'mono' }),
+      makeAudioConnection({ id: 'a2', sourceJackId: 1, targetJackId: 3, signalMode: 'mono' }),
+    ];
+    const result = computeShoppingList([], audio, [], [], jackMap);
+
+    // Should stay as two separate cables (mismatched TRS→TS), not consolidated
+    expect(result.cables).toHaveLength(1);
+    expect(result.cables[0].quantity).toBe(2);
+    expect(result.cables[0].label).toBe('1/4" TRS to 1/4" TS patch cable');
+  });
+
+  it('does not consolidate when shared jack is not TRS', () => {
+    // Two stereo connections share a TS jack (unusual but possible)
+    const jackMap = new Map<number, Jack>([
+      [1, makeJack({ id: 1, connector_type: '1/4" TS' })],
+      [2, makeJack({ id: 2, connector_type: '1/4" TS', direction: 'input' })],
+      [3, makeJack({ id: 3, connector_type: '1/4" TS', direction: 'input' })],
+    ]);
+    const audio = [
+      makeAudioConnection({ id: 'a1', sourceJackId: 1, targetJackId: 2, signalMode: 'stereo' }),
+      makeAudioConnection({ id: 'a2', sourceJackId: 1, targetJackId: 3, signalMode: 'stereo' }),
+    ];
+    const result = computeShoppingList([], audio, [], [], jackMap);
+
+    expect(result.cables).toHaveLength(1);
+    expect(result.cables[0].quantity).toBe(2);
+    expect(result.cables[0].label).toBe('1/4" TS patch cable');
+  });
+
   it('handles audio connections with string jackIds (virtual/placeholder)', () => {
     const jackMap = new Map<number, Jack>([
       [1, makeJack({ id: 1, connector_type: '1/4" TS' })],

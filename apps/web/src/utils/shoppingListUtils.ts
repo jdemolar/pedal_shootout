@@ -78,6 +78,91 @@ function controlSubTypeLabel(controlType: string): string {
   }
 }
 
+function isTrsConnector(connectorType: string | null): boolean {
+  if (!connectorType) return false;
+  return connectorType.toLowerCase().includes('trs');
+}
+
+/**
+ * Detect TRS-to-2×TS insert cable patterns in audio connections.
+ * When two stereo connections share the same jack on one side (TRS)
+ * and use different jacks on the other (TS), they represent a single
+ * insert cable rather than two separate patch cables.
+ */
+function consolidateInsertCables(
+  audioConnections: AudioConnection[],
+  jackMap: Map<number, Jack>,
+  grouped: Map<string, CableRequirement>,
+): void {
+  const stereoConns = audioConnections.filter(c => c.signalMode === 'stereo');
+
+  const bySourceJack = new Map<number | string, AudioConnection[]>();
+  const byTargetJack = new Map<number | string, AudioConnection[]>();
+  for (const conn of stereoConns) {
+    const srcGroup = bySourceJack.get(conn.sourceJackId) ?? [];
+    srcGroup.push(conn);
+    bySourceJack.set(conn.sourceJackId, srcGroup);
+
+    const tgtGroup = byTargetJack.get(conn.targetJackId) ?? [];
+    tgtGroup.push(conn);
+    byTargetJack.set(conn.targetJackId, tgtGroup);
+  }
+
+  bySourceJack.forEach((conns, jackId) => {
+    if (conns.length !== 2) return;
+    const jack = typeof jackId === 'number' ? jackMap.get(jackId) : null;
+    if (!jack || !isTrsConnector(jack.connector_type)) return;
+    mergeAsInsertCable(conns, 'source', jack.connector_type!, jackMap, grouped);
+  });
+
+  byTargetJack.forEach((conns, jackId) => {
+    if (conns.length !== 2) return;
+    const jack = typeof jackId === 'number' ? jackMap.get(jackId) : null;
+    if (!jack || !isTrsConnector(jack.connector_type)) return;
+    mergeAsInsertCable(conns, 'target', jack.connector_type!, jackMap, grouped);
+  });
+}
+
+function mergeAsInsertCable(
+  conns: AudioConnection[],
+  sharedSide: 'source' | 'target',
+  trsConnectorType: string,
+  jackMap: Map<number, Jack>,
+  grouped: Map<string, CableRequirement>,
+): void {
+  const otherJackId = sharedSide === 'source' ? conns[0].targetJackId : conns[0].sourceJackId;
+  const otherJack = typeof otherJackId === 'number' ? jackMap.get(otherJackId) : null;
+  const tsConnectorType = otherJack?.connector_type ?? 'unknown';
+
+  // Remove the two individual cable entries
+  for (const conn of conns) {
+    const keys = Array.from(grouped.keys());
+    for (const key of keys) {
+      const req = grouped.get(key)!;
+      const idx = req.connectionIds.indexOf(conn.id);
+      if (idx !== -1) {
+        req.quantity -= 1;
+        req.connectionIds.splice(idx, 1);
+        if (req.quantity <= 0) grouped.delete(key);
+        break;
+      }
+    }
+  }
+
+  const insertKey = `audio::insert::${trsConnectorType}::${tsConnectorType}`;
+  const label = `${trsConnectorType} to 2\u00D7${tsConnectorType} insert cable`;
+  grouped.set(insertKey, {
+    category: 'audio',
+    sourceConnectorType: sharedSide === 'source' ? trsConnectorType : tsConnectorType,
+    targetConnectorType: sharedSide === 'source' ? tsConnectorType : trsConnectorType,
+    label,
+    quantity: 1,
+    connectionIds: conns.map(c => c.id),
+    requiresCustomCable: true,
+    notes: ['Insert cable \u2014 single TRS splits to two TS connections'],
+  });
+}
+
 interface ConnectionBase {
   id: string;
   sourceJackId: number | string;
@@ -150,6 +235,7 @@ export function computeShoppingList(
   for (const conn of audioConnections) {
     processConnection(conn, 'audio', jackMap, grouped);
   }
+  consolidateInsertCables(audioConnections, jackMap, grouped);
 
   for (const conn of midiConnections) {
     processConnection(conn, 'midi', jackMap, grouped);

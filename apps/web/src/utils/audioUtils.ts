@@ -21,6 +21,13 @@ export function getStereoPartner(jack: Jack, allJacks: Jack[]): Jack | undefined
   return allJacks.find(j => j.id !== jack.id && j.group_id === jack.group_id);
 }
 
+// --- TRS detection ---
+
+export function isTrsConnector(connectorType: string | null): boolean {
+  if (!connectorType) return false;
+  return connectorType.toLowerCase().includes('trs');
+}
+
 // --- Send/return loop detection ---
 
 /**
