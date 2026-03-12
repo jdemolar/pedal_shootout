@@ -18,7 +18,7 @@ export function hasAudioJacks(row: { jacks: Jack[] }): boolean {
 
 export function getStereoPartner(jack: Jack, allJacks: Jack[]): Jack | undefined {
   if (!jack.group_id) return undefined;
-  return allJacks.find(j => j.id !== jack.id && j.group_id === jack.group_id);
+  return allJacks.find(j => j.id !== jack.id && j.group_id === jack.group_id && j.direction === jack.direction);
 }
 
 // --- TRS detection ---

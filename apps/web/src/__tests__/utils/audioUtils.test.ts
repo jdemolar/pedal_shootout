@@ -131,6 +131,19 @@ describe('getStereoPartner', () => {
     const jack = makeJack({ id: 1, group_id: 'stereo-1' });
     expect(getStereoPartner(jack, [jack])).toBeUndefined();
   });
+
+  it('does not match jacks with opposite direction (send/return pairs)', () => {
+    const send = makeJack({ id: 1, direction: 'output', group_id: 'loop-1' });
+    const ret = makeJack({ id: 2, direction: 'input', group_id: 'loop-1' });
+    expect(getStereoPartner(send, [send, ret])).toBeUndefined();
+    expect(getStereoPartner(ret, [send, ret])).toBeUndefined();
+  });
+
+  it('matches jacks with same direction and group_id', () => {
+    const left = makeJack({ id: 1, direction: 'output', group_id: 'stereo-out' });
+    const right = makeJack({ id: 2, direction: 'output', group_id: 'stereo-out' });
+    expect(getStereoPartner(left, [left, right])).toBe(right);
+  });
 });
 
 // --- wouldCreateCycle ---
