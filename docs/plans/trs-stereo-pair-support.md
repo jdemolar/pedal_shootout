@@ -90,7 +90,15 @@ const canStereoPair =
   (srcIsTrs && tgtHasStereo) ||               // TRS source ↔ discrete stereo target
   (srcHasStereo && tgtIsTrs);                 // Discrete stereo source ↔ TRS target
 
-if (canStereoPair) {
+// TRS-to-TRS: single cable carries both channels — no prompt needed, auto-stereo
+const bothTrs = srcIsTrs && tgtIsTrs && !srcHasStereo && !tgtHasStereo;
+
+if (bothTrs) {
+  // Create a single stereo connection directly (no fan-out, one cable suffices)
+  createConnection(sourceJackId, sourceInstanceId, targetJackId, targetInstanceId, 'stereo', null);
+  setPendingSource(null);
+  setMousePos(null);
+} else if (canStereoPair) {
   /* show prompt */
 }
 ```
@@ -250,7 +258,7 @@ Import `isTrsConnector` from a shared location or inline the check. Since `shopp
 
 **Multiple insert cables:** If two different TRS jacks each fan out to stereo pairs (e.g., a loop switcher with two stereo loops), `consolidateInsertCables` handles them independently since each TRS jack groups separately.
 
-**TRS-to-TRS stereo:** If both sides are TRS (both carry L+R on a single jack), the existing mono connection flow is correct — a single TRS-to-TRS cable carries both channels. No stereo pair prompt needed. The `canStereoPair` logic won't trigger because neither side has a discrete partner, and `srcIsTrs && tgtIsTrs` is intentionally not a condition (a single cable suffices).
+**TRS-to-TRS stereo:** If both sides are TRS with no discrete partners, a single TRS-to-TRS cable carries both channels. The `bothTrs` check (Step 2) handles this by auto-creating a single connection with `signalMode: 'stereo'` — no prompt, no fan-out, just the correct signal mode. The shopping list processes this as one TRS patch cable.
 
 **Validation:** The existing `validateAudioConnection` function validates each connection independently. When two connections share a TRS jack, both will be validated — this is fine since each represents a valid signal path (one conductor of the TRS).
 
@@ -275,6 +283,6 @@ export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" 
 
 3. **Shopping list:** Check the List tab. Verify the cable entry shows "1/4" TRS to 2×1/4" TS insert cable" (quantity 1) rather than two separate patch cables.
 
-4. **TRS-to-TRS:** Connect two devices that both have TRS jacks (no discrete partners). Verify no stereo prompt appears — a single mono connection with a TRS cable is correct.
+4. **TRS-to-TRS:** Connect two devices that both have TRS jacks (no discrete partners). Verify no stereo prompt appears — a single connection is auto-created with `signalMode: 'stereo'`. The shopping list shows one TRS patch cable.
 
 5. **Discrete-to-discrete:** Connect two devices that both have discrete L/R jacks. Verify the existing stereo pair flow works unchanged.
