@@ -423,6 +423,27 @@ describe('computeShoppingList', () => {
     expect(result.cables[0].label).toBe('1/4" TS patch cable');
   });
 
+  it('does not consolidate connections to different instances sharing the same jack ID', () => {
+    // Two instances of the same product (same jack IDs) connected to different
+    // outputs on a switcher. Jack ID 10 is the TRS input on both instances.
+    const jackMap = new Map<number, Jack>([
+      [5, makeJack({ id: 5, connector_type: '1/4" TRS' })],  // switcher send 1
+      [6, makeJack({ id: 6, connector_type: '1/4" TRS' })],  // switcher send 2
+      [10, makeJack({ id: 10, connector_type: '1/4" TRS', direction: 'input' })], // pedal input (shared ID)
+    ]);
+    const audio = [
+      makeAudioConnection({ id: 'a1', sourceJackId: 5, targetJackId: 10, sourceInstanceId: 'switcher', targetInstanceId: 'pedal-1', signalMode: 'stereo' }),
+      makeAudioConnection({ id: 'a2', sourceJackId: 6, targetJackId: 10, sourceInstanceId: 'switcher', targetInstanceId: 'pedal-2', signalMode: 'stereo' }),
+    ];
+    const result = computeShoppingList([], audio, [], [], jackMap);
+
+    // Should be 2 individual TRS patch cables, NOT a "TRS to 2×TRS insert cable"
+    expect(result.cables).toHaveLength(1);
+    expect(result.cables[0].quantity).toBe(2);
+    expect(result.cables[0].label).toBe('1/4" TRS patch cable');
+    expect(result.cables.some(c => c.label.includes('insert'))).toBe(false);
+  });
+
   it('handles audio connections with string jackIds (virtual/placeholder)', () => {
     const jackMap = new Map<number, Jack>([
       [1, makeJack({ id: 1, connector_type: '1/4" TS' })],

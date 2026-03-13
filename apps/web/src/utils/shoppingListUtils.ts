@@ -96,26 +96,31 @@ function consolidateInsertCables(
 ): void {
   const stereoConns = audioConnections.filter(c => c.signalMode === 'stereo');
 
-  const bySourceJack = new Map<number | string, AudioConnection[]>();
-  const byTargetJack = new Map<number | string, AudioConnection[]>();
+  // Group by jack ID + instance ID — jack IDs are product-level, so two
+  // instances of the same product share IDs. Without the instance ID in the
+  // key, connections to different instances get incorrectly merged.
+  const bySourceKey = new Map<string, { jackId: number | string; conns: AudioConnection[] }>();
+  const byTargetKey = new Map<string, { jackId: number | string; conns: AudioConnection[] }>();
   for (const conn of stereoConns) {
-    const srcGroup = bySourceJack.get(conn.sourceJackId) ?? [];
-    srcGroup.push(conn);
-    bySourceJack.set(conn.sourceJackId, srcGroup);
+    const srcKey = `${conn.sourceInstanceId}::${conn.sourceJackId}`;
+    const srcEntry = bySourceKey.get(srcKey) ?? { jackId: conn.sourceJackId, conns: [] };
+    srcEntry.conns.push(conn);
+    bySourceKey.set(srcKey, srcEntry);
 
-    const tgtGroup = byTargetJack.get(conn.targetJackId) ?? [];
-    tgtGroup.push(conn);
-    byTargetJack.set(conn.targetJackId, tgtGroup);
+    const tgtKey = `${conn.targetInstanceId}::${conn.targetJackId}`;
+    const tgtEntry = byTargetKey.get(tgtKey) ?? { jackId: conn.targetJackId, conns: [] };
+    tgtEntry.conns.push(conn);
+    byTargetKey.set(tgtKey, tgtEntry);
   }
 
-  bySourceJack.forEach((conns, jackId) => {
+  bySourceKey.forEach(({ jackId, conns }) => {
     if (conns.length !== 2) return;
     const jack = typeof jackId === 'number' ? jackMap.get(jackId) : null;
     if (!jack || !isTrsConnector(jack.connector_type)) return;
     mergeAsInsertCable(conns, 'source', jack.connector_type!, jackMap, grouped);
   });
 
-  byTargetJack.forEach((conns, jackId) => {
+  byTargetKey.forEach(({ jackId, conns }) => {
     if (conns.length !== 2) return;
     const jack = typeof jackId === 'number' ? jackMap.get(jackId) : null;
     if (!jack || !isTrsConnector(jack.connector_type)) return;
