@@ -17,6 +17,8 @@
 #### Shopping list — deferred improvements
 
 - [ ] **Cable length estimation** — Requires Layout view waypoint data (cable routing); blocked on cable routing waypoints task above
+- [ ] **Direction-agnostic cable grouping** — Cables with the same connector types in opposite order (e.g., 1/4" TRS → 1/4" TS and 1/4" TS → 1/4" TRS) should be counted in the same row. The grouping key in `shoppingListUtils.ts` currently treats source/target order as distinct.
+- [ ] **TRS-to-TRS mono/stereo cable choice** — When connecting two TRS jacks, the user should be able to choose whether the cable is mono (TS) or stereo (TRS). Currently TRS-to-TRS auto-creates a stereo connection, but the user may want to use a TS cable for a mono signal. The shopping list cable type should reflect this choice.
 - [ ] **CSV export** — Export shopping list as CSV for offline use
 - [ ] **User-editable cable prices** — Allow users to set per-cable-type prices for cost estimation
 - [ ] **"Have" checkbox persistence** — Let users mark cables they already own; requires new workbench state field
@@ -25,7 +27,7 @@
 ## 3. Audio / Signal path
 
 - [x] **False cycle detection in loop switcher send/return** — Audio cycle detection falsely flags feedback loops when connecting a pedal in a loop switcher's send/return loop (e.g., RJM Mastermind PBC 10). The cycle detection sees A→B and B→A as a cycle, but send/return is intentionally bidirectional. (plan: `docs/plans/completed/fix-send-return-cycle-detection.md`)
-- [ ] **TRS multi-connection support for stereo pairs** — A TRS jack can carry two independent signals (tip + ring), but the stereo pair auto-connection logic assumes each connection needs a unique jack on both sides. When one side has a single TRS jack and the other has discrete L/R jacks (stereo pair with shared `group_id`), the same TRS jack should be reused for both connections — one per conductor. This generalizes beyond send/return loops to any TRS-to-discrete-stereo scenario (balanced connections, mixer inserts, etc.). The shopping list should derive "TRS to 2×TS insert cable" when a single TRS jack sources two connections.
+- [x] **TRS multi-connection support for stereo pairs** — A TRS jack can carry two independent signals (tip + ring), but the stereo pair auto-connection logic assumes each connection needs a unique jack on both sides. When one side has a single TRS jack and the other has discrete L/R jacks (stereo pair with shared `group_id`), the same TRS jack should be reused for both connections — one per conductor. This generalizes beyond send/return loops to any TRS-to-discrete-stereo scenario (balanced connections, mixer inserts, etc.). The shopping list should derive "TRS to 2×TS insert cable" when a single TRS jack sources two connections. (plan: `docs/plans/completed/trs-stereo-pair-support.md`)
 - [ ] **Signal path validator** — Flag mono/stereo mismatches, impedance issues
 
 ## 3. MIDI
