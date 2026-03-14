@@ -18,7 +18,7 @@
 
 - [ ] **Cable length estimation** — Requires Layout view waypoint data (cable routing); blocked on cable routing waypoints task above
 - [ ] **Direction-agnostic cable grouping** — Cables with the same connector types in opposite order (e.g., 1/4" TRS → 1/4" TS and 1/4" TS → 1/4" TRS) should be counted in the same row. The grouping key in `shoppingListUtils.ts` currently treats source/target order as distinct.
-- [ ] **TRS-to-TRS mono/stereo cable choice** — When connecting two TRS jacks, the user should be able to choose whether the cable is mono (TS) or stereo (TRS). Currently TRS-to-TRS auto-creates a stereo connection, but the user may want to use a TS cable for a mono signal. The shopping list cable type should reflect this choice.
+- [ ] **Cable connector prompt for TRS jacks** — When creating a connection where either end is a TRS jack, show a prompt asking the user to specify the cable connector type for each end (e.g., TRS or TS). A TRS jack can accept a TS plug, so the user should be able to choose. This affects both the connection's signal mode and the shopping list cable type. Currently TRS-to-TRS auto-creates a stereo connection, but the user may want a TS cable for a mono signal; similarly, TS-to-TRS connections should let the user confirm the cable type for each end.
 - [ ] **CSV export** — Export shopping list as CSV for offline use
 - [ ] **User-editable cable prices** — Allow users to set per-cable-type prices for cost estimation
 - [ ] **"Have" checkbox persistence** — Let users mark cables they already own; requires new workbench state field
