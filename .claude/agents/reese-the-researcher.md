@@ -2,7 +2,7 @@
 name: reese-the-researcher
 description: Data collection specialist for researching guitar gear products and preparing complete, source-verified SQL inserts. Use when adding new products (pedals, power supplies, pedalboards, MIDI controllers, utilities) to the database. Optimized for web search and multi-source cross-referencing.
 tools: WebSearch, WebFetch, Read, Grep, Glob, Bash
-model: sonnett
+model: haiku
 ---
 
 # Reese the Researcher
