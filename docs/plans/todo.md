@@ -8,9 +8,10 @@
 ## Dependency Map
 
 ```
-8.a–8.e (data population) ──┬──→ 1.a (Plugs view needs plug data)
-                             ├──→ 4.a (Layout planner needs pedalboard + plug data)
-                             └──→ 3.a, 9.a, 9.b (MIDI features need MIDI controller data)
+9.a–9.e (data population) ──┬──→ 1.a (Plugs view needs plug data)
+                             ├──→ 5.a (Layout planner needs pedalboard + plug data)
+                             ├──→ 4.a, 10.a, 10.b (MIDI features need MIDI controller data)
+                             └──→ 6.e (slot finder benefits from dimensions + power jack data)
 
 2.a (cable routing waypoints) ──→ 2.b (cable length estimation)
 
@@ -18,7 +19,11 @@
 
 10.a (cloud infra) ──→ 10.b (Node upgrade via Docker)
 
-6.c (PowerView rotation) ──→ 6.d (PowerView z-index; natural to do together)
+6.b (comparison table) ──→ 6.c (contextual suggestions use comparison bar)
+                        └──→ 6.d (guided finder feeds into comparison bar)
+6.c + 6.d ──────────────────→ 6.e (slot finder builds on both)
+
+7.d (PowerView rotation) ──→ 7.e (PowerView z-index; natural to do together)
 
 8.f (trs_midi_standard col) ──→ improved MIDI TRS auto-detection (no separate task yet)
 8.g–8.j (control schema gaps) ──→ improved auto-validation in Control view
@@ -66,18 +71,27 @@
 
 ## 6. Shopping & Comparison
 
+(plan: `docs/plans/comparison-and-buying-flow.md`)
+
 - [ ] **6.a — Shopping list view** — Display workbench items as shopping list, with has, needs, price, totals, and links to purchase.
+- [ ] **6.b — Side-by-side comparison table** — Compare toggle on catalog rows, persistent comparison bar, `/compare` route with spec columns, best-value highlights, and buy links per product. No schema changes needed. Foundational affiliate surface.
+- [ ] **6.c — Contextual suggestions** → depends on 6.b (comparison bar integration). "You might also consider" panel in catalog expanded rows and workbench detail panel. Similarity scored client-side from existing spec data. Spec delta callouts ("adds MIDI", "30mm shorter"). Swap button in workbench.
+- [ ] **6.d — Guided finder** (`/find`) → benefits from 6.b (comparison bar). Question-driven shortlist for less technical buyers. 6 questions, client-side filter/rank, results feed into comparison bar and buy links. Pre-fillable from workbench board context (see 6.e).
+- [ ] **6.e — Workbench slot finder** → depends on 6.c (fit indicators), 6.d (pre-fill), benefits from good data coverage on dimensions + power jacks. Context-aware "find a pedal for this slot" using live board constraints (physical space, power budget, signal chain mode, MIDI availability). Marquee differentiator — no other tool has this.
 
 ## 7. UI & UX
 
+(design plan: `docs/plans/design-system-redesign.md`)
+
 - [x] **7.✓1** — Make objects rotateable (Layout view — `docs/plans/completed/rotation-z-index.md`)
 - [x] **7.✓2** — Enable objects to be sent forward or back on z-axis (Layout view — `docs/plans/completed/rotation-z-index.md`)
-- [ ] **7.a — Unit toggle** — Enable toggle for units of measurement (mm ↔ inches).
-- [ ] **7.b — Product images** — Add images to views so users can see the product within the details view (in expanded row panels).
-- [ ] **7.c — PowerView rotation** — Add rotation to PowerView and other planning views (see `docs/plans/options/powerview-rotation.md`).
-- [ ] **7.d — PowerView z-index** — Add z-index ordering to PowerView and other planning views. Natural companion to 7.c.
-- [ ] **7.e — Swap manufacturer/model card text** — Swap position and style of Manufacturer text and Model text in cards (e.g., "BigSky" at top in white and "Strymon" below in green).
-- [ ] **7.f — Hideable nav** — Make nav and menu area hideable for increased screen real estate (especially on mobile).
+- [ ] **7.a — Design system implementation** — Apply Vintage PCB redesign: design tokens (`_tokens.scss`), web fonts (Barlow Condensed + JetBrains Mono), nav, DataTable, workbench cards, panels, badges, canvas dot grid. Implement in the order specified in the plan. No architectural changes — token and typography migration. (plan: `docs/plans/design-system-redesign.md`)
+- [ ] **7.b — Unit toggle** — Enable toggle for units of measurement (mm ↔ inches).
+- [ ] **7.c — Product images** — Add images to views so users can see the product within the details view (in expanded row panels).
+- [ ] **7.d — PowerView rotation** — Add rotation to PowerView and other planning views (see `docs/plans/options/powerview-rotation.md`).
+- [ ] **7.e — PowerView z-index** — Add z-index ordering to PowerView and other planning views. Natural companion to 7.d.
+- [ ] **7.f — Swap manufacturer/model card text** — Swap position and style of Manufacturer text and Model text in cards (e.g., "BigSky" at top in white and "Strymon" below in green). Superseded in part by 7.a (design system); revisit after.
+- [ ] **7.g — Hideable nav** — Make nav and menu area hideable for increased screen real estate (especially on mobile). Superseded in part by 7.a mobile nav redesign; revisit after.
 
 ## 8. API
 
@@ -145,8 +159,12 @@
 | 2.g  | "Have" checkbox persistence |
 | 3.a  | Signal path validator |
 | 6.a  | Shopping list view |
-| 7.b  | Product images |
-| 7.c + 7.d | PowerView rotation + z-index (do together) |
+| 6.b  | Side-by-side comparison table + buy links (no schema changes) |
+| 6.c  | Contextual suggestions with spec deltas + swap |
+| 6.d  | Guided finder `/find` (client-side filter/rank) |
+| 7.a  | Design system implementation (Vintage PCB — tokens, fonts, workbench cards, nav, badges) |
+| 7.c  | Product images |
+| 7.d + 7.e | PowerView rotation + z-index (do together) |
 | 9.j  | Independent channel count (schema design decision) |
 | 9.k–9.n | Deferred ControlConnection fields (UI + schema) |
 
@@ -160,6 +178,7 @@
 | 2.h  | Blocked on 8.a + user accounts |
 | 4.a  | Benefits from 9.c (MIDI controller data) |
 | 5.a  | Benefits from 9.b + 9.e (pedalboard + plug data) |
+| 6.e  | Slot finder — depends on 6.c + 6.d; benefits from good dimension + power jack data coverage |
 | 8.a  | Large scope (write API) |
 | 10.a–10.b | Benefits from 9.c; 10.b depends on 10.a |
 | 11.a–11.b | Infrastructure; 11.b blocked on 11.a |
