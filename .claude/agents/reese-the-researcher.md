@@ -188,7 +188,7 @@ Required fields for every jack: `product_id`, `category`, `direction`, `connecto
 |---|---|---|
 | `category` | TEXT NOT NULL | `'audio'`, `'power'`, `'midi'`, `'expression'`, `'usb'`, `'aux'` |
 | `direction` | TEXT NOT NULL | `'input'`, `'output'`, `'bidirectional'` |
-| `connector_type` | TEXT NOT NULL | `'1/4" TS'`, `'1/4" TRS'`, `'XLR'`, `'XLR Combo'`, `'5-pin DIN'`, `'3.5mm TRS'`, `'2.1mm barrel'`, `'2.5mm barrel'`, `'USB-A'`, `'USB-B'`, `'USB-C'`, `'IEC C14'`, `'Speakon'`, `'EIAJ-05'` |
+| `connector_type` | TEXT NOT NULL | Must be one of the canonical values below. A CHECK constraint enforces this. |
 | `jack_name` | TEXT | Descriptive name: `'Input L'`, `'Exp 1'`, `'Loop 1 Send'`, `'Output 1'` |
 | `position` | TEXT | `'Top'`, `'Left'`, `'Right'`, `'Bottom'`, `'Front'`, `'Back'` |
 | `voltage` | TEXT | For power jacks: `'9V'`, `'12V'`, `'18V'`, `'9-18V'`, `'9V/12V/18V'` |
@@ -198,6 +198,41 @@ Required fields for every jack: `product_id`, `category`, `direction`, `connecto
 | `is_isolated` | BOOLEAN | For power outputs |
 | `group_id` | TEXT | Links stereo pairs (`'stereo_in'`), FX loops (`'loop_1'`) |
 | `function` | TEXT | Detailed description of what this jack does |
+
+### Canonical `connector_type` Values
+
+The `jacks.connector_type` column has a CHECK constraint — only these values are accepted:
+
+| Connector | Category |
+|---|---|
+| `1/4" TS` | Audio |
+| `1/4" TRS` | Audio |
+| `3.5mm TS` | Audio / Power (some pedals use 3.5mm mono for DC input) |
+| `3.5mm TRS` | Audio |
+| `XLR` | Audio |
+| `XLR Combo` | Audio (combo jacks that accept XLR or 1/4") |
+| `6-pin XLR` | Audio/MIDI specialty |
+| `RCA` | Power (Cioks-style phono DC connectors) |
+| `5-pin DIN` | MIDI |
+| `7-pin DIN` | MIDI (phantom power capable) |
+| `2.1mm barrel` | Power |
+| `2.5mm barrel` | Power |
+| `EIAJ-05` | Power (Strymon-style DC link) |
+| `IEC C14` | Power (AC mains / kettle lead) |
+| `Hardwired` | Power (permanently attached cable, no connector) |
+| `USB-A` | USB |
+| `USB-B` | USB |
+| `USB-C` | USB |
+| `USB Mini` | USB |
+| `USB Micro` | USB |
+| `Speakon` | Speaker/load boxes |
+
+**Shared connectors disambiguated by `category`:** Both `1/4" TRS` and `3.5mm TRS` are used across multiple categories — for example, `1/4" TRS` appears as audio, expression, and MIDI (TRS MIDI). The `connector_type` describes the physical plug; the `category` field carries the semantic meaning. Do not create separate connector_type values to distinguish these uses.
+
+**Never use:**
+- `6.35mm TS` or `6.35mm TRS` — use `1/4" TS` / `1/4" TRS` instead
+- `USB Type B` or `USB Type C` — use `USB-B` / `USB-C` instead
+- Any value not in the canonical list above (the CHECK constraint will reject it)
 
 ## Product Sources (Data Provenance)
 

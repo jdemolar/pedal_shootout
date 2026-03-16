@@ -81,14 +81,23 @@ CREATE INDEX idx_products_type ON products(product_type_id);
 CREATE TABLE jacks (
     id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     product_id INTEGER NOT NULL,          -- FK to products table
-    category TEXT NOT NULL,               -- 'Audio Input', 'Audio Output', 'MIDI In', 'MIDI Out', 'MIDI Thru',
-                                          -- 'Power Input', 'Power Output', 'Expression', 'Sidechain', 'USB', 'Aux'
-    direction TEXT NOT NULL,              -- 'Input', 'Output', 'Bidirectional'
+    category TEXT NOT NULL,               -- 'audio', 'power', 'midi', 'expression', 'usb', 'aux'
+    direction TEXT NOT NULL,              -- 'input', 'output', 'bidirectional'
     jack_name TEXT,              -- 'Input L', 'Exp 1', 'Loop 1 Send', 'Output 1'
     position TEXT,               -- 'Top', 'Left', 'Right', 'Bottom', 'Front', 'Back'
-    connector_type TEXT NOT NULL,-- '1/4" TS', '1/4" TRS', 'XLR', 'XLR Combo', '5-pin DIN',
-                                 -- '3.5mm TRS', '2.1mm barrel', '2.5mm barrel', 'USB-A',
-                                 -- 'USB-B', 'USB-C', 'IEC C14', 'Speakon'
+    connector_type TEXT NOT NULL CHECK (connector_type IN (
+                                 -- Audio
+                                 '1/4" TS', '1/4" TRS', '3.5mm TS', '3.5mm TRS',
+                                 'XLR', 'XLR Combo', '6-pin XLR', 'RCA',
+                                 -- MIDI
+                                 '5-pin DIN', '7-pin DIN',
+                                 -- Power
+                                 '2.1mm barrel', '2.5mm barrel', 'EIAJ-05', 'IEC C14', 'Hardwired',
+                                 -- USB
+                                 'USB-A', 'USB-B', 'USB-C', 'USB Mini', 'USB Micro',
+                                 -- Speaker/load
+                                 'Speakon'
+                                 )),
     impedance_ohms INTEGER,      -- For audio jacks (e.g., 1000000 for 1M ohm input)
     voltage TEXT,                -- For power jacks: '9V', '12V', '18V', '9-18V'
     current_ma INTEGER,          -- For power jacks: max current in milliamps
