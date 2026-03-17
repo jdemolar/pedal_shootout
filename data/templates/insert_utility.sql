@@ -148,4 +148,7 @@ VALUES (currval('products_id_seq'), 'audio', 'output', '{{audio_out_connector}}'
 --     {{verified}}
 -- );
 
+-- ─── UPDATE RESEARCH TIMESTAMP ───────────────────────────────────────────────
+UPDATE products SET last_researched_at = CURRENT_DATE WHERE id = currval('products_id_seq');
+
 COMMIT;

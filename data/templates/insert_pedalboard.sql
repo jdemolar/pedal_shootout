@@ -123,4 +123,7 @@ INSERT INTO pedalboard_details (
 --     {{verified}}
 -- );
 
+-- ─── UPDATE RESEARCH TIMESTAMP ───────────────────────────────────────────────
+UPDATE products SET last_researched_at = CURRENT_DATE WHERE id = currval('products_id_seq');
+
 COMMIT;

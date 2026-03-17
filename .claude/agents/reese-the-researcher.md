@@ -38,6 +38,7 @@ Read the appropriate template from `data/templates/`:
 - `insert_pedalboard.sql`
 - `insert_midi_controller.sql`
 - `insert_utility.sql`
+- `insert_plug.sql`
 
 ### Step 3: Check Manufacturer
 
@@ -180,6 +181,9 @@ If dimensions are given in inches, convert: multiply by 25.4 and round to one de
 - Audio input and output
 - Power input only if active device (omit for passive DI, passive reamp, etc.)
 
+### Plugs
+- **No jacks.** Plugs are cable connectors — they ARE the connector, not a product with ports. All connector data lives in `plug_details`, not in `jacks`.
+
 ## Jack Column Reference
 
 Required fields for every jack: `product_id`, `category`, `direction`, `connector_type`
@@ -198,6 +202,13 @@ Required fields for every jack: `product_id`, `category`, `direction`, `connecto
 | `is_isolated` | BOOLEAN | For power outputs |
 | `group_id` | TEXT | Links stereo pairs (`'stereo_in'`), FX loops (`'loop_1'`) |
 | `function` | TEXT | Detailed description of what this jack does |
+| `power_over_connector` | BOOLEAN | TRUE if jack carries power alongside signal (e.g. phantom power, bus power) |
+| `is_buffered` | BOOLEAN | TRUE if jack has a built-in buffer |
+| `buffer_switchable` | BOOLEAN | TRUE if the buffer can be toggled on/off |
+| `has_ground_lift` | BOOLEAN | TRUE if jack has a ground lift option |
+| `has_phase_invert` | BOOLEAN | TRUE if jack can invert phase/polarity |
+| `normalled_to_jack_id` | INTEGER | FK to `jacks.id` — the jack this one is normalled to |
+| `normalling_type` | TEXT | `'Normalled'`, `'Half-Normalled'`, `'Non-Normalled'`, `'Parallel'` |
 
 ### Canonical `connector_type` Values
 
@@ -236,8 +247,9 @@ The `jacks.connector_type` column has a CHECK constraint — only these values a
 
 ## Product Sources (Data Provenance)
 
-For every field populated from an external source, include a `product_sources` INSERT:
+For every field populated from an external source, include a `product_sources` INSERT.
 
+**For fields on `products`, detail tables, or `product_compatibility`:**
 ```sql
 INSERT INTO product_sources (product_id, table_name, field_name, source_type, source_url, reliability, value_recorded, accessed_at)
 VALUES (
@@ -252,9 +264,30 @@ VALUES (
 );
 ```
 
-**source_type values:** `'manufacturer_website'`, `'manufacturer_manual'`, `'manufacturer_direct'`, `'major_retailer'`, `'community_database'`, `'review_site'`, `'user_submission'`, `'other'`
+**For fields on `jacks`** — `jack_id` is required (NOT NULL enforced by CHECK constraint). **Always** use `currval('jacks_id_seq')` immediately after the jack INSERT it refers to. Never use a subquery to look up the jack by category/direction — `LIMIT 1` can silently return the wrong row if a product has multiple jacks of the same type.
+```sql
+-- Insert the jack first
+INSERT INTO jacks (product_id, category, direction, connector_type, voltage, current_ma, polarity)
+VALUES (currval('products_id_seq'), 'power', 'input', '2.1mm barrel', '9V', 100, 'Center Negative');
 
-When `table_name = 'jacks'`, `jack_id` is required and must NOT be NULL. For all other table names, `jack_id` must be NULL.
+-- Then record provenance for fields sourced from external data
+INSERT INTO product_sources (product_id, jack_id, table_name, field_name, source_type, source_url, reliability, value_recorded, accessed_at)
+VALUES (
+    currval('products_id_seq'),
+    currval('jacks_id_seq'),  -- must reference the jack just inserted
+    'jacks',
+    'current_ma',
+    'major_retailer',
+    'https://www.sweetwater.com/...',
+    'Medium',
+    '100mA',
+    CURRENT_DATE
+);
+```
+
+`jack_id` must be NULL for all non-jack table names, and must NOT be NULL when `table_name = 'jacks'`. The schema enforces this with a CHECK constraint that will reject the insert if violated.
+
+**source_type values:** `'manufacturer_website'`, `'manufacturer_manual'`, `'manufacturer_direct'`, `'major_retailer'`, `'community_database'`, `'review_site'`, `'user_submission'`, `'other'`
 
 ## CHECK Constraints Quick Reference
 
