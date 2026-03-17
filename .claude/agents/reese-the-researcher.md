@@ -264,7 +264,7 @@ VALUES (
 );
 ```
 
-**For fields on `jacks`** — `jack_id` is required (NOT NULL enforced by CHECK constraint). Use `currval('jacks_id_seq')` immediately after the jack INSERT it refers to:
+**For fields on `jacks`** — `jack_id` is required (NOT NULL enforced by CHECK constraint). **Always** use `currval('jacks_id_seq')` immediately after the jack INSERT it refers to. Never use a subquery to look up the jack by category/direction — `LIMIT 1` can silently return the wrong row if a product has multiple jacks of the same type.
 ```sql
 -- Insert the jack first
 INSERT INTO jacks (product_id, category, direction, connector_type, voltage, current_ma, polarity)
