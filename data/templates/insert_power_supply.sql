@@ -140,4 +140,7 @@ VALUES (currval('products_id_seq'), 'power', 'output', '{{out1_connector}}', '{{
 --     {{verified}}
 -- );
 
+-- ─── UPDATE RESEARCH TIMESTAMP ───────────────────────────────────────────────
+UPDATE products SET last_researched_at = CURRENT_DATE WHERE id = currval('products_id_seq');
+
 COMMIT;
