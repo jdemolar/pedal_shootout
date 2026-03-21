@@ -19,6 +19,10 @@ export interface JackApiResponse {
   normalledToJackId: number | null;
   normallingType: string | null;
   groupId: string | null;
+  trsMidiStandard: string | null;
+  trsPolarity: string | null;
+  potResistanceOhms: number | null;
+  footswitchType: string | null;
 }
 
 export interface PedalDetailApiResponse {
