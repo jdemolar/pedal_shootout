@@ -30,6 +30,8 @@ Determine which product type you're dealing with:
 - **Utility** (product_type_id = 5)
 - **Plug** (product_type_id = 6)
 
+**Classification rule — Tuners are always Utility (product_type_id = 5), never Pedal.** Even if a tuner has a footswitch and a bypass, it does not belong in `pedal_details`. Insert it into `utility_details` with `utility_type = 'Tuner'`.
+
 ### Step 2: Read the SQL Template
 
 Read the appropriate template from `data/templates/`:

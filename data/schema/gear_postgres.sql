@@ -81,7 +81,7 @@ CREATE INDEX idx_products_type ON products(product_type_id);
 CREATE TABLE jacks (
     id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     product_id INTEGER NOT NULL,          -- FK to products table
-    category TEXT NOT NULL,               -- 'audio', 'power', 'midi', 'expression', 'usb', 'aux'
+    category TEXT NOT NULL,               -- 'audio', 'power', 'midi', 'expression', 'usb', 'aux', 'multijack'
     direction TEXT NOT NULL,              -- 'input', 'output', 'bidirectional'
     jack_name TEXT,              -- 'Input L', 'Exp 1', 'Loop 1 Send', 'Output 1'
     position TEXT,               -- 'Top', 'Left', 'Right', 'Bottom', 'Front', 'Back'
@@ -134,7 +134,7 @@ CREATE TABLE pedal_details (
         'Gain', 'Fuzz', 'Compression', 'Delay', 'Reverb',
         'Chorus', 'Flanger', 'Phaser', 'Tremolo', 'Vibrato',
         'Rotary', 'Univibe', 'Ring Modulator',
-        'Pitch Shifter', 'Wah', 'Filter',
+        'Pitch Shifter', 'Wah', 'Filter', 'EQ',
         'Multi Effects', 'Utility', 'Preamp', 'Amp/Cab Sim', 'Other'
     )),                                   -- Primary effect category
     circuit_type TEXT,            -- 'Bluesbreaker', 'Tube Screamer', 'Klon', 'RAT',
