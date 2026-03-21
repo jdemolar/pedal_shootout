@@ -25,7 +25,11 @@ public record JackDto(
     Boolean hasPhaseInvert,
     Integer normalledToJackId,
     String normallingType,
-    String groupId
+    String groupId,
+    String trsMidiStandard,
+    String trsPolarity,
+    Integer potResistanceOhms,
+    String footswitchType
 ) {
     public static JackDto from(Jack j) {
         return new JackDto(
@@ -48,7 +52,11 @@ public record JackDto(
             j.getHasPhaseInvert(),
             j.getNormalledToJackId(),
             j.getNormallingType(),
-            j.getGroupId()
+            j.getGroupId(),
+            j.getTrsMidiStandard(),
+            j.getTrsPolarity(),
+            j.getPotResistanceOhms(),
+            j.getFootswitchType()
         );
     }
 }

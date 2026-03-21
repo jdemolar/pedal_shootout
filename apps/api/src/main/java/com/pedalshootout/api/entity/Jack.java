@@ -75,6 +75,18 @@ public class Jack {
     @Column(name = "group_id")
     private String groupId;
 
+    @Column(name = "trs_midi_standard")
+    private String trsMidiStandard;
+
+    @Column(name = "trs_polarity")
+    private String trsPolarity;
+
+    @Column(name = "pot_resistance_ohms")
+    private Integer potResistanceOhms;
+
+    @Column(name = "footswitch_type")
+    private String footswitchType;
+
     public Jack() {}
 
     // --- Getters ---
@@ -99,4 +111,8 @@ public class Jack {
     public Integer getNormalledToJackId() { return normalledToJackId; }
     public String getNormallingType() { return normallingType; }
     public String getGroupId() { return groupId; }
+    public String getTrsMidiStandard() { return trsMidiStandard; }
+    public String getTrsPolarity() { return trsPolarity; }
+    public Integer getPotResistanceOhms() { return potResistanceOhms; }
+    public String getFootswitchType() { return footswitchType; }
 }
