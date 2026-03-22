@@ -113,6 +113,7 @@ CREATE TABLE jacks (
     normalling_type TEXT,                        -- 'Normalled', 'Half-Normalled', 'Non-Normalled', 'Parallel'
     group_id TEXT,               -- Links stereo pairs ('stereo_in'), FX loops ('loop_1'),
                                  -- or related jacks together
+    is_balanced BOOLEAN,         -- TRUE = balanced signal path, FALSE = unbalanced, NULL = unknown
     trs_midi_standard TEXT CHECK (trs_midi_standard IN ('TRS-A', 'TRS-B', 'Tip Active', 'Ring Active')),
     trs_polarity TEXT CHECK (trs_polarity IN ('tip-active', 'ring-active')),
     pot_resistance_ohms INTEGER,                                                    -- For expression jacks (e.g., 10000 for 10K Ohm)

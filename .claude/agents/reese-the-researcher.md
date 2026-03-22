@@ -209,6 +209,7 @@ Required fields for every jack: `product_id`, `category`, `direction`, `connecto
 | `buffer_switchable` | BOOLEAN | TRUE if the buffer can be toggled on/off |
 | `has_ground_lift` | BOOLEAN | TRUE if jack has a ground lift option |
 | `has_phase_invert` | BOOLEAN | TRUE if jack can invert phase/polarity |
+| `is_balanced` | BOOLEAN | `TRUE` = balanced signal path, `FALSE` = unbalanced, `NULL` = unknown. TS connectors are always `FALSE`. TRS/XLR default to `NULL` unless the source confirms balanced wiring. |
 | `normalled_to_jack_id` | INTEGER | FK to `jacks.id` — the jack this one is normalled to |
 | `normalling_type` | TEXT | `'Normalled'`, `'Half-Normalled'`, `'Non-Normalled'`, `'Parallel'` |
 
@@ -245,6 +246,7 @@ The `jacks.connector_type` column has a CHECK constraint — only these values a
 **Never use:**
 - `6.35mm TS` or `6.35mm TRS` — use `1/4" TS` / `1/4" TRS` instead
 - `USB Type B` or `USB Type C` — use `USB-B` / `USB-C` instead
+- `XLR (balanced)` — use `XLR` and set `is_balanced = TRUE` on the jack instead
 - Any value not in the canonical list above (the CHECK constraint will reject it)
 
 ## Product Sources (Data Provenance)
