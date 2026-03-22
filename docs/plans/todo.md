@@ -104,15 +104,15 @@
 - [ ] **9.c — Populate MIDI controller data** (not started)
 - [ ] **9.d — Populate utility data** (not started)
 - [ ] **9.e — Populate plug data** (not started)
-- [ ] **9.f — `trs_midi_standard` column** — Add to `jacks` table. Currently the MIDI connections view stores TRS wiring configuration (TRS-A, TRS-B, Tip Active, Ring Active) at the connection level rather than per-jack. Once this column exists, validation can derive the standard from the jack data directly and pre-populate the connection's TRS setting automatically.
+- [x] **9.f — `trs_midi_standard` column** — Add to `jacks` table. Currently the MIDI connections view stores TRS wiring configuration (TRS-A, TRS-B, Tip Active, Ring Active) at the connection level rather than per-jack. Once this column exists, validation can derive the standard from the jack data directly and pre-populate the connection's TRS setting automatically.
 
 ### Control connections enhancements
 
 #### Schema gaps
 
-- [ ] **9.g — TRS polarity per jack** — Add `trs_polarity` column to `jacks` table (`'tip-active'`, `'ring-active'`, or NULL). Expression jacks have a default polarity that determines compatibility (e.g., Mission Engineering is tip-active, Chase Bliss is ring-active). Currently the Control view stores polarity on the connection, but per-jack data would enable automatic mismatch detection.
-- [ ] **9.h — Potentiometer resistance** — Add `impedance_ohms` or `pot_resistance_ohms` column to `jacks` table for expression jacks. Pot resistance (e.g., 10K vs 25K Ohm) affects compatibility between expression pedals and their targets. The existing `impedance_ohms` column is intended for audio impedance matching, so a separate column may be needed.
-- [ ] **9.i — Toe switch type** — Add `footswitch_type` column to `jacks` table (`'momentary'`, `'latching'`) for aux/toe switch jacks. Currently `footswitch_type` only exists on `midi_controller_details`. Expression pedals with toe switches (e.g., Mission SP-25M-PRO Aero) need this data for the Control view to validate switch compatibility.
+- [x] **9.g — TRS polarity per jack** — Add `trs_polarity` column to `jacks` table (`'tip-active'`, `'ring-active'`, or NULL). Expression jacks have a default polarity that determines compatibility (e.g., Mission Engineering is tip-active, Chase Bliss is ring-active). Currently the Control view stores polarity on the connection, but per-jack data would enable automatic mismatch detection.
+- [x] **9.h — Potentiometer resistance** — Add `impedance_ohms` or `pot_resistance_ohms` column to `jacks` table for expression jacks. Pot resistance (e.g., 10K vs 25K Ohm) affects compatibility between expression pedals and their targets. The existing `impedance_ohms` column is intended for audio impedance matching, so a separate column may be needed.
+- [x] **9.i — Toe switch type** — Add `footswitch_type` column to `jacks` table (`'momentary'`, `'latching'`) for aux/toe switch jacks. Currently `footswitch_type` only exists on `midi_controller_details`. Expression pedals with toe switches (e.g., Mission SP-25M-PRO Aero) need this data for the Control view to validate switch compatibility.
 - [ ] **9.j — Independent channel count** — Add a way to represent ganged vs independent expression outputs. Multi-channel expression pedals (e.g., Mission SP-25L-PRO Aero with 3 independent outputs) need to indicate whether channels move together or independently. This could be a column on `utility_details` or a relationship between jacks.
 
 #### Deferred `ControlConnection` fields
@@ -145,10 +145,7 @@
 | 7.a  | Unit toggle (mm ↔ inches) |
 | 7.e  | Swap manufacturer/model card text styling |
 | 7.f  | Hideable nav area |
-| 9.f  | `trs_midi_standard` column (schema + migration) |
-| 9.g  | TRS polarity per jack (schema + migration) |
-| 9.h  | Potentiometer resistance column (schema + migration) |
-| 9.i  | Toe switch type column (schema + migration) |
+
 
 ### Medium effort (standalone, moderate scope)
 
