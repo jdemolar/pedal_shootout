@@ -321,6 +321,45 @@ describe('validateAudioConnection', () => {
     expect(result.warnings[0].key).toBe('audio:circular-connection');
   });
 
+  it('returns info when two switcher loops both route through a single device (e.g. KoT 4-Jack)', () => {
+    // Switcher (inst-switcher): two loops, each with paired group_ids
+    //   Loop 1: Send jack 10 (group_id=loop-1), Return jack 11 (group_id=loop-1)
+    //   Loop 2: Send jack 12 (group_id=loop-2), Return jack 13 (group_id=loop-2)
+    // KoT 4-Jack (inst-kot): two audio paths sharing an internal FX insert
+    //   Input 1: jack 20 (no group_id)
+    //   Output 1 / FX Send: jack 21 (group_id=kot-loop)
+    //   Input 2 / FX Return: jack 22 (group_id=kot-loop)
+    //   Output 2: jack 23 (no group_id)
+    // Existing connections:
+    //   1. Switcher Loop1Send → KoT Input1
+    //   2. KoT Output1 → Switcher Loop1Return
+    //   3. Switcher Loop2Send → KoT Input2
+    // New connection (4th): KoT Output2 → Switcher Loop2Return
+    // This should be a valid send/return loop, not an error.
+    const conns = [
+      makeConn({ id: 'c1', sourceInstanceId: 'inst-switcher', targetInstanceId: 'inst-kot', sourceJackId: 10, targetJackId: 20 }),
+      makeConn({ id: 'c2', sourceInstanceId: 'inst-kot', targetInstanceId: 'inst-switcher', sourceJackId: 21, targetJackId: 11 }),
+      makeConn({ id: 'c3', sourceInstanceId: 'inst-switcher', targetInstanceId: 'inst-kot', sourceJackId: 12, targetJackId: 22 }),
+    ];
+    const jackLookup = new Map<number, { group_id: string | null }>([
+      [10, { group_id: 'loop-1' }],
+      [11, { group_id: 'loop-1' }],
+      [12, { group_id: 'loop-2' }],
+      [13, { group_id: 'loop-2' }],
+      [20, { group_id: null }],
+      [21, { group_id: 'kot-loop' }],
+      [22, { group_id: 'kot-loop' }],
+      [23, { group_id: null }],
+    ]);
+    const result = validateAudioConnection(
+      baseSourceJack, baseTargetJack, 'mono', 'mono',
+      conns, 'inst-kot', 'inst-switcher', 23, 13, jackLookup,
+    );
+    expect(result.warnings[0].key).toBe('audio:send-return-loop');
+    expect(result.warnings[0].severity).toBe('info');
+    expect(result.status).toBe('valid');
+  });
+
   it('returns error for cross-loop wiring (different group_ids)', () => {
     // Switcher: Loop1 Send jack 10 (group_id=loop-1), Loop2 Return jack 13 (group_id=loop-2)
     const conns = [makeConn({
