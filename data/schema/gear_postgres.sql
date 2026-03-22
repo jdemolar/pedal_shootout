@@ -334,7 +334,8 @@ CREATE TABLE utility_details (
         'Tuner', 'Volume Pedal', 'Expression Pedal', 'Noise Gate',
         'Power Conditioner', 'Signal Router', 'Impedance Matcher',
         'Headphone Amp', 'Mixer', 'Junction Box', 'Patch Bay',
-        'Mute Switch', 'Amp Switcher', 'Load Box', 'Line Level Converter', 'Other'
+        'Mute Switch', 'Amp Switcher', 'Load Box', 'Line Level Converter',
+        'Tap Tempo', 'Other'
     )),                                   -- Specific utility category
 
     -- Signal path
