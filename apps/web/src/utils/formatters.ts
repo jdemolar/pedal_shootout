@@ -5,6 +5,7 @@ export function formatMsrp(cents: number | null): string {
 
 export function formatDimensions(w: number | null, d: number | null, h: number | null): string {
   if (w != null && d != null && h != null) return `${w} \u00d7 ${d} \u00d7 ${h} mm`;
+  if (w != null && d != null) return `${w} \u00d7 ${d} mm`;
   return '\u2014';
 }
 

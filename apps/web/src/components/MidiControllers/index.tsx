@@ -67,7 +67,7 @@ const columns: ColumnDef<MidiController>[] = [
       ? <>{formatMsrp(c.msrp_cents)}</>
       : <span className="null-value">{'\u2014'}</span> },
   { label: 'Dimensions', width: 180, align: 'center',
-    render: c => c.width_mm != null && c.depth_mm != null && c.height_mm != null
+    render: c => c.width_mm != null && c.depth_mm != null
       ? <>{formatDimensions(c.width_mm, c.depth_mm, c.height_mm)}</>
       : <span className="null-value">{'\u2014'}</span> },
   { label: 'Power', width: 120, align: 'center',

@@ -54,7 +54,7 @@ const columns: ColumnDef<Utility>[] = [
       ? <>{formatMsrp(u.msrp_cents)}</>
       : <span className="null-value">{'\u2014'}</span> },
   { label: 'Dimensions', width: 150, align: 'center',
-    render: u => u.width_mm != null && u.depth_mm != null && u.height_mm != null
+    render: u => u.width_mm != null && u.depth_mm != null
       ? <>{formatDimensions(u.width_mm, u.depth_mm, u.height_mm)}</>
       : <span className="null-value">{'\u2014'}</span> },
   { label: 'Reliability', width: 80, align: 'center', sortKey: 'data_reliability',

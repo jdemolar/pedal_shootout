@@ -88,7 +88,7 @@ const columns: ColumnDef<PowerSupply>[] = [
       ? <>{formatMsrp(ps.msrp_cents)}</>
       : <span className="null-value">{'\u2014'}</span> },
   { label: 'Dimensions', width: 150, align: 'center',
-    render: ps => ps.width_mm != null && ps.depth_mm != null && ps.height_mm != null
+    render: ps => ps.width_mm != null && ps.depth_mm != null
       ? <>{formatDimensions(ps.width_mm, ps.depth_mm, ps.height_mm)}</>
       : <span className="null-value">{'\u2014'}</span> },
   { label: 'Reliability', width: 80, align: 'center', sortKey: 'data_reliability',
