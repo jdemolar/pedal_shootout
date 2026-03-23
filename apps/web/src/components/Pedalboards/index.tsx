@@ -61,7 +61,7 @@ const columns: ColumnDef<Pedalboard>[] = [
       ? <>{formatMsrp(p.msrp_cents)}</>
       : <span className="null-value">{'\u2014'}</span> },
   { label: 'Dimensions', width: 150, align: 'center',
-    render: p => p.width_mm != null && p.depth_mm != null && p.height_mm != null
+    render: p => p.width_mm != null && p.depth_mm != null
       ? <>{formatDimensions(p.width_mm, p.depth_mm, p.height_mm)}</>
       : <span className="null-value">{'\u2014'}</span> },
   { label: 'Reliability', width: 80, align: 'center', sortKey: 'data_reliability',

@@ -272,7 +272,7 @@ const WorkbenchTableView = ({ onRowClick, rows, loading, error }: WorkbenchTable
                 </span>
               </td>
               <td className="workbench__td" style={{ textAlign: 'center' }}>
-                {row.width_mm != null && row.depth_mm != null && row.height_mm != null
+                {row.width_mm != null && row.depth_mm != null
                   ? formatDimensions(row.width_mm, row.depth_mm, row.height_mm)
                   : <span className="null-value">{'\u2014'}</span>
                 }
