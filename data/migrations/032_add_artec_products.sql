@@ -635,8 +635,8 @@ VALUES
 UPDATE products SET last_researched_at = CURRENT_DATE WHERE id = currval('products_id_seq');
 
 -- ─── 14. SE-SWB A/B Switch Box (utility) ─────────────────────────────────────
--- Passive A/B box. Optional 9V for LED only — power jack omitted; device is
--- passive and should not appear in the power budget.
+-- Passive A/B box. Optional 9V input for LED only — power jack included as
+-- the connector physically exists on the device.
 
 INSERT INTO products (
     manufacturer_id, product_type_id, model,
@@ -674,6 +674,12 @@ VALUES (currval('products_id_seq'), 'audio', 'output', '1/4" TS', 'Output B', 'l
 
 INSERT INTO product_sources (product_id, jack_id, table_name, field_name, value_recorded, source_url, source_type, reliability)
 VALUES (currval('products_id_seq'), currval('jacks_id_seq'), 'jacks', 'connector_type', '1/4" TS', 'http://www.artecsound.com/effect/se-swb.htm', 'manufacturer_website', 'High');
+
+INSERT INTO jacks (product_id, category, direction, connector_type, voltage, current_ma, polarity)
+VALUES (currval('products_id_seq'), 'power', 'input', '2.1mm barrel', '9V', 4, 'Center Negative');
+
+INSERT INTO product_sources (product_id, jack_id, table_name, field_name, value_recorded, source_url, source_type, reliability)
+VALUES (currval('products_id_seq'), currval('jacks_id_seq'), 'jacks', 'current_ma', '4mA (LED only)', 'http://www.artecsound.com/effect/se-swb.htm', 'manufacturer_website', 'High');
 
 INSERT INTO product_sources (product_id, jack_id, table_name, field_name, value_recorded, source_url, source_type, reliability)
 VALUES
