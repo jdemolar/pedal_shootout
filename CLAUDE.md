@@ -336,7 +336,7 @@ The schema enforces allowed values via CHECK constraints. Inserts will fail if a
 - `status`: `'Active'`, `'Defunct'`, `'Discontinued'`, `'Unknown'`
 
 **`pedal_details`**
-- `effect_type`: `'Gain'`, `'Fuzz'`, `'Compression'`, `'Delay'`, `'Reverb'`, `'Chorus'`, `'Flanger'`, `'Phaser'`, `'Tremolo'`, `'Vibrato'`, `'Rotary'`, `'Univibe'`, `'Ring Modulator'`, `'Pitch Shifter'`, `'Wah'`, `'Filter'`, `'Multi Effects'`, `'Utility'`, `'Preamp'`, `'Amp/Cab Sim'`, `'Other'`
+- `effect_type`: `'Gain'`, `'Fuzz'`, `'Compression'`, `'Delay'`, `'Reverb'`, `'Chorus'`, `'Flanger'`, `'Phaser'`, `'Tremolo'`, `'Vibrato'`, `'Rotary'`, `'Univibe'`, `'Ring Modulator'`, `'Pitch Shifter'`, `'Wah'`, `'Filter'`, `'EQ'`, `'Looper'`, `'Multi Effects'`, `'Utility'`, `'Preamp'`, `'Amp/Cab Sim'`, `'Other'`
 - `signal_type`: `'Analog'`, `'Digital'`, `'Hybrid'`
 - `bypass_type`: `'True Bypass'`, `'Buffered Bypass'`, `'Relay Bypass'`, `'DSP Bypass'`, `'Both'`
 - `mono_stereo`: `'Mono'`, `'Stereo In/Out'`, `'Mono In/Stereo Out'`
@@ -354,7 +354,7 @@ The schema enforces allowed values via CHECK constraints. Inserts will fail if a
 - `footswitch_type`: `'Momentary'`, `'Latching'`, `'Dual-Action'`, `'Mixed'`
 
 **`utility_details`**
-- `utility_type` (22 values): `'DI Box'`, `'Reamp Box'`, `'Buffer'`, `'Splitter'`, `'A/B Box'`, `'A/B/Y Box'`, `'Tuner'`, `'Volume Pedal'`, `'Expression Pedal'`, `'Noise Gate'`, `'Power Conditioner'`, `'Signal Router'`, `'Impedance Matcher'`, `'Headphone Amp'`, `'Mixer'`, `'Junction Box'`, `'Patch Bay'`, `'Mute Switch'`, `'Amp Switcher'`, `'Load Box'`, `'Line Level Converter'`, `'Other'`
+- `utility_type` (24 values): `'DI Box'`, `'Reamp Box'`, `'Buffer'`, `'Splitter'`, `'A/B Box'`, `'A/B/Y Box'`, `'Tuner'`, `'Volume Pedal'`, `'Expression Pedal'`, `'Noise Gate'`, `'Power Conditioner'`, `'Signal Router'`, `'Impedance Matcher'`, `'Headphone Amp'`, `'Mixer'`, `'Junction Box'`, `'Patch Bay'`, `'Mute Switch'`, `'Amp Switcher'`, `'Load Box'`, `'Line Level Converter'`, `'Tap Tempo'`, `'Aux Switch'`, `'Other'`
 - `signal_type`: `'Analog'`, `'Digital'`, `'Both'`
 
 **`product_compatibility`**

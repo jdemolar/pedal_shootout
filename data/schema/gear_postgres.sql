@@ -140,7 +140,7 @@ CREATE TABLE pedal_details (
         'Chorus', 'Flanger', 'Phaser', 'Tremolo', 'Vibrato',
         'Rotary', 'Univibe', 'Ring Modulator',
         'Pitch Shifter', 'Wah', 'Filter', 'EQ',
-        'Multi Effects', 'Utility', 'Preamp', 'Amp/Cab Sim', 'Other'
+        'Looper', 'Multi Effects', 'Utility', 'Preamp', 'Amp/Cab Sim', 'Other'
     )),                                   -- Primary effect category
     circuit_type TEXT,            -- 'Bluesbreaker', 'Tube Screamer', 'Klon', 'RAT',
                                   -- 'Big Muff', 'Fuzz Face', 'Memory Man', etc.
@@ -336,7 +336,7 @@ CREATE TABLE utility_details (
         'Power Conditioner', 'Signal Router', 'Impedance Matcher',
         'Headphone Amp', 'Mixer', 'Junction Box', 'Patch Bay',
         'Mute Switch', 'Amp Switcher', 'Load Box', 'Line Level Converter',
-        'Tap Tempo', 'Other'
+        'Tap Tempo', 'Aux Switch', 'Other'
     )),                                   -- Specific utility category
 
     -- Signal path
